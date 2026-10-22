@@ -11,7 +11,7 @@ import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 
 export const MatchesView: React.FC = () => {
-  const { showToast, selectedResourceId } = useApp();
+  const { showToast, selectedResourceId, navigateToResource } = useApp();
   const matchModal = useRouteModal('/matches');
   const [matches, setMatches] = useState<Match[]>([]);
   const [standings, setStandings] = useState<LeagueStandingRow[]>([]);
@@ -189,7 +189,16 @@ export const MatchesView: React.FC = () => {
                 <div className="flex items-center justify-between text-xs text-slate-500 pt-3 mt-3 border-t border-pitch-separator">
                   <div className="flex items-center gap-1.5 truncate">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{match.venue}</span>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigateToResource('pitches', match.pitchId);
+                      }}
+                      className="truncate text-left text-xs text-slate-500 hover:text-pitch-primary hover:underline focus-visible:outline-2 focus-visible:outline-pitch-primary"
+                    >
+                      {match.pitchName || match.venue}
+                    </button>
                   </div>
                   <span className="text-xs font-bold text-pitch-primary group-hover:translate-x-0.5 transition-transform shrink-0">
                     Détails & Temps forts →
@@ -360,15 +369,17 @@ export const MatchesView: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-2">
-              <button
-                onClick={handleToggleFollow}
-                className="w-full py-3 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-              >
-                <Star className={`w-4 h-4 ${isFollowing ? 'text-lime-volt fill-lime-volt' : ''}`} />
-                <span>{isFollowing ? 'Match suivi (Favoris)' : 'Suivre les alertes de ce match'}</span>
-              </button>
-            </div>
+            {selectedMatch.status !== 'FINISHED' && (
+              <div className="pt-2">
+                <button
+                  onClick={handleToggleFollow}
+                  className="w-full py-3 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                >
+                  <Star className={`w-4 h-4 ${isFollowing ? 'text-lime-volt fill-lime-volt' : ''}`} />
+                  <span>{isFollowing ? 'Match suivi (Favoris)' : 'Suivre les alertes de ce match'}</span>
+                </button>
+              </div>
+            )}
           </div>
         </Modal>
       )}

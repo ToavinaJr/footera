@@ -159,6 +159,7 @@ export interface Match {
   scheduledAt?: string;
   time: string;
   venue: string;
+  pitchId?: string;
   pitchName?: string;
   city: string;
   competition: string;
