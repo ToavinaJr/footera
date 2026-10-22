@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { useApp } from './context/useApp';
 import { Header } from './components/layout/Header';
 import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
@@ -17,6 +18,8 @@ import { ProfileView } from './components/modules/Profile/ProfileView';
 import { StatsView } from './components/modules/Stats/StatsView';
 
 const AppContent: React.FC = () => {
+  const { setActiveSection } = useApp();
+
   return (
     <div className="min-h-full flex flex-col bg-[#f5f8f4] text-[#12281e] font-sans selection:bg-[#c6f432] selection:text-[#092c1a]">
       {/* Discreet Demo / Data Mode Banner */}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import type { UserProfile, UserRole } from '../types';
+import type { NotificationItem, UserProfile, UserRole } from '../types';
 import { authService } from '../services/authService';
 import { notificationsService } from '../services/notificationsService';
 import { mockStorage } from '../mocks/mockStorage';

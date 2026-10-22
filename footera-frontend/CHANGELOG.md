@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Rendre les scripts Vite indépendants des exécutables Bun endommagés dans `node_modules` et corriger les exports incompatibles avec Fast Refresh.
+
 ### Added
 
 - Routage client React Router pour chaque espace de l’application et prise en charge des URLs directes.
