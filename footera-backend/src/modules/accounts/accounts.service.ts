@@ -2,12 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateSportsCvPayload } from './sports-cv.validation.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
+import { CatalogsService } from '../catalogs/catalogs.service.js';
 
 const USER_ID = 'usr_me';
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly records: RecordRepository) {}
+  constructor(private readonly records: RecordRepository, private readonly catalogs: CatalogsService) {}
 
   profile() { return this.records.find('users', USER_ID); }
 
@@ -37,7 +38,11 @@ export class AccountsService {
   }
 
   async updateSportsCv(input: unknown) {
-    const partial = validateSportsCvPayload(input);
+    const [positions, strongFeet] = await Promise.all([
+      this.catalogs.values('playerPositions'),
+      this.catalogs.values('strongFeet'),
+    ]);
+    const partial = validateSportsCvPayload(input, positions, strongFeet);
     const current: any = await this.profile();
     if (!current) return null;
     return this.records.save('users', USER_ID, { ...current, sportsCv: { ...current.sportsCv, ...partial } });

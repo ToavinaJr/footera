@@ -9,6 +9,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 import { ImageUploadField } from '../../common/ImageUploadField';
+import { catalogsService } from '../../../services/catalogsService';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {
@@ -33,13 +34,13 @@ const MARKETPLACE_IMAGE_PRESETS = [
   },
 ];
 
-const POPULAR_BRANDS = ['Nike', 'Adidas', 'Puma', 'Kipsta', 'Umbro', 'Mizuno'];
-
 export const MarketplaceView: React.FC = () => {
   const { showToast, user } = useApp();
   const itemModal = useRouteModal('/marketplace');
   const [items, setItems] = useState<MarketplaceListing[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -51,20 +52,24 @@ export const MarketplaceView: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState<MarketplaceListing['category']>('');
   const [formPrice, setFormPrice] = useState('');
-  const [formCondition, setFormCondition] = useState<MarketplaceListing['condition']>('Très bon état');
-  const [formBrand, setFormBrand] = useState('Nike');
+  const [formCondition, setFormCondition] = useState('');
+  const [formBrand, setFormBrand] = useState('');
   const [formCity, setFormCity] = useState(user?.city || 'Antananarivo');
   const [formDescription, setFormDescription] = useState('');
   const [formImageUrl, setFormImageUrl] = useState(MARKETPLACE_IMAGE_PRESETS[0].url);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    marketplaceService.categories()
-      .then((availableCategories) => {
-        setCategories(availableCategories);
-        setFormCategory((current) => current || availableCategories[0] || '');
+    catalogsService.getOptions()
+      .then((options) => {
+        setCategories(options.marketplaceCategories);
+        setConditions(options.marketplaceConditions);
+        setBrands(options.marketplaceBrands);
+        setFormCategory((current) => current || options.marketplaceCategories[0] || '');
+        setFormCondition((current) => current || options.marketplaceConditions[0] || '');
+        setFormBrand((current) => current || options.marketplaceBrands[0] || '');
       })
-      .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les catégories.', 'error'));
+      .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les options Marketplace.', 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -109,7 +114,7 @@ export const MarketplaceView: React.FC = () => {
         category: formCategory,
         price: priceNum,
         condition: formCondition,
-        brand: formBrand.trim() || 'Marque sportive',
+        brand: formBrand,
         city: formCity.trim(),
         imageUrl: formImageUrl || MARKETPLACE_IMAGE_PRESETS[0].url,
         description: formDescription.trim() || 'Équipement contrôlé et prêt pour la compétition.',
@@ -376,13 +381,13 @@ export const MarketplaceView: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">État de l&apos;article *</label>
                 <select
                   value={formCondition}
-                  onChange={(e) => setFormCondition(e.target.value as MarketplaceListing['condition'])}
+                  onChange={(e) => setFormCondition(e.target.value)}
+                  required
+                  disabled={!conditions.length}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="Neuf avec étiquette">Neuf avec étiquette</option>
-                  <option value="Comme neuf">Comme neuf (porté 1-2 fois)</option>
-                  <option value="Très bon état">Très bon état</option>
-                  <option value="Bon état">Bon état</option>
+                  <option value="" disabled>Choisir un état</option>
+                  {conditions.map((condition) => <option key={condition} value={condition}>{condition}</option>)}
                 </select>
               </div>
 
@@ -401,29 +406,16 @@ export const MarketplaceView: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Marque *</label>
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                {POPULAR_BRANDS.map((brand) => (
-                  <button
-                    key={brand}
-                    type="button"
-                    onClick={() => setFormBrand(brand)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                      formBrand === brand
-                        ? 'bg-pitch-primary text-white shadow-2xs'
-                        : 'bg-white border border-pitch-line text-slate-700 hover:border-pitch-primary'
-                    }`}
-                  >
-                    {brand}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
+              <select
+                required
                 value={formBrand}
                 onChange={(e) => setFormBrand(e.target.value)}
-                placeholder="Ou saisissez une marque..."
+                disabled={!brands.length}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-              />
+              >
+                <option value="" disabled>Choisir une marque</option>
+                {brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+              </select>
             </div>
 
             <div>

@@ -10,6 +10,11 @@ export class MarketplaceController {
     return this.marketplace.categories();
   }
 
+  @Get('options')
+  options() {
+    return this.marketplace.options();
+  }
+
   @Get()
   list(
     @Query('q') query?: string,

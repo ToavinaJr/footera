@@ -2,11 +2,20 @@ import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { BookingsService } from './bookings.service.js';
 
+const catalogOptions = {
+  pitchSurfaces: ['Indoor Five', 'Synthétique dernière génération'],
+  pitchAmenities: ['Lighting'],
+};
+
 function makeService(profile: { activeRole: string; roles: string[] }) {
   const records = { create: vi.fn(async (_table: string, _id: string, pitch: unknown) => pitch) };
   const accounts = { profile: vi.fn(async () => profile) };
   const notifications = { add: vi.fn(async () => undefined) };
-  return { service: new BookingsService(records as any, accounts as any, notifications as any), records };
+  const catalogs = {
+    options: vi.fn(async () => catalogOptions),
+    values: vi.fn(async (key: keyof typeof catalogOptions) => catalogOptions[key]),
+  };
+  return { service: new BookingsService(records as any, accounts as any, notifications as any, catalogs as any), records };
 }
 
 describe('BookingsService pitch permissions', () => {
@@ -27,10 +36,9 @@ describe('BookingsService pitch permissions', () => {
     expect(records.create).not.toHaveBeenCalled();
   });
 
-  it('exposes backend-managed surface and amenity options', () => {
+  it('exposes surface and amenity options from the database catalog', async () => {
     const { service } = makeService({ activeRole: 'Joueur', roles: ['Joueur'] });
-    expect(service.getPitchOptions().surfaces).toContain('Indoor Five');
-    expect(service.getPitchOptions().amenities).toContain('Éclairage nocturne LED');
+    await expect(service.getPitchOptions()).resolves.toEqual({ surfaces: catalogOptions.pitchSurfaces, amenities: catalogOptions.pitchAmenities });
   });
 });
 
@@ -55,7 +63,8 @@ describe('BookingsService bookings and ratings', () => {
     };
     const accounts = { profile: vi.fn(async () => ({ id: 'user-1', name: 'Alex', roles: ['Joueur'], sportsCv: {} })) };
     const notifications = { add: vi.fn(async () => undefined) };
-    return { service: new BookingsService(records as any, accounts as any, notifications as any), records, created, getPitch: () => pitch };
+    const catalogs = { options: vi.fn(async () => ({})), values: vi.fn(async () => []) };
+    return { service: new BookingsService(records as any, accounts as any, notifications as any, catalogs as any), records, created, getPitch: () => pitch };
   }
 
   it('quotes selected slot prices from backend data rather than client-supplied prices', async () => {

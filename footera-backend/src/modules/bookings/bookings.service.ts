@@ -4,28 +4,16 @@ import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
-
-export const PITCH_SURFACES = ['Synthétique dernière génération', 'Gazon naturel', 'Indoor Five', 'Futsal parquet'];
-export const PITCH_AMENITIES = [
-  'Vestiaires avec douches chaudes',
-  'Éclairage nocturne LED',
-  'Parking gratuit surveillé',
-  'Buvette & Club House',
-  'Tribunes abritées',
-  'Caméras vidéo HD Replay',
-  'Chronomètre & Tableau d’affichage',
-  'Ballons & Chasubles fournis',
-  'Vestiaires chauffés',
-  'Parking gratuit',
-  'Tribunes 500 places',
-  'Buvette',
-];
+import { CatalogsService } from '../catalogs/catalogs.service.js';
 
 @Injectable()
 export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
-  constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService) {}
-  getPitchOptions() { return { surfaces: PITCH_SURFACES, amenities: PITCH_AMENITIES }; }
+  constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService, private readonly catalogs: CatalogsService) {}
+  async getPitchOptions() {
+    const options = await this.catalogs.options();
+    return { surfaces: options.pitchSurfaces, amenities: options.pitchAmenities };
+  }
 
   async listPitches(filters: { city?: string; surface?: string; date?: string } = {}) {
     const pitches: any[] = await this.records.list('pitches');
@@ -177,8 +165,12 @@ export class BookingsService {
     if (!user?.roles?.includes('Gestionnaire Terrain')) {
       throw new ForbiddenException('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
     }
-    if (!PITCH_SURFACES.includes(input?.surface)) throw new BadRequestException('Type de surface invalide.');
-    if (!Array.isArray(input?.amenities) || input.amenities.some((amenity: unknown) => !PITCH_AMENITIES.includes(amenity as string))) {
+    const [surfaces, amenities] = await Promise.all([
+      this.catalogs.values('pitchSurfaces'),
+      this.catalogs.values('pitchAmenities'),
+    ]);
+    if (!surfaces.includes(input?.surface)) throw new BadRequestException('Type de surface invalide.');
+    if (!Array.isArray(input?.amenities) || input.amenities.some((amenity: unknown) => !amenities.includes(amenity as string))) {
       throw new BadRequestException('La liste des équipements et commodités est invalide.');
     }
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');

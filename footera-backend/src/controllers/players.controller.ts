@@ -6,6 +6,11 @@ import { NotificationsService } from '../modules/notifications/notifications.ser
 export class PlayersController {
   constructor(private readonly players: PlayersService, private readonly notifications: NotificationsService) {}
 
+  @Get('options')
+  options() {
+    return this.players.options();
+  }
+
   @Get()
   list(
     @Query('q') query?: string,

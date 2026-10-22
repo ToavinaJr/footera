@@ -1,10 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 
-const POSITIONS = new Set([
-  'Gardien', 'Défenseur Central', 'Latéral Droit', 'Latéral Gauche', 'Milieu Défensif',
-  'Milieu Central', 'Milieu Offensif', 'Ailier Droit', 'Ailier Gauche', 'Avant-centre',
-]);
-const STRONG_FEET = new Set(['Droitier', 'Gaucher', 'Ambidextre']);
 const ALLOWED_FIELDS = new Set([
   'primaryPosition', 'secondaryPosition', 'strongFoot', 'height', 'weight',
   'experienceYears', 'preferredNumber', 'currentTeam', 'bio',
@@ -12,7 +7,7 @@ const ALLOWED_FIELDS = new Set([
 
 type SportsCvUpdate = Record<string, string | number | null>;
 
-export function validateSportsCvPayload(input: unknown): SportsCvUpdate {
+export function validateSportsCvPayload(input: unknown, positions: readonly string[], strongFeet: readonly string[]): SportsCvUpdate {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new BadRequestException('Le CV sportif doit être un objet JSON.');
   }
@@ -25,20 +20,20 @@ export function validateSportsCvPayload(input: unknown): SportsCvUpdate {
 
   const value: SportsCvUpdate = {};
   if ('primaryPosition' in body) {
-    if (typeof body.primaryPosition !== 'string' || !POSITIONS.has(body.primaryPosition)) {
+    if (typeof body.primaryPosition !== 'string' || !positions.includes(body.primaryPosition)) {
       throw new BadRequestException('Le poste principal est invalide.');
     }
     value.primaryPosition = body.primaryPosition;
   }
   if ('secondaryPosition' in body) {
     if (body.secondaryPosition !== null && body.secondaryPosition !== ''
-      && (typeof body.secondaryPosition !== 'string' || !POSITIONS.has(body.secondaryPosition))) {
+      && (typeof body.secondaryPosition !== 'string' || !positions.includes(body.secondaryPosition))) {
       throw new BadRequestException('Le poste secondaire est invalide.');
     }
     value.secondaryPosition = body.secondaryPosition as string | null;
   }
   if ('strongFoot' in body) {
-    if (typeof body.strongFoot !== 'string' || !STRONG_FEET.has(body.strongFoot)) {
+    if (typeof body.strongFoot !== 'string' || !strongFeet.includes(body.strongFoot)) {
       throw new BadRequestException('Le pied fort est invalide.');
     }
     value.strongFoot = body.strongFoot;

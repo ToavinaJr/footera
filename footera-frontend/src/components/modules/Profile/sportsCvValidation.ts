@@ -1,19 +1,15 @@
-import type { StrongFoot, Position, UserProfile } from '../../../types';
+import type { UserProfile } from '../../../types';
 
 export type SportsCvErrors = Partial<Record<'primaryPosition' | 'strongFoot' | 'height' | 'weight' | 'currentTeam' | 'bio', string>>;
 
 export const validateSportsCv = (
   value: Pick<UserProfile['sportsCv'], 'primaryPosition' | 'strongFoot' | 'height' | 'weight' | 'currentTeam' | 'bio'>,
+  positions: string[],
+  strongFeet: string[],
 ): SportsCvErrors => {
   const errors: SportsCvErrors = {};
-  const positions: Position[] = [
-    'Gardien', 'Défenseur Central', 'Latéral Droit', 'Latéral Gauche', 'Milieu Défensif',
-    'Milieu Central', 'Milieu Offensif', 'Ailier Droit', 'Ailier Gauche', 'Avant-centre',
-  ];
-  const feet: StrongFoot[] = ['Droitier', 'Gaucher', 'Ambidextre'];
-
   if (!positions.includes(value.primaryPosition)) errors.primaryPosition = 'Choisissez un poste valide.';
-  if (!feet.includes(value.strongFoot)) errors.strongFoot = 'Choisissez un pied fort valide.';
+  if (!strongFeet.includes(value.strongFoot)) errors.strongFoot = 'Choisissez un pied fort valide.';
   if (!Number.isInteger(value.height) || value.height < 100 || value.height > 250) {
     errors.height = 'La taille doit être comprise entre 100 et 250 cm.';
   }

@@ -1,7 +1,13 @@
 import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
+import { catalogsService } from './catalogsService';
 import { Player, Position } from '../types';
+
+export interface PlayerOptions {
+  positions: string[];
+  levels: string[];
+}
 
 export interface PlayerFilters {
   query?: string;
@@ -12,6 +18,12 @@ export interface PlayerFilters {
 }
 
 export const playersService = {
+  async options(): Promise<PlayerOptions> {
+    if (!IS_MOCK_MODE) return apiClient<PlayerOptions>('players/options');
+    const options = await catalogsService.getOptions();
+    return { positions: options.playerPositions, levels: options.playerLevels };
+  },
+
   async list(filters?: PlayerFilters): Promise<Player[]> {
     if (IS_MOCK_MODE) {
       let players = mockStorage.getPlayers();

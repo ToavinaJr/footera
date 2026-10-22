@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Shield, Trophy, UserPlus, Star, Heart } from 'lucide-react';
 import { playersService, PlayerFilters } from '../../../services/playersService';
-import { Player, Position } from '../../../types';
+import { Player } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -13,6 +13,8 @@ export const PlayersView: React.FC = () => {
   const { showToast, navigateToResource } = useApp();
   const playerModal = useRouteModal('/players');
   const [players, setPlayers] = useState<Player[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [levels, setLevels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Filters
@@ -32,6 +34,15 @@ export const PlayersView: React.FC = () => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
   const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
+
+  useEffect(() => {
+    playersService.options()
+      .then((options) => {
+        setPositions(options.positions);
+        setLevels(options.levels);
+      })
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les postes et niveaux.', 'error'));
+  }, [showToast]);
 
   useEffect(() => {
     async function fetchPlayers() {
@@ -76,17 +87,7 @@ export const PlayersView: React.FC = () => {
     showToast(`Invitation officielle transmise à ${selectedPlayer.name} !`);
   };
 
-  const positionsList: (Position | 'Toutes')[] = [
-    'Toutes',
-    'Milieu Central',
-    'Avant-centre',
-    'Ailier Droit',
-    'Ailier Gauche',
-    'Défenseur Central',
-    'Latéral Droit',
-    'Latéral Gauche',
-    'Gardien',
-  ];
+  const positionsList = ['Toutes', ...positions];
 
   return (
     <div className="space-y-6 pb-16">
@@ -149,10 +150,7 @@ export const PlayersView: React.FC = () => {
               className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary transition-colors outline-hidden"
             >
               <option value="Tous">Tous les niveaux</option>
-              <option value="National">National</option>
-              <option value="Régional">Régional (R1, R2, R3)</option>
-              <option value="Départemental">Départemental / District</option>
-              <option value="Loisir">Loisir / Five</option>
+              {levels.map((level) => <option key={level} value={level}>{level}</option>)}
             </select>
           </div>
         </div>

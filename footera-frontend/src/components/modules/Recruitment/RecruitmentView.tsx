@@ -9,6 +9,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 import { EntityLink } from '../../common/EntityLink';
+import { catalogsService } from '../../../services/catalogsService';
 
 export const RecruitmentView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
@@ -21,6 +22,7 @@ export const RecruitmentView: React.FC = () => {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState('Tous');
+  const [positionOptions, setPositionOptions] = useState<string[]>([]);
 
   // Ad Detail & Apply
   const activeAd = adModal.resourceId
@@ -32,6 +34,12 @@ export const RecruitmentView: React.FC = () => {
   const [applyMessage, setApplyMessage] = useState('');
   const [applicantPhone, setApplicantPhone] = useState(user?.phone || '06 12 34 56 78');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    catalogsService.getOptions()
+      .then((options) => setPositionOptions(options.recruitmentPositions))
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les postes recherchés.', 'error'));
+  }, [showToast]);
 
   useEffect(() => {
     async function loadRecruitmentData() {
@@ -132,10 +140,7 @@ export const RecruitmentView: React.FC = () => {
                 className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
               >
                 <option value="Tous">Tous les postes</option>
-                <option value="Défenseur Central">Défenseur Central</option>
-                <option value="Ailier Droit">Ailier Droit</option>
-                <option value="Gardien">Gardien</option>
-                <option value="Avant-centre">Avant-centre</option>
+                {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
               </select>
             </div>
           </div>

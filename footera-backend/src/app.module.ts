@@ -4,6 +4,7 @@ import { AppService } from './app.service.js';
 import { AccountsModule } from './modules/accounts/accounts.module.js';
 import { BookingsModule } from './modules/bookings/bookings.module.js';
 import { ClubsModule } from './modules/clubs/clubs.module.js';
+import { CatalogsModule } from './modules/catalogs/catalogs.module.js';
 import { DatabaseModule } from './modules/database.module.js';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module.js';
 import { MatchesModule } from './modules/matches/matches.module.js';
@@ -18,6 +19,7 @@ import { UploadsModule } from './modules/uploads/uploads.module.js';
 @Module({
   imports: [
     DatabaseModule,
+    CatalogsModule,
     AccountsModule,
     PlayersModule,
     TeamsModule,

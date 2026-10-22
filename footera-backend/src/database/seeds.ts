@@ -32,6 +32,18 @@ export interface PlayerSeed {
   previousClubs: string[];
 }
 
+export const SEED_CATALOGS = [
+  { id: 'pitch-surfaces', values: ['Synthétique dernière génération', 'Gazon naturel', 'Indoor Five', 'Futsal parquet'] },
+  { id: 'pitch-amenities', values: ['Vestiaires avec douches chaudes', 'Éclairage nocturne LED', 'Parking gratuit surveillé', 'Buvette & Club House', 'Tribunes abritées', 'Caméras vidéo HD Replay', 'Chronomètre & Tableau d’affichage', 'Ballons & Chasubles fournis', 'Vestiaires chauffés', 'Parking gratuit', 'Tribunes 500 places', 'Buvette'] },
+  { id: 'marketplace-categories', values: ['Crampons', 'Maillots', 'Ballons', 'Gardiens', 'Équipements'] },
+  { id: 'marketplace-conditions', values: ['Neuf avec étiquette', 'Comme neuf', 'Très bon état', 'Bon état'] },
+  { id: 'marketplace-brands', values: ['Nike', 'Adidas', 'Puma', 'Kipsta', 'Umbro', 'Mizuno', 'Garman Official'] },
+  { id: 'player-positions', values: ['Gardien', 'Défenseur Central', 'Latéral Droit', 'Latéral Gauche', 'Milieu Défensif', 'Milieu Central', 'Milieu Offensif', 'Ailier Droit', 'Ailier Gauche', 'Avant-centre'] },
+  { id: 'recruitment-positions', values: ['Gardien', 'Défenseur Central', 'Latéral Droit', 'Latéral Gauche', 'Milieu Défensif', 'Milieu Central', 'Milieu Offensif', 'Ailier Droit', 'Ailier Gauche', 'Avant-centre', 'Entraîneur Adjoint', 'Préparateur Physique', 'Entraîneur Principal'] },
+  { id: 'player-levels', values: ['Départemental', 'Régional', 'National', 'Loisir'] },
+  { id: 'strong-feet', values: ['Droitier', 'Gaucher', 'Ambidextre'] },
+];
+
 export interface TeamMemberSeed {
   playerId: string;
   name: string;

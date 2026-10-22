@@ -1,16 +1,18 @@
-export type Position = 
-  | 'Gardien'
-  | 'Défenseur Central'
-  | 'Latéral Droit'
-  | 'Latéral Gauche'
-  | 'Milieu Défensif'
-  | 'Milieu Central'
-  | 'Milieu Offensif'
-  | 'Ailier Droit'
-  | 'Ailier Gauche'
-  | 'Avant-centre';
+export type Position = string;
 
-export type StrongFoot = 'Droitier' | 'Gaucher' | 'Ambidextre';
+export type StrongFoot = string;
+
+export interface CatalogOptions {
+  pitchSurfaces: string[];
+  pitchAmenities: string[];
+  marketplaceCategories: string[];
+  marketplaceConditions: string[];
+  marketplaceBrands: string[];
+  playerPositions: string[];
+  recruitmentPositions: string[];
+  playerLevels: string[];
+  strongFeet: string[];
+}
 
 export type UserRole = 
   | 'Joueur'
@@ -31,7 +33,7 @@ export interface Player {
   strongFoot: StrongFoot;
   currentTeam?: string;
   currentTeamId?: string;
-  level: 'Départemental' | 'Régional' | 'National' | 'Loisir';
+  level: string;
   height: number; // in cm
   weight: number; // in kg
   appearances: number;
@@ -309,7 +311,7 @@ export interface RecruitmentAd {
   teamLogoUrl: string;
   clubName?: string;
   city: string;
-  positionSought: Position | 'Entraîneur Adjoint' | 'Préparateur Physique' | 'Entraîneur Principal';
+  positionSought: string;
   category: string;
   division: string;
   description: string;
@@ -337,7 +339,7 @@ export interface MarketplaceListing {
   title: string;
   category: string;
   price: number;
-  condition: 'Neuf avec étiquette' | 'Très bon état' | 'Bon état';
+  condition: string;
   brand: string;
   size?: string;
   city: string;

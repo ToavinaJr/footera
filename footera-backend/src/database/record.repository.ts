@@ -16,6 +16,7 @@ export const RECORD_MODELS = {
   notifications: 'notificationRecord',
   standings: 'leagueStandingRecord',
   activity: 'activityFeedRecord',
+  catalogs: 'catalogRecord',
 } as const;
 
 export type RecordCollection = keyof typeof RECORD_MODELS;

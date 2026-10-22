@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
+import { CatalogsService } from '../catalogs/catalogs.service.js';
 
 @Injectable()
 export class PlayersService {
-  constructor(private readonly records: RecordRepository) {}
+  constructor(private readonly records: RecordRepository, private readonly catalogs: CatalogsService) {}
+
+  async options() {
+    const options = await this.catalogs.options();
+    return { positions: options.playerPositions, levels: options.playerLevels };
+  }
 
   async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
     const players = await this.records.list<any>('players');

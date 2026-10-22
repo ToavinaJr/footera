@@ -2,7 +2,7 @@ import {
   SEED_ACTIVITY_FEED, SEED_APPLICATIONS, SEED_BOOKINGS, SEED_CLUBS,
   SEED_LEAGUE_STANDINGS, SEED_MARKETPLACE, SEED_MATCHES,
   SEED_NOTIFICATIONS, SEED_PITCHES, SEED_PLAYERS, SEED_RECRUITMENT_ADS,
-  SEED_TEAMS, SEED_TOURNAMENTS, SEED_USER,
+  SEED_TEAMS, SEED_TOURNAMENTS, SEED_USER, SEED_CATALOGS,
 } from './seeds.js';
 import { PrismaService } from './prisma.service.js';
 import { RECORD_MODELS, RecordCollection } from './record.repository.js';
@@ -22,6 +22,7 @@ const collections: Array<[RecordCollection, string, unknown[]]> = [
   ['notifications', 'id', SEED_NOTIFICATIONS],
   ['standings', 'position', SEED_LEAGUE_STANDINGS],
   ['activity', 'id', SEED_ACTIVITY_FEED],
+  ['catalogs', 'id', SEED_CATALOGS],
 ];
 
 export async function seedDatabase(prisma: PrismaService, { reset = false } = {}) {

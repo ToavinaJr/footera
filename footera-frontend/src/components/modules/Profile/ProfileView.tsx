@@ -28,6 +28,7 @@ import type { Player, Team } from '../../../types';
 import { PlayerCareerPanel } from '../Players/PlayerCareerPanel';
 import { validateSportsCv, type SportsCvErrors } from './sportsCvValidation';
 import { ImageUploadField } from '../../common/ImageUploadField';
+import { catalogsService } from '../../../services/catalogsService';
 
 export const ProfileView: React.FC = () => {
   const { user, switchRole, updateProfile, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
@@ -53,16 +54,27 @@ export const ProfileView: React.FC = () => {
   const [isLoadingPublicPlayer, setIsLoadingPublicPlayer] = useState(false);
   const [publicPlayerNotFound, setPublicPlayerNotFound] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [positionOptions, setPositionOptions] = useState<string[]>([]);
+  const [strongFootOptions, setStrongFootOptions] = useState<string[]>([]);
 
   // Edit CV modal
-  const [cvPosition, setCvPosition] = useState<Position>(user?.sportsCv.primaryPosition || 'Milieu Central');
+  const [cvPosition, setCvPosition] = useState<Position>(user?.sportsCv.primaryPosition || '');
   const [cvHeight, setCvHeight] = useState(user?.sportsCv.height || 180);
   const [cvWeight, setCvWeight] = useState(user?.sportsCv.weight || 75);
-  const [cvFoot, setCvFoot] = useState<StrongFoot>(user?.sportsCv.strongFoot || 'Droitier');
+  const [cvFoot, setCvFoot] = useState<StrongFoot>(user?.sportsCv.strongFoot || '');
   const [cvBio, setCvBio] = useState(user?.sportsCv.bio || '');
   const [cvCurrentTeam, setCvCurrentTeam] = useState(user?.sportsCv.currentTeam || '');
   const [cvErrors, setCvErrors] = useState<SportsCvErrors>({});
   const [isSavingCv, setIsSavingCv] = useState(false);
+
+  useEffect(() => {
+    catalogsService.getOptions()
+      .then((options) => {
+        setPositionOptions(options.playerPositions);
+        setStrongFootOptions(options.strongFeet);
+      })
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les options du CV sportif.', 'error'));
+  }, [showToast]);
 
   useEffect(() => {
     if (!profileId) return;
@@ -121,7 +133,7 @@ export const ProfileView: React.FC = () => {
       bio: cvBio,
       currentTeam: cvCurrentTeam,
     };
-    const errors = validateSportsCv(cv);
+    const errors = validateSportsCv(cv, positionOptions, strongFootOptions);
     setCvErrors(errors);
     if (Object.keys(errors).length) return;
 
@@ -175,16 +187,17 @@ export const ProfileView: React.FC = () => {
       {/* Profile Header */}
       <div className="p-6 md:p-8 rounded-3xl bg-white border border-pitch-line shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="shrink-0 space-y-2">
+          <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
             <img
               src={displayedAvatar}
               alt={displayedName}
-              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover bg-slate-100 border-2 border-pitch-primary"
+              className="h-full w-full rounded-2xl border-2 border-pitch-primary bg-slate-100 object-cover"
               referrerPolicy="no-referrer"
             />
             {isOwner && <ImageUploadField
               purpose="avatar"
               label="Changer la photo"
+              variant="avatar"
               onUploaded={async (avatarUrl) => updateProfile({ avatarUrl })}
             />}
           </div>
@@ -456,18 +469,12 @@ export const ProfileView: React.FC = () => {
               <select
                 value={cvPosition}
                 onChange={(e) => setCvPosition(e.target.value as any)}
+                required
+                disabled={!positionOptions.length}
                 className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               >
-                <option value="Gardien">Gardien</option>
-                <option value="Défenseur Central">Défenseur Central</option>
-                <option value="Latéral Droit">Latéral Droit</option>
-                <option value="Latéral Gauche">Latéral Gauche</option>
-                <option value="Milieu Défensif">Milieu Défensif</option>
-                <option value="Milieu Central">Milieu Central</option>
-                <option value="Milieu Offensif">Milieu Offensif</option>
-                <option value="Ailier Droit">Ailier Droit</option>
-                <option value="Ailier Gauche">Ailier Gauche</option>
-                <option value="Avant-centre">Avant-centre</option>
+                <option value="" disabled>Choisir un poste</option>
+                {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
               </select>
             </div>
 
@@ -505,11 +512,12 @@ export const ProfileView: React.FC = () => {
                 <select
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as any)}
+                  required
+                  disabled={!strongFootOptions.length}
                   className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
                 >
-                  <option value="Droitier">Droitier</option>
-                  <option value="Gaucher">Gaucher</option>
-                  <option value="Ambidextre">Ambidextre</option>
+                  <option value="" disabled>Choisir un pied fort</option>
+                  {strongFootOptions.map((foot) => <option key={foot} value={foot}>{foot}</option>)}
                 </select>
               </div>
             </div>

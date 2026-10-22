@@ -26,8 +26,7 @@ import {
   TeamStatsItem, 
   PlayerStatsItem, 
   Tournament, 
-  Team,
-  Position 
+  Team
 } from '../../../types';
 import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
@@ -36,6 +35,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { formatFiniteNumber } from '../../../utils/numberFormat';
+import { catalogsService } from '../../../services/catalogsService';
 
 export const StatsView: React.FC = () => {
   const { showToast, navigateToResource } = useApp();
@@ -50,6 +50,7 @@ export const StatsView: React.FC = () => {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [playerSearchQuery, setPlayerSearchQuery] = useState('');
   const [playerPositionFilter, setPlayerPositionFilter] = useState<string>('Tous');
+  const [positionOptions, setPositionOptions] = useState<string[]>([]);
 
   // Data
   const [scorers, setScorers] = useState<TopScorerItem[]>([]);
@@ -66,12 +67,14 @@ export const StatsView: React.FC = () => {
   useEffect(() => {
     async function loadOptions() {
       try {
-        const [tournList, teamList] = await Promise.all([
+        const [tournList, teamList, catalogOptions] = await Promise.all([
           tournamentsService.list(),
           teamsService.list(),
+          catalogsService.getOptions(),
         ]);
         setTournaments(tournList);
         setTeams(teamList);
+        setPositionOptions(catalogOptions.playerPositions);
       } catch (err: any) {
         showToast(err.message || 'Erreur lors du chargement des options', 'error');
       }
@@ -834,13 +837,7 @@ export const StatsView: React.FC = () => {
                     className="w-full sm:w-48 bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
                   >
                     <option value="Tous">Tous les postes</option>
-                    <option value="Avant-centre">Avant-centre</option>
-                    <option value="Ailier Gauche">Ailier Gauche</option>
-                    <option value="Ailier Droit">Ailier Droit</option>
-                    <option value="Milieu Central">Milieu Central</option>
-                    <option value="Milieu Offensif">Milieu Offensif</option>
-                    <option value="Défenseur Central">Défenseur Central</option>
-                    <option value="Gardien">Gardien</option>
+                    {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
                   </select>
                 </div>
               </div>

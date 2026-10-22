@@ -78,3 +78,8 @@ model ActivityFeedRecord {
   payload Json
   @@map("activity_feed")
 }
+model CatalogRecord {
+  id      String @id
+  payload Json
+  @@map("catalogs")
+}
