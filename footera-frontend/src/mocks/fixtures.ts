@@ -855,7 +855,7 @@ export const INITIAL_BOOKINGS: Booking[] = [
     pitchName: 'Terrain d Honneur 11x11 Synthétique',
     complexName: 'Complexe Sportif Municipal',
     surface: 'Synthétique dernière génération',
-    date: '28 Octobre 2026',
+    date: '2026-10-28',
     time: '20:00 - 21:30',
     durationMinutes: 90,
     totalPrice: 150,

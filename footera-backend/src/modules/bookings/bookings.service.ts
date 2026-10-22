@@ -6,6 +6,16 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 
+const normalizeDateKey = (value: string) => {
+  const normalized = value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized;
+  const match = /^(?:[a-z]+\s+)?(\d{1,2})\s+([a-z]+)\s+(\d{4})$/.exec(normalized);
+  if (!match) return value.trim();
+  const months = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+  const month = months.indexOf(match[2]);
+  return month < 0 ? value.trim() : `${match[3]}-${String(month + 1).padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+};
+
 @Injectable()
 export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
@@ -37,7 +47,7 @@ export class BookingsService {
   private withDateAvailability(pitch: any, bookings: any[], date?: string) {
     if (!date) return pitch;
     const bookedTimes = new Set(bookings
-      .filter((booking) => booking.pitchId === pitch.id && booking.date === date && booking.status !== 'CANCELLED')
+      .filter((booking) => booking.pitchId === pitch.id && normalizeDateKey(booking.date) === normalizeDateKey(date) && booking.status !== 'CANCELLED')
       .map((booking) => booking.time));
     return {
       ...pitch,
@@ -66,7 +76,7 @@ export class BookingsService {
       seen.add(key);
       const slot = pitch.availableSlots?.find((candidate: any) => candidate.time === selection.time && candidate.isAvailable);
       const alreadyBooked = bookings.some((booking) => booking.pitchId === input.pitchId
-        && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+        && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
       if (!slot || alreadyBooked) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} n’est plus disponible.`);
       const price = Number(slot.price);
       if (!Number.isFinite(price) || price < 0) throw new ConflictException('Le tarif de ce créneau est invalide.');
@@ -88,7 +98,7 @@ export class BookingsService {
     const selections = input.selections;
     for (const selection of selections) {
       const reserved = currentBookings.some((booking: any) => booking.pitchId === input.pitchId
-        && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+        && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
       if (reserved) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} vient d’être réservé.`);
     }
 

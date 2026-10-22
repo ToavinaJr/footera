@@ -2,6 +2,7 @@ import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
 import { Pitch, PitchOptions, SurfaceType } from '../types';
+import { normalizeDateKey } from '../utils/date';
 
 export interface CreatePitchInput {
   name: string;
@@ -49,7 +50,7 @@ export const pitchesService = {
         const bookings = mockStorage.getBookings();
         pitches = pitches.map((pitch) => {
           const bookedTimes = new Set(bookings
-            .filter((booking) => booking.pitchId === pitch.id && booking.date === filters.date && booking.status !== 'CANCELLED')
+            .filter((booking) => booking.pitchId === pitch.id && normalizeDateKey(booking.date) === normalizeDateKey(filters.date!) && booking.status !== 'CANCELLED')
             .map((booking) => booking.time));
           return { ...pitch, availableSlots: pitch.availableSlots.map((slot) => ({
             ...slot,
@@ -74,7 +75,7 @@ export const pitchesService = {
       const pitch = { ...p, myReview, myRating: myReview?.rating };
       if (!date) return mockDelay(pitch, 150);
       const bookedTimes = new Set(mockStorage.getBookings()
-        .filter((booking) => booking.pitchId === p.id && booking.date === date && booking.status !== 'CANCELLED')
+        .filter((booking) => booking.pitchId === p.id && normalizeDateKey(booking.date) === normalizeDateKey(date) && booking.status !== 'CANCELLED')
         .map((booking) => booking.time));
       return mockDelay({ ...pitch, availableSlots: p.availableSlots.map((slot) => ({
         ...slot,

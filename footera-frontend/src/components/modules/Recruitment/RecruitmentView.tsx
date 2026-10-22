@@ -12,7 +12,7 @@ import { EntityLink } from '../../common/EntityLink';
 import { catalogsService } from '../../../services/catalogsService';
 
 export const RecruitmentView: React.FC = () => {
-  const { showToast, selectedResourceId, user } = useApp();
+  const { showToast, selectedResourceId } = useApp();
   const adModal = useRouteModal('/recruitment');
   const [activeTab, setActiveTab] = useState<'ads' | 'my-applications'>('ads');
   const [ads, setAds] = useState<RecruitmentAd[]>([]);
@@ -32,7 +32,7 @@ export const RecruitmentView: React.FC = () => {
       : null;
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState('');
-  const [applicantPhone, setApplicantPhone] = useState(user?.phone || '06 12 34 56 78');
+  const [applicantPhone, setApplicantPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export const RecruitmentView: React.FC = () => {
   }, [searchQuery, positionFilter, selectedResourceId, showToast]);
 
   const handleApply = async () => {
-    if (!activeAd || !applyMessage.trim()) return;
+    if (!activeAd || !applyMessage.trim() || !applicantPhone.trim()) return;
     setIsSubmitting(true);
     try {
       await recruitmentService.apply(activeAd.id, {
@@ -193,6 +193,8 @@ export const RecruitmentView: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         adModal.openDetail(ad.id);
+                        setApplicantPhone('');
+                        setApplyMessage('');
                         setIsApplyModalOpen(true);
                       }}
                       className="px-5 py-2.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
@@ -269,7 +271,11 @@ export const RecruitmentView: React.FC = () => {
             </p>
 
             <button
-              onClick={() => setIsApplyModalOpen(true)}
+              onClick={() => {
+                setApplicantPhone('');
+                setApplyMessage('');
+                setIsApplyModalOpen(true);
+              }}
               className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <Send className="w-4 h-4" />
@@ -321,7 +327,7 @@ export const RecruitmentView: React.FC = () => {
               </button>
               <button
                 onClick={handleApply}
-                disabled={!applyMessage.trim() || isSubmitting}
+                disabled={!applyMessage.trim() || !applicantPhone.trim() || isSubmitting}
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Envoi...' : 'Envoyer ma candidature'}

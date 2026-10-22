@@ -29,6 +29,7 @@ import { PlayerCareerPanel } from '../Players/PlayerCareerPanel';
 import { validateSportsCv, type SportsCvErrors } from './sportsCvValidation';
 import { ImageUploadField } from '../../common/ImageUploadField';
 import { catalogsService } from '../../../services/catalogsService';
+import { formatDateForDisplay } from '../../../utils/date';
 
 export const ProfileView: React.FC = () => {
   const { user, switchRole, updateProfile, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
@@ -400,7 +401,7 @@ export const ProfileView: React.FC = () => {
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
-                    {b.complexName} · <strong className="text-pitch-ink">{b.date}</strong> à{' '}
+                    {b.complexName} · <strong className="text-pitch-ink">{formatDateForDisplay(b.date)}</strong> à{' '}
                     <strong className="text-pitch-primary">{b.time}</strong>
                   </p>
                   <p className="text-xs text-slate-600">Montant total : {b.totalPrice} € TTC</p>

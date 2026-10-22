@@ -43,7 +43,7 @@ export const HomeView: React.FC = () => {
 
   // Modal for Team Roster & Relance
   const [isRelanceModalOpen, setIsRelanceModalOpen] = useState(false);
-  const [relanceMessage, setRelanceMessage] = useState('Rappel match samedi 15h30 : Présence au vestiaire requise à 14h15 avec protège-tibias.');
+  const [relanceMessage, setRelanceMessage] = useState('');
   const [isSendingRelance, setIsSendingRelance] = useState(false);
 
   useEffect(() => {
@@ -80,6 +80,7 @@ export const HomeView: React.FC = () => {
   }, []);
 
   const handleSendRelance = async () => {
+    if (!relanceMessage.trim()) return;
     setIsSendingRelance(true);
     await new Promise((r) => setTimeout(r, 400));
     setIsSendingRelance(false);
@@ -441,6 +442,7 @@ export const HomeView: React.FC = () => {
                 rows={4}
                 value={relanceMessage}
                 onChange={(e) => setRelanceMessage(e.target.value)}
+                placeholder="Rédigez votre consigne et les informations pratiques du match…"
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors"
               />
             </div>
@@ -453,7 +455,7 @@ export const HomeView: React.FC = () => {
               </button>
               <button
                 onClick={handleSendRelance}
-                disabled={isSendingRelance}
+                disabled={!relanceMessage.trim() || isSendingRelance}
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-primary hover:bg-pitch-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
               >
                 <Send className="w-3.5 h-3.5" />

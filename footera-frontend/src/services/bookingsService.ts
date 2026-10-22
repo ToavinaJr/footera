@@ -2,6 +2,7 @@ import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
 import { Booking } from '../types';
+import { normalizeDateKey } from '../utils/date';
 
 export interface CreateBookingInput {
   pitchId: string;
@@ -37,7 +38,7 @@ export const bookingsService = {
       for (const selection of input.selections) {
         const slot = pitch.availableSlots.find((candidate) => candidate.time === selection.time);
         const isBooked = bookings.some((booking) => booking.pitchId === input.pitchId
-          && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+          && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
         if (!slot || isBooked) throw new Error('Un créneau sélectionné n’est plus disponible.');
         perDate[selection.date] = (perDate[selection.date] || 0) + slot.price;
       }
@@ -77,7 +78,7 @@ export const bookingsService = {
         const key = `${selection.date}:${selection.time}`;
         const slot = pitch.availableSlots.find((candidate) => candidate.time === selection.time && candidate.isAvailable);
         const isBooked = currentBookings.some((booking) => booking.pitchId === input.pitchId
-          && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+          && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
         if (seen.has(key) || !slot || isBooked) throw new Error('Un des créneaux sélectionnés n’est plus disponible.');
         seen.add(key);
       }

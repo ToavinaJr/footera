@@ -54,9 +54,9 @@ export const MarketplaceView: React.FC = () => {
   const [formPrice, setFormPrice] = useState('');
   const [formCondition, setFormCondition] = useState('');
   const [formBrand, setFormBrand] = useState('');
-  const [formCity, setFormCity] = useState(user?.city || 'Antananarivo');
+  const [formCity, setFormCity] = useState('');
   const [formDescription, setFormDescription] = useState('');
-  const [formImageUrl, setFormImageUrl] = useState(MARKETPLACE_IMAGE_PRESETS[0].url);
+  const [formImageUrl, setFormImageUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -65,9 +65,6 @@ export const MarketplaceView: React.FC = () => {
         setCategories(options.marketplaceCategories);
         setConditions(options.marketplaceConditions);
         setBrands(options.marketplaceBrands);
-        setFormCategory((current) => current || options.marketplaceCategories[0] || '');
-        setFormCondition((current) => current || options.marketplaceConditions[0] || '');
-        setFormBrand((current) => current || options.marketplaceBrands[0] || '');
       })
       .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les options Marketplace.', 'error'));
   }, [showToast]);
@@ -96,8 +93,8 @@ export const MarketplaceView: React.FC = () => {
 
   const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim() || !formPrice) {
-      showToast('Veuillez renseigner le titre et le prix de votre article.', 'info');
+    if (!formTitle.trim() || !formPrice || !formCategory || !formCondition || !formBrand || !formCity.trim() || !formImageUrl) {
+      showToast('Veuillez renseigner tous les champs obligatoires et choisir une photo.', 'info');
       return;
     }
 
@@ -116,16 +113,14 @@ export const MarketplaceView: React.FC = () => {
         condition: formCondition,
         brand: formBrand,
         city: formCity.trim(),
-        imageUrl: formImageUrl || MARKETPLACE_IMAGE_PRESETS[0].url,
-        description: formDescription.trim() || 'Équipement contrôlé et prêt pour la compétition.',
+        imageUrl: formImageUrl,
+        description: formDescription.trim(),
       };
 
       const created = await marketplaceService.createListing(input);
       showToast('Votre article a été publié dans la Marketplace avec succès !', 'success');
       // Reset fields
-      setFormTitle('');
-      setFormPrice('');
-      setFormDescription('');
+      resetCreateListingForm();
 
       // Refresh listings
       const updated = await marketplaceService.list({ category: categoryFilter });
@@ -136,6 +131,22 @@ export const MarketplaceView: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetCreateListingForm = () => {
+    setFormTitle('');
+    setFormCategory('');
+    setFormPrice('');
+    setFormCondition('');
+    setFormBrand('');
+    setFormCity('');
+    setFormDescription('');
+    setFormImageUrl('');
+  };
+
+  const handleOpenCreateListing = () => {
+    resetCreateListingForm();
+    itemModal.openCreate();
   };
 
   return (
@@ -151,7 +162,7 @@ export const MarketplaceView: React.FC = () => {
         </div>
 
         <button
-          onClick={itemModal.openCreate}
+          onClick={handleOpenCreateListing}
           className="px-5 py-2.5 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -434,7 +445,7 @@ export const MarketplaceView: React.FC = () => {
             {/* Photo Preset Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Photo illustrative de l&apos;article
+                Photo illustrative de l&apos;article *
               </label>
               <ImageUploadField purpose="marketplace" label="Importer une photo" onUploaded={setFormImageUrl} disabled={isSubmitting || !user?.roles?.includes('Vendeur')} disabledHint="Le rôle Vendeur doit être attribué à votre compte pour importer l’image." />
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">

@@ -15,6 +15,7 @@ import {
   ActivityFeedItem,
   PitchReview,
 } from '../types';
+import { normalizeDateKey } from '../utils/date';
 
 import {
   INITIAL_USER_PROFILE,
@@ -410,7 +411,7 @@ class MockStorageRepository {
     const pitch = this.pitches.find((p) => p.id === input.pitchId);
     const slot = pitch?.availableSlots.find((candidate) => candidate.time === input.time && candidate.isAvailable);
     const alreadyBooked = this.bookings.some((booking) => booking.pitchId === input.pitchId
-      && booking.date === input.date && booking.time === input.time && booking.status !== 'CANCELLED');
+      && normalizeDateKey(booking.date) === normalizeDateKey(input.date) && booking.time === input.time && booking.status !== 'CANCELLED');
     if (!slot || alreadyBooked) {
       throw new Error('Ce créneau n’est plus disponible pour cette date.');
     }

@@ -11,6 +11,8 @@ import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 import { teamsService } from '../../../services/teamsService';
+import { DatePickerField } from '../../common/DatePickerField';
+import { formatDateForDisplay, getTodayDateInputValue } from '../../../utils/date';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -32,7 +34,7 @@ const TOURNAMENT_BANNER_PRESETS = [
 ];
 
 export const TournamentsView: React.FC = () => {
-  const { showToast, selectedResourceId, user } = useApp();
+  const { showToast, selectedResourceId } = useApp();
   const tournamentModal = useRouteModal('/tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,16 +53,16 @@ export const TournamentsView: React.FC = () => {
 
   // Create Tournament Modal
   const [formTitle, setFormTitle] = useState('');
-  const [formFormat, setFormFormat] = useState<Tournament['format']>('11v11');
-  const [formCity, setFormCity] = useState(user?.city || 'Fianarantsoa');
-  const [formVenue, setFormVenue] = useState('Stade Moderne Ampasambazaha');
-  const [formStartDate, setFormStartDate] = useState('15 Nov 2026');
-  const [formEndDate, setFormEndDate] = useState('22 Nov 2026');
-  const [formMaxTeams, setFormMaxTeams] = useState<number>(16);
-  const [formEntryFee, setFormEntryFee] = useState<string>('80');
-  const [formPrizePool, setFormPrizePool] = useState<string>('1200');
-  const [formOrganizer, setFormOrganizer] = useState(user?.sportsCv.currentTeam || 'Comité Footera Matsiatra');
-  const [formBannerUrl, setFormBannerUrl] = useState(TOURNAMENT_BANNER_PRESETS[0].url);
+  const [formFormat, setFormFormat] = useState<Tournament['format'] | ''>('');
+  const [formCity, setFormCity] = useState('');
+  const [formVenue, setFormVenue] = useState('');
+  const [formStartDate, setFormStartDate] = useState('');
+  const [formEndDate, setFormEndDate] = useState('');
+  const [formMaxTeams, setFormMaxTeams] = useState<number | ''>('');
+  const [formEntryFee, setFormEntryFee] = useState('');
+  const [formPrizePool, setFormPrizePool] = useState('');
+  const [formOrganizer, setFormOrganizer] = useState('');
+  const [formBannerUrl, setFormBannerUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -123,8 +125,12 @@ export const TournamentsView: React.FC = () => {
 
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim() || !formVenue.trim() || !formCity.trim()) {
+    if (!formTitle.trim() || !formVenue.trim() || !formCity.trim() || !formFormat || !formMaxTeams || !formStartDate || !formEndDate || !formOrganizer.trim() || !formBannerUrl) {
       showToast('Veuillez remplir tous les champs obligatoires.', 'info');
+      return;
+    }
+    if (formStartDate < getTodayDateInputValue() || formEndDate < formStartDate) {
+      showToast('Vérifiez les dates : la fin doit être après le début et le tournoi ne peut pas commencer dans le passé.', 'info');
       return;
     }
 
@@ -144,19 +150,16 @@ export const TournamentsView: React.FC = () => {
         venue: formVenue.trim(),
         startDate: formStartDate.trim(),
         endDate: formEndDate.trim(),
-        maxTeams: Number(formMaxTeams),
+        maxTeams: formMaxTeams,
         entryFee: fee,
         prizePool: prize,
-        bannerUrl: formBannerUrl || TOURNAMENT_BANNER_PRESETS[0].url,
-        organizer: formOrganizer.trim() || 'Organisation Officielle',
+        bannerUrl: formBannerUrl,
+        organizer: formOrganizer.trim(),
       };
 
       const created = await tournamentsService.create(input);
       showToast(`Tournoi "${created.title}" créé et publié avec succès !`);
-      // Reset form
-      setFormTitle('');
-      setFormEntryFee('80');
-      setFormPrizePool('1200');
+      resetCreateTournamentForm();
 
       // Refresh list and select the new tournament
       const allUpdated = await tournamentsService.list();
@@ -167,6 +170,25 @@ export const TournamentsView: React.FC = () => {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const resetCreateTournamentForm = () => {
+    setFormTitle('');
+    setFormFormat('');
+    setFormCity('');
+    setFormVenue('');
+    setFormStartDate('');
+    setFormEndDate('');
+    setFormMaxTeams('');
+    setFormEntryFee('');
+    setFormPrizePool('');
+    setFormOrganizer('');
+    setFormBannerUrl('');
+  };
+
+  const handleOpenCreateTournament = () => {
+    resetCreateTournamentForm();
+    tournamentModal.openCreate();
   };
 
   return (
@@ -183,7 +205,7 @@ export const TournamentsView: React.FC = () => {
         </div>
 
         <button
-          onClick={tournamentModal.openCreate}
+          onClick={handleOpenCreateTournament}
           className="px-5 py-2.5 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -238,7 +260,7 @@ export const TournamentsView: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-pitch-primary shrink-0" />
-                      <span>{tourn.startDate}</span>
+                      <span>{formatDateForDisplay(tourn.startDate)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-pitch-primary shrink-0" />
@@ -368,7 +390,7 @@ export const TournamentsView: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-pitch-panel border border-border-subtle space-y-2 text-xs text-slate-700">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-500">Dates de la compétition :</span>
-                    <span className="font-bold text-pitch-ink">{selectedTournament.startDate} au {selectedTournament.endDate}</span>
+                    <span className="font-bold text-pitch-ink">{formatDateForDisplay(selectedTournament.startDate)} au {formatDateForDisplay(selectedTournament.endDate)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-500">Lieu & Infrastructure :</span>
@@ -383,9 +405,7 @@ export const TournamentsView: React.FC = () => {
                 {selectedTournament.registeredTeams < selectedTournament.maxTeams ? (
                   <button
                     onClick={() => {
-                      const enrolled = new Set(selectedTournament.participantTeamIds ?? []);
-                      const availableTeams = teams.filter((team) => !enrolled.has(team.id));
-                      setRegisterTeamId(availableTeams.find((team) => team.name === user?.sportsCv.currentTeam)?.id ?? availableTeams[0]?.id ?? '');
+                      setRegisterTeamId('');
                       setIsRegisterOpen(true);
                     }}
                     className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
@@ -581,9 +601,11 @@ export const TournamentsView: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Format de jeu *</label>
                 <select
                   value={formFormat}
-                  onChange={(e) => setFormFormat(e.target.value as Tournament['format'])}
+                  onChange={(e) => setFormFormat(e.target.value as Tournament['format'] | '')}
+                  required
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
+                  <option value="">Choisir un format</option>
                   <option value="11v11">11 contre 11 (Grand terrain)</option>
                   <option value="7v7">Foot à 7</option>
                   <option value="5v5 (Five)">Five (5v5)</option>
@@ -595,9 +617,11 @@ export const TournamentsView: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nombre d&apos;équipes max *</label>
                 <select
                   value={formMaxTeams}
-                  onChange={(e) => setFormMaxTeams(Number(e.target.value))}
+                  onChange={(e) => setFormMaxTeams(e.target.value ? Number(e.target.value) : '')}
+                  required
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
+                  <option value="">Choisir un nombre d’équipes</option>
                   <option value={8}>8 équipes (Quarts, Demis, Finale)</option>
                   <option value={12}>12 équipes (Poules + Finales)</option>
                   <option value={16}>16 équipes (Format standard mondial)</option>
@@ -635,27 +659,11 @@ export const TournamentsView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Date de début *</label>
-                <input
-                  type="text"
-                  required
-                  value={formStartDate}
-                  onChange={(e) => setFormStartDate(e.target.value)}
-                  placeholder="Ex: 15 Nov 2026"
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                />
+                <DatePickerField id="tournament-start-date" label="Date de début *" value={formStartDate} onChange={setFormStartDate} min={getTodayDateInputValue()} required />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Date de fin / Finales *</label>
-                <input
-                  type="text"
-                  required
-                  value={formEndDate}
-                  onChange={(e) => setFormEndDate(e.target.value)}
-                  placeholder="Ex: 22 Nov 2026"
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                />
+                <DatePickerField id="tournament-end-date" label="Date de fin / Finales *" value={formEndDate} onChange={setFormEndDate} min={formStartDate || getTodayDateInputValue()} required />
               </div>
             </div>
 
@@ -704,7 +712,7 @@ export const TournamentsView: React.FC = () => {
             {/* Banner Theme Presets */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Visuel officiel du tournoi
+                Visuel officiel du tournoi *
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {TOURNAMENT_BANNER_PRESETS.map((preset) => {
