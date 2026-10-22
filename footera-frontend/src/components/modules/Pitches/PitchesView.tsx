@@ -41,6 +41,11 @@ const AVAILABLE_AMENITIES = [
   'Ballons & Chasubles fournis',
 ];
 
+interface SelectedPitchSlot {
+  slot: PitchSlot;
+  date: string;
+}
+
 export const PitchesView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
   const navigate = useNavigate();
@@ -63,7 +68,7 @@ export const PitchesView: React.FC = () => {
 
   // Booking Flow State
   const [bookingDate, setBookingDate] = useState('Samedi 24 Octobre 2026');
-  const [selectedSlots, setSelectedSlots] = useState<PitchSlot[]>([]);
+  const [selectedSlots, setSelectedSlots] = useState<SelectedPitchSlot[]>([]);
   const [teamName, setTeamName] = useState(user?.sportsCv.currentTeam || '');
   const [phone, setPhone] = useState(user?.phone || '06 12 34 56 78');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +112,9 @@ export const PitchesView: React.FC = () => {
   useEffect(() => {
     if (!selectedPitch) return;
     const firstAvailable = selectedPitch.availableSlots.find((slot) => slot.isAvailable);
-    if (firstAvailable && !selectedSlots.length) setSelectedSlots([firstAvailable]);
+    if (firstAvailable && !selectedSlots.some((selected) => selected.date === bookingDate)) {
+      setSelectedSlots((current) => [...current, { slot: firstAvailable, date: bookingDate }]);
+    }
   }, [selectedPitch?.id]);
 
   useEffect(() => {
@@ -116,14 +123,20 @@ export const PitchesView: React.FC = () => {
 
   const toggleSlot = (slot: PitchSlot) => {
     if (!slot.isAvailable) return;
-    setSelectedSlots((current) => current.some((selected) => selected.id === slot.id)
-      ? current.filter((selected) => selected.id !== slot.id)
-      : [...current, slot]);
+    setSelectedSlots((current) => current.some((selected) => selected.date === bookingDate && selected.slot.id === slot.id)
+      ? current.filter((selected) => selected.date !== bookingDate || selected.slot.id !== slot.id)
+      : [...current, { slot, date: bookingDate }]);
+  };
+
+  const handleBookingDateChange = (date: string) => {
+    if (date === bookingDate) return;
+    setBookingDate(date);
   };
 
   const handleOpenBooking = (pitch: Pitch, slot?: PitchSlot) => {
     const firstAvail = pitch.availableSlots.find((s) => s.isAvailable);
-    setSelectedSlots([slot ?? firstAvail].filter((value): value is PitchSlot => Boolean(value)));
+    const initialSlot = slot ?? firstAvail;
+    setSelectedSlots(initialSlot ? [{ slot: initialSlot, date: bookingDate }] : []);
     setTeamName(user?.sportsCv.currentTeam || '');
     navigate(`/pitches/${encodeURIComponent(pitch.id)}/book`);
   };
@@ -136,15 +149,15 @@ export const PitchesView: React.FC = () => {
       for (const slot of selectedSlots) {
         await bookingsService.requestBooking({
           pitchId: selectedPitch.id,
-          date: bookingDate,
-          time: slot.time,
+          date: slot.date,
+          time: slot.slot.time,
           teamName: teamName.trim() || undefined,
-          totalPrice: slot.price,
+          totalPrice: slot.slot.price,
         });
         completedCount += 1;
       }
 
-      showToast(`Créneau confirmé à ${selectedPitch.name} le ${bookingDate} !`, 'success');
+      showToast(`${completedCount} créneau(x) confirmé(s) sur ${selectedPitch.name}.`, 'success');
       navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
       setSelectedSlots([]);
     } catch (e: any) {
@@ -231,6 +244,13 @@ export const PitchesView: React.FC = () => {
     'Dimanche 25 Octobre 2026',
     'Mercredi 28 Octobre 2026',
   ];
+  const selectedSlotsByDate = selectedSlots.reduce<Record<string, PitchSlot[]>>((groups, selection) => {
+    (groups[selection.date] ??= []).push(selection.slot);
+    return groups;
+  }, {});
+  const selectedSlotsTotal = selectedSlots.reduce((total, selection) => total + selection.slot.price, 0);
+  const selectedSlotsForCurrentDate = selectedSlots.filter((selection) => selection.date === bookingDate);
+  const currentDateTotal = selectedSlotsForCurrentDate.reduce((total, selection) => total + selection.slot.price, 0);
 
   if (routePitchId && !isBookingRoute && pitchModal.mode !== 'create') {
     if (isLoading) return <CardSkeleton />;
@@ -273,7 +293,7 @@ export const PitchesView: React.FC = () => {
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {detailPitch.availableSlots.map((slot) => {
-                const isSelected = selectedSlots.some((selected) => selected.id === slot.id);
+                const isSelected = selectedSlots.some((selected) => selected.date === bookingDate && selected.slot.id === slot.id);
                 return <div key={slot.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-3">
                   <div><strong className="block text-sm text-[#092c1a]">{slot.time}</strong><span className="mt-1 block text-xs text-slate-500">{slot.price} € · 1h30</span></div>
                   <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-[#0e4d2e] text-white' : 'border border-[#dce6d8] bg-white text-[#0e5632] hover:bg-[#f2f8f0]'}`}>{!slot.isAvailable ? 'Indisponible' : isSelected ? 'Sélectionné' : 'Sélectionner'}</button>
@@ -282,7 +302,7 @@ export const PitchesView: React.FC = () => {
               {!detailPitch.availableSlots.length && <p className="text-sm text-slate-500">Aucun créneau renseigné pour le moment.</p>}
             </div>
             {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-[#edf3ea] pt-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-slate-600"><strong className="text-[#092c1a]">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-[#0e5632]">{selectedSlots.reduce((total, slot) => total + slot.price, 0)} €</strong> au total</p>
+              <p className="text-sm text-slate-600"><strong className="text-[#092c1a]">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-[#0e5632]">{selectedSlotsTotal} €</strong> au total</p>
               <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-[#0e4d2e] px-4 py-3 text-sm font-bold text-white hover:bg-[#0a3a23]">Réserver les créneaux sélectionnés</button>
             </div>}
           </div>
@@ -477,7 +497,7 @@ export const PitchesView: React.FC = () => {
                   <button
                     key={date}
                     type="button"
-                    onClick={() => setBookingDate(date)}
+                    onClick={() => handleBookingDateChange(date)}
                     className={`p-3 rounded-2xl border text-xs font-bold text-left transition-all cursor-pointer ${
                       bookingDate === date
                         ? 'border-[#0e5632] bg-[#f2f7f0] text-[#0e5632] ring-1 ring-[#0e5632]'
@@ -497,7 +517,7 @@ export const PitchesView: React.FC = () => {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {selectedPitch.availableSlots.map((slot) => {
-                  const isSelected = selectedSlots.some((selected) => selected.id === slot.id);
+                  const isSelected = selectedSlots.some((selected) => selected.date === bookingDate && selected.slot.id === slot.id);
                   return (
                     <button
                       key={slot.id}
@@ -523,20 +543,32 @@ export const PitchesView: React.FC = () => {
               </div>
             </div>
 
-            {selectedSlots.length > 0 && (
+            {selectedSlotsForCurrentDate.length > 0 && (
               <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-slate-500 block font-medium">{selectedSlots.length} créneau(x) · total</span>
+                  <span className="text-slate-500 block font-medium">{selectedSlotsForCurrentDate.length} créneau(x) · total</span>
                   <span className="text-xl font-extrabold text-[#0e5632] tabular-nums">
-                    {selectedSlots.reduce((total, slot) => total + slot.price, 0)} € TTC
+                    {currentDateTotal} € TTC
                   </span>
                 </div>
                 <div className="text-right text-slate-500">
                   <span>{bookingDate}</span>
-                  <span className="block font-bold text-[#092c1a]">{selectedSlots.map((slot) => slot.time).join(' · ')}</span>
+                  <span className="block font-bold text-[#092c1a]">{selectedSlotsForCurrentDate.map((selection) => selection.slot.time).join(' · ')}</span>
                 </div>
               </div>
             )}
+
+            {selectedSlots.length > 0 && <aside className="rounded-2xl border border-[#dce6d8] bg-white p-4" aria-label="Récapitulatif des créneaux sélectionnés">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-extrabold text-[#092c1a]">Rappel de votre sélection</p>
+                <p className="text-xs font-bold text-[#0e5632]">{selectedSlots.length} créneau(x) · {selectedSlotsTotal} €</p>
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {Object.entries(selectedSlotsByDate).map(([date, slots]) => <li key={date} className="flex flex-wrap justify-between gap-x-3 text-xs text-slate-600">
+                  <span className="font-semibold">{date}</span><span>{slots.map((slot) => slot.time).join(' · ')}</span>
+                </li>)}
+              </ul>
+            </aside>}
 
             <div className="pt-2">
               <button
