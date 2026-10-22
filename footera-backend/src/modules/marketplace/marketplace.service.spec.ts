@@ -10,7 +10,7 @@ function makeService(profile: { activeRole: string; roles: string[] }) {
 }
 
 describe('MarketplaceService role permissions', () => {
-  const listing = { title: 'Chaussures', price: 25, imageUrl: 'https://images.unsplash.com/photo-123' };
+  const listing = { title: 'Chaussures', category: 'Crampons', price: 25, imageUrl: 'https://images.unsplash.com/photo-123' };
 
   it('allows listing when Vendeur is assigned, regardless of active mode', async () => {
     const { service, records } = makeService({ activeRole: 'Joueur', roles: ['Joueur', 'Vendeur'] });
@@ -21,6 +21,13 @@ describe('MarketplaceService role permissions', () => {
   it('rejects listing when the account does not have Vendeur assigned', async () => {
     const { service, records } = makeService({ activeRole: 'Vendeur', roles: ['Joueur'] });
     await expect(service.create({ ...listing })).rejects.toBeInstanceOf(ForbiddenException);
+    expect(records.create).not.toHaveBeenCalled();
+  });
+
+  it('exposes the categories from the backend catalog and rejects unknown categories', async () => {
+    const { service, records } = makeService({ activeRole: 'Vendeur', roles: ['Vendeur'] });
+    expect(service.categories()).toContain('Crampons');
+    await expect(service.create({ ...listing, category: 'Non cataloguée' })).rejects.toMatchObject({ status: 400 });
     expect(records.create).not.toHaveBeenCalled();
   });
 });

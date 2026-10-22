@@ -32,17 +32,6 @@ const PITCH_IMAGE_PRESETS = [
   },
 ];
 
-const AVAILABLE_AMENITIES = [
-  'Vestiaires avec douches chaudes',
-  'Éclairage nocturne LED',
-  'Parking gratuit surveillé',
-  'Buvette & Club House',
-  'Tribunes abritées',
-  'Caméras vidéo HD Replay',
-  'Chronomètre & Tableau d\'affichage',
-  'Ballons & Chasubles fournis',
-];
-
 interface SelectedPitchSlot {
   slot: PitchSlot;
   date: string;
@@ -56,6 +45,8 @@ export const PitchesView: React.FC = () => {
   const isBookingRoute = location.pathname.endsWith('/book');
   const pitchModal = useRouteModal('/pitches');
   const [pitches, setPitches] = useState<Pitch[]>([]);
+  const [surfaceOptions, setSurfaceOptions] = useState<SurfaceType[]>([]);
+  const [amenityOptions, setAmenityOptions] = useState<string[]>([]);
   const hasLoadedPitches = useRef(false);
   const pitchRequestId = useRef(0);
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceType | 'Toutes'>('Toutes');
@@ -84,17 +75,22 @@ export const PitchesView: React.FC = () => {
   const [formComplexName, setFormComplexName] = useState('Complexe Sportif Municipal');
   const [formCity, setFormCity] = useState(user?.city || 'Fianarantsoa');
   const [formAddress, setFormAddress] = useState('Boulevard de la Liberté');
-  const [formSurface, setFormSurface] = useState<SurfaceType>('Synthétique dernière génération');
+  const [formSurface, setFormSurface] = useState<SurfaceType>('');
   const [formDimensions, setFormDimensions] = useState('105m x 68m (11v11)');
   const [formHourlyRate, setFormHourlyRate] = useState('50');
-  const [formAmenities, setFormAmenities] = useState<string[]>([
-    'Vestiaires avec douches chaudes',
-    'Éclairage nocturne LED',
-    'Parking gratuit surveillé',
-    'Buvette & Club House',
-  ]);
+  const [formAmenities, setFormAmenities] = useState<string[]>([]);
   const [formImageUrl, setFormImageUrl] = useState(PITCH_IMAGE_PRESETS[0].url);
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    pitchesService.getOptions()
+      .then((options) => {
+        setSurfaceOptions(options.surfaces);
+        setAmenityOptions(options.amenities);
+        setFormSurface((current) => current || options.surfaces[0] || '');
+      })
+      .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les options des terrains.', 'error'));
+  }, [showToast]);
 
   useEffect(() => {
     async function loadPitches() {
@@ -238,7 +234,7 @@ export const PitchesView: React.FC = () => {
         dimensions: formDimensions.trim(),
         imageUrl: formImageUrl || PITCH_IMAGE_PRESETS[0].url,
         hourlyRate: rate,
-        amenities: formAmenities.length > 0 ? formAmenities : ['Éclairage nocturne LED', 'Vestiaires'],
+        amenities: formAmenities,
       };
 
       const created = await pitchesService.create(input);
@@ -258,13 +254,7 @@ export const PitchesView: React.FC = () => {
     }
   };
 
-  const surfaces: (SurfaceType | 'Toutes')[] = [
-    'Toutes',
-    'Synthétique dernière génération',
-    'Gazon naturel',
-    'Indoor Five',
-    'Futsal parquet',
-  ];
+  const surfaces: (SurfaceType | 'Toutes')[] = ['Toutes', ...surfaceOptions];
 
   const dateOptions = [
     'Samedi 24 Octobre 2026',
@@ -685,12 +675,12 @@ export const PitchesView: React.FC = () => {
                 <select
                   value={formSurface}
                   onChange={(e) => setFormSurface(e.target.value as SurfaceType)}
+                  required
+                  disabled={surfaceOptions.length === 0}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="Synthétique dernière génération">Synthétique dernière génération</option>
-                  <option value="Gazon naturel">Gazon naturel</option>
-                  <option value="Indoor Five">Indoor Five (Salle)</option>
-                  <option value="Futsal parquet">Futsal parquet</option>
+                  <option value="" disabled>Choisir un type de surface</option>
+                  {surfaceOptions.map((surface) => <option key={surface} value={surface}>{surface}</option>)}
                 </select>
               </div>
 
@@ -727,7 +717,7 @@ export const PitchesView: React.FC = () => {
                 Équipements et commodités du complexe
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {AVAILABLE_AMENITIES.map((item) => {
+                {amenityOptions.map((item) => {
                   const isChecked = formAmenities.includes(item);
                   return (
                     <button

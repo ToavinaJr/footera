@@ -1,7 +1,7 @@
 import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
-import { Pitch, SurfaceType } from '../types';
+import { Pitch, PitchOptions, SurfaceType } from '../types';
 
 export interface CreatePitchInput {
   name: string;
@@ -16,6 +16,17 @@ export interface CreatePitchInput {
 }
 
 export const pitchesService = {
+  async getOptions(): Promise<PitchOptions> {
+    if (IS_MOCK_MODE) {
+      const pitches = mockStorage.getPitches();
+      return mockDelay({
+        surfaces: [...new Set(pitches.map((pitch) => pitch.surface))],
+        amenities: [...new Set(pitches.flatMap((pitch) => pitch.amenities))],
+      }, 100);
+    }
+    return apiClient<PitchOptions>('pitches/options');
+  },
+
   async list(filters?: { city?: string; surface?: SurfaceType | 'Toutes'; date?: string }): Promise<Pitch[]> {
     if (IS_MOCK_MODE) {
       let pitches = mockStorage.getPitches();

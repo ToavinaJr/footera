@@ -12,7 +12,7 @@ function makeService(profile: { activeRole: string; roles: string[] }) {
 describe('BookingsService pitch permissions', () => {
   const pitch = {
     name: 'Terrain test', complexName: 'Complexe test', city: 'Antananarivo', address: 'Centre',
-    surface: 'Synthétique', dimensions: '5v5', imageUrl: 'https://images.unsplash.com/photo-123', hourlyRate: 50,
+    surface: 'Synthétique dernière génération', dimensions: '5v5', imageUrl: 'https://images.unsplash.com/photo-123', hourlyRate: 50, amenities: [],
   };
 
   it('allows pitch creation when Gestionnaire Terrain is assigned, regardless of active mode', async () => {
@@ -25,5 +25,11 @@ describe('BookingsService pitch permissions', () => {
     const { service, records } = makeService({ activeRole: 'Gestionnaire Terrain', roles: ['Joueur'] });
     await expect(service.createPitch({ ...pitch })).rejects.toBeInstanceOf(ForbiddenException);
     expect(records.create).not.toHaveBeenCalled();
+  });
+
+  it('exposes backend-managed surface and amenity options', () => {
+    const { service } = makeService({ activeRole: 'Joueur', roles: ['Joueur'] });
+    expect(service.getPitchOptions().surfaces).toContain('Indoor Five');
+    expect(service.getPitchOptions().amenities).toContain('Éclairage nocturne LED');
   });
 });

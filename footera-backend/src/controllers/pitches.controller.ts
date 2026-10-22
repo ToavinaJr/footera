@@ -10,6 +10,11 @@ export class PitchesController {
     return this.bookings.listPitches({ city, surface, date });
   }
 
+  @Get('options')
+  options() {
+    return this.bookings.getPitchOptions();
+  }
+
   @Get(':id')
   async getById(@Param('id') id: string, @Query('date') date?: string) {
     const pitch = await this.bookings.getPitch(id, date);

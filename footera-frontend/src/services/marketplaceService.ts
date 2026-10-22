@@ -16,6 +16,14 @@ export interface CreateListingInput {
 }
 
 export const marketplaceService = {
+  async categories(): Promise<string[]> {
+    if (IS_MOCK_MODE) {
+      const categories = [...new Set(mockStorage.getMarketplace().map((item) => item.category))];
+      return mockDelay(categories, 100);
+    }
+    return apiClient<string[]>('marketplace/categories');
+  },
+
   async list(filters?: { query?: string; category?: string; maxPrice?: number }): Promise<MarketplaceListing[]> {
     if (IS_MOCK_MODE) {
       let items = mockStorage.getMarketplace();

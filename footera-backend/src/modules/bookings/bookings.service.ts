@@ -1,14 +1,32 @@
-import { ConflictException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 
+export const PITCH_SURFACES = ['Synthétique dernière génération', 'Gazon naturel', 'Indoor Five', 'Futsal parquet'];
+export const PITCH_AMENITIES = [
+  'Vestiaires avec douches chaudes',
+  'Éclairage nocturne LED',
+  'Parking gratuit surveillé',
+  'Buvette & Club House',
+  'Tribunes abritées',
+  'Caméras vidéo HD Replay',
+  'Chronomètre & Tableau d’affichage',
+  'Ballons & Chasubles fournis',
+  'Vestiaires chauffés',
+  'Parking gratuit',
+  'Tribunes 500 places',
+  'Buvette',
+];
+
 @Injectable()
 export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService) {}
+  getPitchOptions() { return { surfaces: PITCH_SURFACES, amenities: PITCH_AMENITIES }; }
+
   async listPitches(filters: { city?: string; surface?: string; date?: string } = {}) {
     const pitches: any[] = await this.records.list('pitches');
     const bookings = filters.date ? await this.records.list<any>('bookings') : [];
@@ -58,6 +76,10 @@ export class BookingsService {
     const user: any = await this.accounts.profile();
     if (!user?.roles?.includes('Gestionnaire Terrain')) {
       throw new ForbiddenException('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
+    }
+    if (!PITCH_SURFACES.includes(input?.surface)) throw new BadRequestException('Type de surface invalide.');
+    if (!Array.isArray(input?.amenities) || input.amenities.some((amenity: unknown) => !PITCH_AMENITIES.includes(amenity as string))) {
+      throw new BadRequestException('La liste des équipements et commodités est invalide.');
     }
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');
     const id = `pitch_${randomUUID()}`;

@@ -5,6 +5,11 @@ import { MarketplaceService } from '../modules/marketplace/marketplace.service.j
 export class MarketplaceController {
   constructor(private readonly marketplace: MarketplaceService) {}
 
+  @Get('categories')
+  categories() {
+    return this.marketplace.categories();
+  }
+
   @Get()
   list(
     @Query('q') query?: string,

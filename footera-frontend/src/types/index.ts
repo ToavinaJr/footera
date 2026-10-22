@@ -239,7 +239,12 @@ export interface Tournament {
   fixtures: TournamentMatchFixture[];
 }
 
-export type SurfaceType = 'Synthétique dernière génération' | 'Gazon naturel' | 'Indoor Five' | 'Futsal parquet';
+export type SurfaceType = string;
+
+export interface PitchOptions {
+  surfaces: SurfaceType[];
+  amenities: string[];
+}
 
 export interface PitchSlot {
   id: string;
@@ -316,7 +321,7 @@ export interface Application {
 export interface MarketplaceListing {
   id: string;
   title: string;
-  category: 'Crampons' | 'Maillots' | 'Ballons' | 'Équipements' | 'Gardiens';
+  category: string;
   price: number;
   condition: 'Neuf avec étiquette' | 'Très bon état' | 'Bon état';
   brand: string;

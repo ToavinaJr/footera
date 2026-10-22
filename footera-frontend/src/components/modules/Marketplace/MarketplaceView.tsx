@@ -12,27 +12,22 @@ import { ImageUploadField } from '../../common/ImageUploadField';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {
-    category: 'Crampons',
     name: 'Crampons Pro Moulés',
     url: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=600&h=450&q=80',
   },
   {
-    category: 'Maillots',
     name: 'Maillot Domicile Match',
     url: 'https://images.unsplash.com/photo-1577212017184-80cc0da11082?auto=format&fit=crop&w=600&h=450&q=80',
   },
   {
-    category: 'Ballons',
     name: 'Ballon Officiel Match',
     url: 'https://images.unsplash.com/photo-1614632537423-1e6c2e7e0aab?auto=format&fit=crop&w=600&h=450&q=80',
   },
   {
-    category: 'Gardiens',
     name: 'Gants Gardien Pro Grip',
     url: 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?auto=format&fit=crop&w=600&h=450&q=80',
   },
   {
-    category: 'Équipements',
     name: 'Chasubles & Entraînement',
     url: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600&h=450&q=80',
   },
@@ -44,6 +39,7 @@ export const MarketplaceView: React.FC = () => {
   const { showToast, user } = useApp();
   const itemModal = useRouteModal('/marketplace');
   const [items, setItems] = useState<MarketplaceListing[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +49,7 @@ export const MarketplaceView: React.FC = () => {
     ? items.find((item) => item.id === itemModal.resourceId) ?? null
     : null;
   const [formTitle, setFormTitle] = useState('');
-  const [formCategory, setFormCategory] = useState<MarketplaceListing['category']>('Crampons');
+  const [formCategory, setFormCategory] = useState<MarketplaceListing['category']>('');
   const [formPrice, setFormPrice] = useState('');
   const [formCondition, setFormCondition] = useState<MarketplaceListing['condition']>('Très bon état');
   const [formBrand, setFormBrand] = useState('Nike');
@@ -61,6 +57,15 @@ export const MarketplaceView: React.FC = () => {
   const [formDescription, setFormDescription] = useState('');
   const [formImageUrl, setFormImageUrl] = useState(MARKETPLACE_IMAGE_PRESETS[0].url);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    marketplaceService.categories()
+      .then((availableCategories) => {
+        setCategories(availableCategories);
+        setFormCategory((current) => current || availableCategories[0] || '');
+      })
+      .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les catégories.', 'error'));
+  }, [showToast]);
 
   useEffect(() => {
     async function loadItems() {
@@ -82,10 +87,6 @@ export const MarketplaceView: React.FC = () => {
 
   const handleCategoryChange = (cat: MarketplaceListing['category']) => {
     setFormCategory(cat);
-    const matchingPreset = MARKETPLACE_IMAGE_PRESETS.find((p) => p.category === cat);
-    if (matchingPreset) {
-      setFormImageUrl(matchingPreset.url);
-    }
   };
 
   const handleCreateListing = async (e: React.FormEvent) => {
@@ -131,8 +132,6 @@ export const MarketplaceView: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  const categories = ['Toutes', 'Crampons', 'Maillots', 'Ballons', 'Gardiens', 'Équipements'];
 
   return (
     <div className="space-y-6 pb-16">
@@ -348,13 +347,12 @@ export const MarketplaceView: React.FC = () => {
                 <select
                   value={formCategory}
                   onChange={(e) => handleCategoryChange(e.target.value as MarketplaceListing['category'])}
+                  required
+                  disabled={categories.length === 0}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="Crampons">Crampons</option>
-                  <option value="Maillots">Maillots</option>
-                  <option value="Ballons">Ballons</option>
-                  <option value="Gardiens">Gants / Gardiens</option>
-                  <option value="Équipements">Équipements & Accessoires</option>
+                  <option value="" disabled>Choisir une catégorie</option>
+                  {categories.map((category) => <option key={category} value={category}>{category}</option>)}
                 </select>
               </div>
 
