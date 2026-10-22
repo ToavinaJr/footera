@@ -714,6 +714,7 @@ export const INITIAL_MATCHES: Match[] = [
     },
     status: 'FINISHED',
     date: 'Dimanche 11 Octobre',
+    playedAt: '2026-10-11T16:00:00+03:00',
     time: '16:00',
     venue: 'Stade Mahamasina, Antananarivo',
     pitchName: 'Terrain central',

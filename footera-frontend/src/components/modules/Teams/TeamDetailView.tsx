@@ -10,6 +10,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
+import { getTeamRecentForm } from '../../../utils/matchResults';
 
 const MatchCard: React.FC<{ match: Match; team: Team; onOpen: (id: string) => void }> = ({ match, team, onOpen }) => {
   const isHome = match.homeTeam.id === team.id;
@@ -101,8 +102,9 @@ export const TeamDetailView: React.FC = () => {
     return () => { active = false; };
   }, [teamId, showToast]);
 
-  const history = useMemo(() => matches.filter((match) => match.status === 'FINISHED' || match.status === 'LIVE'), [matches]);
+  const history = useMemo(() => matches.filter((match) => match.status === 'FINISHED'), [matches]);
   const upcoming = useMemo(() => matches.filter((match) => match.status === 'SCHEDULED'), [matches]);
+  const recentForm = useMemo(() => getTeamRecentForm(team?.id ?? '', matches), [team?.id, matches]);
 
   if (isLoading) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>;
   if (!team) return <EmptyState icon={Trophy} title="Équipe introuvable" description="Cette équipe n’existe pas ou n’est plus disponible." actionLabel="Retour aux équipes" onAction={() => navigate('/teams')} />;
@@ -127,7 +129,7 @@ export const TeamDetailView: React.FC = () => {
           <div className="rounded-2xl bg-pitch-panel px-4 py-3 text-sm">
             <p className="text-caption uppercase text-slate-500">Bilan de la saison</p>
             <p className="mt-1 font-extrabold text-pitch-ink">{team.stats.matchesPlayed} matchs · {team.stats.points} pts</p>
-            <div className="mt-2 flex gap-1">{team.recentForm.map((result, index) => <FormIndicator key={`${result}-${index}`} result={result} size="sm" />)}</div>
+            <div className="mt-2 flex items-center gap-1">{recentForm.length ? recentForm.map((result, index) => <FormIndicator key={`${result}-${index}`} result={result} size="sm" />) : <span className="text-caption text-slate-400">Aucun résultat enregistré</span>}</div>
           </div>
         </div>
       </section>

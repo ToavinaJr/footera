@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Shield, Users, Trophy, UserPlus, MapPin, Heart, ChevronRight, User, Target, Sparkles, BarChart3 } from 'lucide-react';
 import { teamsService } from '../../../services/teamsService';
 import { statsService } from '../../../services/statsService';
-import { Team, Club, TeamMember, TopScorerItem, TopAssisterItem } from '../../../types';
+import { Team, Club, TeamMember, TopScorerItem, TopAssisterItem, Match } from '../../../types';
 import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -12,6 +12,8 @@ import { useApp } from '../../../context/useApp';
 import { useSearchParams } from 'react-router-dom';
 import { finiteNumberOr, formatFiniteNumber } from '../../../utils/numberFormat';
 import { ImageUploadField } from '../../common/ImageUploadField';
+import { matchesService } from '../../../services/matchesService';
+import { getTeamRecentForm } from '../../../utils/matchResults';
 
 export const TeamsView: React.FC = () => {
   const { showToast, selectedResourceId, toggleFavoriteTeam, user, navigateToResource } = useApp();
@@ -19,6 +21,7 @@ export const TeamsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'teams' | 'clubs'>('teams');
   const [teams, setTeams] = useState<Team[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
@@ -48,12 +51,14 @@ export const TeamsView: React.FC = () => {
     async function loadData() {
       setIsLoading(true);
       try {
-        const [teamsData, clubsData] = await Promise.all([
+        const [teamsData, clubsData, matchesData] = await Promise.all([
           teamsService.list({ query: searchQuery, category: categoryFilter }),
           teamsService.listClubs(),
+          matchesService.list(),
         ]);
         setTeams(teamsData);
         setClubs(clubsData);
+        setMatches(matchesData);
 
         if (selectedResourceId) {
           const match = teamsData.find((t) => t.id === selectedResourceId);
@@ -185,6 +190,7 @@ export const TeamsView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {teams.map((team) => {
               const isFav = user?.favoriteTeamIds.includes(team.id);
+              const recentForm = getTeamRecentForm(team.id, matches);
               return (
                 <div
                   key={team.id}
@@ -254,9 +260,10 @@ export const TeamsView: React.FC = () => {
                       <div className="pt-2 border-t border-pitch-separator flex items-center justify-between text-xs">
                         <span className="text-slate-500 font-medium">5 derniers matchs</span>
                         <div className="flex items-center gap-1.5">
-                          {team.recentForm.map((result, idx) => (
+                          {recentForm.map((result, idx) => (
                             <FormIndicator key={idx} result={result} size="md" />
                           ))}
+                          {recentForm.length === 0 && <span className="text-caption text-slate-400">Aucun résultat</span>}
                         </div>
                       </div>
 

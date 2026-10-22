@@ -153,6 +153,7 @@ export interface Match {
   };
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED';
   date: string;
+  playedAt?: string;
   time: string;
   venue: string;
   pitchName?: string;
