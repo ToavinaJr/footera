@@ -12,12 +12,12 @@ export class AuthController {
   }
 
   @Put('profile')
-  updateProfile(@Body() body: any) {
+  updateProfile(@Body() body: Record<string, unknown>) {
     return this.accounts.updateProfile(body);
   }
 
   @Put('sports-cv')
-  updateSportsCv(@Body() body: any) {
+  updateSportsCv(@Body() body: unknown) {
     return this.accounts.updateSportsCv(body);
   }
 

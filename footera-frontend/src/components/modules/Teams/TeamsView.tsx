@@ -7,17 +7,20 @@ import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
+import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
+import { useSearchParams } from 'react-router-dom';
 
 export const TeamsView: React.FC = () => {
   const { showToast, selectedResourceId, toggleFavoriteTeam, user, navigateToResource } = useApp();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'teams' | 'clubs'>('teams');
   const [teams, setTeams] = useState<Team[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('query') ?? '');
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
 
   // Detail Modal & Members Roster Modal
@@ -176,7 +179,17 @@ export const TeamsView: React.FC = () => {
               return (
                 <div
                   key={team.id}
-                  className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs hover:border-[#0e5632]/50 transition-all flex flex-col justify-between"
+                  onClick={() => navigateToResource('teams', team.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigateToResource('teams', team.id);
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Voir l'équipe ${team.name}`}
+                  className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs hover:border-[#0e5632]/50 transition-all flex flex-col justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0e5632]"
                 >
                   <div>
                     {/* Header Image matching Screenshot 3 */}
@@ -270,7 +283,8 @@ export const TeamsView: React.FC = () => {
                   {/* Primary CTA button matching Screenshot 3: Demander à rejoindre */}
                   <div className="p-5 pt-0">
                     <button
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         setSelectedTeam(team);
                         setIsJoinModalOpen(true);
                       }}
@@ -326,7 +340,7 @@ export const TeamsView: React.FC = () => {
                       key={t.id}
                       className="text-xs px-3 py-1 rounded-full bg-[#f1f5ee] border border-[#dbe5d7] text-slate-700 font-semibold"
                     >
-                      {t.name} ({t.category})
+                      <EntityLink section="teams" id={t.id}>{t.name}</EntityLink> ({t.category})
                     </span>
                   ))}
                 </div>
@@ -396,7 +410,7 @@ export const TeamsView: React.FC = () => {
                         referrerPolicy="no-referrer"
                       />
                       <div>
-                        <h4 className="text-xs font-bold text-[#092c1a]">{member.name}</h4>
+                        <h4 className="text-xs font-bold text-[#092c1a]"><EntityLink section="players" id={member.playerId}>{member.name}</EntityLink></h4>
                         <p className="text-[11px] text-slate-500">
                           {member.position} {member.age && `· ${member.age} ans`}
                         </p>
@@ -485,7 +499,7 @@ export const TeamsView: React.FC = () => {
                             <td className="py-2 px-3 font-extrabold text-[#092c1a]">
                               <div className="flex items-center gap-2">
                                 <img src={s.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                                <span>{s.playerName}</span>
+                                <EntityLink section="players" id={s.playerId}>{s.playerName}</EntityLink>
                               </div>
                             </td>
                             <td className="py-2 px-3 text-center text-slate-500">{s.position}</td>
@@ -524,7 +538,7 @@ export const TeamsView: React.FC = () => {
                             <td className="py-2 px-3 font-extrabold text-[#092c1a]">
                               <div className="flex items-center gap-2">
                                 <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                                <span>{a.playerName}</span>
+                                <EntityLink section="players" id={a.playerId}>{a.playerName}</EntityLink>
                               </div>
                             </td>
                             <td className="py-2 px-3 text-center text-slate-500">{a.position}</td>

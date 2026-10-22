@@ -16,6 +16,16 @@ export interface PlayerSeed {
   goals: number;
   assists: number;
   yellowCards: number;
+  redCards?: number;
+  teamHistoryStats?: Array<{
+    teamId?: string;
+    teamName: string;
+    appearances: number;
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards?: number;
+  }>;
   isAvailableForTransfer: boolean;
   rating?: number;
   bio: string;
@@ -99,6 +109,32 @@ export const SEED_USER = {
 };
 
 export const SEED_PLAYERS: PlayerSeed[] = [
+  {
+    id: 'ply_alex',
+    name: 'Alexandre Morel',
+    age: 25,
+    city: 'Fianarantsoa / Paris',
+    avatarUrl: SEED_USER.avatarUrl,
+    primaryPosition: 'Milieu Central',
+    secondaryPosition: 'Milieu Offensif',
+    strongFoot: 'Droitier',
+    currentTeam: 'Betsileo FC',
+    currentTeamId: 'team_betsileo',
+    level: 'Régional',
+    height: 182,
+    weight: 75,
+    appearances: 18,
+    goals: 5,
+    assists: 11,
+    yellowCards: 1,
+    isAvailableForTransfer: false,
+    rating: 8.4,
+    bio: 'Meilleur passeur de Betsileo FC, distribue le jeu avec une grande précision dans le dernier tiers.',
+    previousClubs: ['Paris Saint-Germain Jeunes', 'Betsileo AC'],
+    teamHistoryStats: [
+      { teamId: 'team_betsileo', teamName: 'Betsileo FC', appearances: 18, goals: 5, assists: 11, yellowCards: 1 },
+    ],
+  },
   {
     id: 'ply_02',
     name: 'Karim Benali',

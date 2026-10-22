@@ -7,6 +7,7 @@ import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
+import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 
@@ -415,11 +416,11 @@ export const TournamentsView: React.FC = () => {
                           <td className="py-2.5 px-3 font-extrabold text-[#092c1a]">
                             <div className="flex items-center gap-2">
                               <img src={s.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
-                              <span>{s.playerName}</span>
+                              <EntityLink section="players" id={s.playerId}>{s.playerName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-2.5 px-3 text-slate-600 font-medium">
-                            {s.teamName}
+                            <EntityLink section="teams" id={s.teamId}>{s.teamName}</EntityLink>
                           </td>
                           <td className="py-2.5 px-3 text-center text-slate-500 tabular-nums font-semibold">
                             {s.matchesPlayed}
@@ -467,11 +468,11 @@ export const TournamentsView: React.FC = () => {
                           <td className="py-2.5 px-3 font-extrabold text-[#092c1a]">
                             <div className="flex items-center gap-2">
                               <img src={a.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
-                              <span>{a.playerName}</span>
+                              <EntityLink section="players" id={a.playerId}>{a.playerName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-2.5 px-3 text-slate-600 font-medium">
-                            {a.teamName}
+                            <EntityLink section="teams" id={a.teamId}>{a.teamName}</EntityLink>
                           </td>
                           <td className="py-2.5 px-3 text-center text-slate-500 tabular-nums font-semibold">
                             {a.matchesPlayed}

@@ -7,9 +7,11 @@ import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
+import { useRouteModal } from '../../../hooks/useRouteModal';
 
 export const PlayersView: React.FC = () => {
   const { showToast, navigateToResource } = useApp();
+  const playerModal = useRouteModal('/players');
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -22,6 +24,9 @@ export const PlayersView: React.FC = () => {
 
   // Detail Modal
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const profilePlayer = playerModal.resourceId
+    ? players.find((player) => player.id === playerModal.resourceId) ?? null
+    : null;
 
   // Invite Modal
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -180,7 +185,17 @@ export const PlayersView: React.FC = () => {
             return (
               <div
                 key={player.id}
-                className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs hover:border-[#0e5632]/50 transition-all flex flex-col justify-between"
+                onClick={() => navigateToResource('players', player.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigateToResource('players', player.id);
+                  }
+                }}
+                role="link"
+                tabIndex={0}
+                aria-label={`Voir le profil de ${player.name}`}
+                className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs hover:border-[#0e5632]/50 transition-all flex flex-col justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0e5632]"
               >
                 <div>
                   {/* Photo matching Screenshot 2 */}
@@ -199,7 +214,10 @@ export const PlayersView: React.FC = () => {
 
                     {/* Heart button top right */}
                     <button
-                      onClick={() => toggleFavorite(player.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleFavorite(player.id);
+                      }}
                       aria-label="Ajouter aux favoris"
                       className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-xs flex items-center justify-center text-white hover:bg-black/60 transition-colors cursor-pointer"
                     >
@@ -246,7 +264,8 @@ export const PlayersView: React.FC = () => {
                 {/* Primary Button matching Screenshot 2: Inviter dans mon équipe */}
                 <div className="p-5 pt-0">
                   <button
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       setSelectedPlayer(player);
                       setIsInviteOpen(true);
                     }}
@@ -263,6 +282,41 @@ export const PlayersView: React.FC = () => {
       )}
 
       {/* Invite Modal */}
+      {profilePlayer && (
+        <Modal
+          isOpen={!!profilePlayer}
+          onClose={playerModal.close}
+          title={profilePlayer.name}
+          subtitle={`${profilePlayer.primaryPosition} · ${profilePlayer.age} ans · ${profilePlayer.city}`}
+          maxWidth="md"
+        >
+          <div className="space-y-5">
+            <div className="flex items-center gap-4">
+              <img src={profilePlayer.avatarUrl} alt={profilePlayer.name} className="h-20 w-20 rounded-2xl object-cover" />
+              <div>
+                <p className="font-bold text-[#092c1a]">{profilePlayer.currentTeam || 'Sans club'}</p>
+                <p className="text-sm text-slate-500">{profilePlayer.level} · {profilePlayer.strongFoot} · {profilePlayer.height} cm</p>
+                <p className="text-sm text-slate-500">{profilePlayer.appearances} matchs · {profilePlayer.goals} buts · {profilePlayer.assists} passes décisives</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600">{profilePlayer.bio}</p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  playerModal.close();
+                  setSelectedPlayer(profilePlayer);
+                  setIsInviteOpen(true);
+                }}
+                className="rounded-xl bg-[#0e4d2e] px-4 py-3 text-sm font-bold text-white"
+              >
+                Inviter dans mon équipe
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {isInviteOpen && selectedPlayer && (
         <Modal
           isOpen={isInviteOpen}

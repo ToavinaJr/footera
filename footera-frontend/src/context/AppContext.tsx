@@ -17,7 +17,8 @@ const routeForSection = (section: NavigationSection) => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const sectionFromPath = location.pathname.split('/').filter(Boolean)[0] as NavigationSection | undefined;
+  const routeSection = location.pathname.split('/').filter(Boolean)[0];
+  const sectionFromPath = (routeSection === 'player' ? 'players' : routeSection) as NavigationSection | undefined;
   const validSections: NavigationSection[] = [
     'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
   ];
@@ -25,7 +26,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ? sectionFromPath
     : 'home';
   const routeResourceMatch = location.pathname.match(
-    /^\/(?:teams|pitches|matches|recruitment)\/([^/]+)\/?$|^\/profile\/bookings\/([^/]+)\/?$/,
+    /^\/(?:player|players|teams|pitches|matches|recruitment)\/([^/]+)\/?$|^\/profile\/bookings\/([^/]+)\/?$/,
   );
   const routeResourceId = routeResourceMatch?.[1] ?? routeResourceMatch?.[2];
   const selectedResourceId = routeResourceId
@@ -89,7 +90,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [navigate]);
 
   const navigateToResource = useCallback((section: NavigationSection, resourceId?: string) => {
-    const supportsDetailRoute = section === 'teams'
+    const supportsDetailRoute = section === 'players'
+      || section === 'teams'
       || section === 'pitches'
       || section === 'marketplace'
       || section === 'tournaments'
@@ -98,7 +100,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       || section === 'bookings';
     let path = routeForSection(section);
     if (resourceId && supportsDetailRoute) {
-      path = `${path}/${encodeURIComponent(resourceId)}`;
+      path = section === 'players'
+        ? `/profile/${encodeURIComponent(resourceId)}`
+        : `${path}/${encodeURIComponent(resourceId)}`;
     }
     const navigationState = resourceId && !supportsDetailRoute ? { state: { resourceId } } : undefined;
     navigate(path, navigationState);
@@ -125,14 +129,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateSportsCv = async (cv: Partial<UserProfile['sportsCv']>) => {
+  const updateSportsCv = async (cv: Partial<UserProfile['sportsCv']>): Promise<boolean> => {
     try {
       const updated = await authService.updateSportsCv(cv);
       setUser(updated);
       showToast('CV Sportif enregistré');
     } catch (e: any) {
       showToast(e.message || 'Erreur de sauvegarde', 'error');
+      return false;
     }
+    return true;
   };
 
   const toggleFavoriteTeam = async (teamId: string): Promise<boolean> => {

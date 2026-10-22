@@ -38,10 +38,20 @@ export interface Player {
   goals: number;
   assists: number;
   yellowCards: number;
+  redCards?: number;
   isAvailableForTransfer: boolean;
   rating?: number; // e.g. 7.8
   bio: string;
   previousClubs: string[];
+  teamHistoryStats?: Array<{
+    teamId?: string;
+    teamName: string;
+    appearances: number;
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards?: number;
+  }>;
 }
 
 export interface TeamMember {
@@ -420,8 +430,8 @@ export interface TeamStatsItem {
   redCards: number;
   points: number;
   recentForm: ('V' | 'N' | 'D')[];
-  topScorer: { name: string; goals: number; avatarUrl?: string };
-  topAssister: { name: string; assists: number; avatarUrl?: string };
+  topScorer: { name: string; playerId?: string; goals: number; avatarUrl?: string };
+  topAssister: { name: string; playerId?: string; assists: number; avatarUrl?: string };
 }
 
 export interface PlayerStatsItem {

@@ -19,7 +19,7 @@ export interface AppContextType {
   isLoadingUser: boolean;
   switchRole: (role: UserRole) => Promise<void>;
   updateProfile: (partial: Partial<UserProfile>) => Promise<void>;
-  updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<void>;
+  updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<boolean>;
   toggleFavoriteTeam: (teamId: string) => Promise<boolean>;
   notifications: NotificationItem[];
   unreadNotificationsCount: number;

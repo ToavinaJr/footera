@@ -26,6 +26,7 @@ import { teamsService } from '../../../services/teamsService';
 import { Match, RecruitmentAd, Pitch, Player, Team, LeagueStandingRow, ActivityFeedItem, Application } from '../../../types';
 import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
+import { EntityLink } from '../../common/EntityLink';
 
 export const HomeView: React.FC = () => {
   const { navigateToResource, user, showToast } = useApp();
@@ -35,6 +36,8 @@ export const HomeView: React.FC = () => {
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([]);
   const [activeApplications, setActiveApplications] = useState<Application[]>([]);
   const [followedTeams, setFollowedTeams] = useState<Team[]>([]);
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
+  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [featuredPlayers, setFeaturedPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,6 +66,8 @@ export const HomeView: React.FC = () => {
         setActivityFeed(feed);
         setActiveApplications(apps);
         setFollowedTeams(allTeams.slice(0, 3));
+        setAllTeams(allTeams);
+        setAllPlayers(players);
         setFeaturedPlayers(players.slice(0, 2));
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -104,7 +109,7 @@ export const HomeView: React.FC = () => {
                   />
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                      {myTeam.name}
+                      <EntityLink section="teams" id={myTeam.id}>{myTeam.name}</EntityLink>
                     </h1>
                     <p className="text-xs text-slate-200 mt-0.5">
                       {myTeam.city} · Coach {myTeam.coachName} · {myTeam.membersCount} membres
@@ -139,7 +144,7 @@ export const HomeView: React.FC = () => {
 
                   <div className="flex items-center justify-between gap-3 py-1">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm font-extrabold text-white truncate">{myTeam.name}</span>
+                      <span className="text-sm font-extrabold text-white truncate"><EntityLink section="teams" id={myTeam.id} className="text-white">{myTeam.name}</EntityLink></span>
                     </div>
                     <span className="text-xs font-extrabold text-[#c6f432] px-2 py-0.5 rounded-md bg-black/30">
                       VS
@@ -208,7 +213,7 @@ export const HomeView: React.FC = () => {
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-500">
-                      Club : <strong className="text-slate-800">{app.teamName}</strong> · Candidat : {app.applicantName} ({app.applicantPosition})
+                      Club : <strong className="text-slate-800"><EntityLink section="teams" id={allTeams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink></strong> · Candidat : <EntityLink section="players" id={allPlayers.find((player) => player.name === app.applicantName)?.id}>{app.applicantName}</EntityLink> ({app.applicantPosition})
                     </p>
                     <p className="text-xs text-slate-600 italic">« {app.message} »</p>
                   </div>
@@ -261,7 +266,7 @@ export const HomeView: React.FC = () => {
 
                   <div className="p-4 space-y-3">
                     <div>
-                      <h3 className="text-base font-extrabold text-[#092c1a]">{player.name}</h3>
+                      <h3 className="text-base font-extrabold text-[#092c1a]"><EntityLink section="players" id={player.id}>{player.name}</EntityLink></h3>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {player.primaryPosition} · {player.age} ans
                       </p>
@@ -357,7 +362,7 @@ export const HomeView: React.FC = () => {
                       >
                         <td className="py-2.5 font-bold text-slate-500">{teamRow.position}</td>
                         <td className="py-2.5 font-semibold truncate max-w-[120px] text-[#092c1a]">
-                          {teamRow.teamName}
+                          <EntityLink section="teams" id={teamRow.teamId}>{teamRow.teamName}</EntityLink>
                         </td>
                         <td className="py-2.5 text-center text-slate-500">{teamRow.played}</td>
                         <td className="py-2.5 text-center text-slate-600">
@@ -403,7 +408,7 @@ export const HomeView: React.FC = () => {
                       referrerPolicy="no-referrer"
                     />
                     <div className="min-w-0">
-                      <h3 className="text-xs font-bold text-[#092c1a] truncate">{team.name}</h3>
+                      <h3 className="text-xs font-bold text-[#092c1a] truncate"><EntityLink section="teams" id={team.id}>{team.name}</EntityLink></h3>
                       <p className="text-[10px] text-slate-500 truncate">{team.city} · {team.division}</p>
                     </div>
                   </div>

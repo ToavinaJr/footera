@@ -203,7 +203,16 @@ export const MarketplaceView: React.FC = () => {
             <div
               key={item.id}
               onClick={() => itemModal.openDetail(item.id)}
-              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  itemModal.openDetail(item.id);
+                }
+              }}
+              role="link"
+              tabIndex={0}
+              aria-label={`Voir l'annonce ${item.title}`}
+              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-[#0e5632]"
             >
               <div>
                 <div className="relative h-44 bg-slate-100 overflow-hidden">

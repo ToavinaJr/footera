@@ -7,7 +7,9 @@ export class SeedService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    if (!(await this.prisma.userRecord.count())) await seedDatabase(this.prisma);
+    // Seed inserts missing fixtures without overwriting records already stored in PostgreSQL.
+    // Running this on every startup also applies additions to existing demo databases.
+    await seedDatabase(this.prisma);
   }
 
   resetDemo() {

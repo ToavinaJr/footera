@@ -6,6 +6,7 @@ import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
+import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 
@@ -148,7 +149,7 @@ export const MatchesView: React.FC = () => {
                     />
                     <div className="min-w-0">
                       <h3 className="text-sm sm:text-base font-extrabold text-[#092c1a] group-hover:text-[#0e5632] transition-colors truncate">
-                        {match.homeTeam.name}
+                        <EntityLink section="teams" id={match.homeTeam.id}>{match.homeTeam.name}</EntityLink>
                       </h3>
                       <span className="text-[11px] text-slate-400">Domicile</span>
                     </div>
@@ -171,7 +172,7 @@ export const MatchesView: React.FC = () => {
                   <div className="col-span-3 flex items-center justify-end gap-3 text-right">
                     <div className="min-w-0">
                       <h3 className="text-sm sm:text-base font-extrabold text-[#092c1a] group-hover:text-[#0e5632] transition-colors truncate">
-                        {match.awayTeam.name}
+                        <EntityLink section="teams" id={match.awayTeam.id}>{match.awayTeam.name}</EntityLink>
                       </h3>
                       <span className="text-[11px] text-slate-400">Extérieur</span>
                     </div>
@@ -224,7 +225,7 @@ export const MatchesView: React.FC = () => {
                       <tr key={r.teamId} className="hover:bg-slate-50">
                         <td className="py-2.5 font-bold text-slate-500">{r.position}</td>
                         <td className="py-2.5 font-bold truncate max-w-[130px] text-[#092c1a]">
-                          {r.teamName}
+                          <EntityLink section="teams" id={r.teamId}>{r.teamName}</EntityLink>
                         </td>
                         <td className="py-2.5 text-center text-slate-500">{r.played}</td>
                         <td className="py-2.5 text-right font-extrabold text-[#0e5632]">{r.points}</td>
@@ -275,7 +276,7 @@ export const MatchesView: React.FC = () => {
                     referrerPolicy="no-referrer"
                   />
                   <span className="text-xs sm:text-sm font-extrabold text-[#092c1a] block">
-                    {selectedMatch.homeTeam.name}
+                    <EntityLink section="teams" id={selectedMatch.homeTeam.id}>{selectedMatch.homeTeam.name}</EntityLink>
                   </span>
                 </div>
 
@@ -297,7 +298,7 @@ export const MatchesView: React.FC = () => {
                     referrerPolicy="no-referrer"
                   />
                   <span className="text-xs sm:text-sm font-extrabold text-[#092c1a] block">
-                    {selectedMatch.awayTeam.name}
+                    <EntityLink section="teams" id={selectedMatch.awayTeam.id}>{selectedMatch.awayTeam.name}</EntityLink>
                   </span>
                 </div>
               </div>

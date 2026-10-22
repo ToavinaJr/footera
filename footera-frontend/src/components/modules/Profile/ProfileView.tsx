@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { 
   User, 
   Shield, 
@@ -12,7 +12,8 @@ import {
   Calendar, 
   Briefcase, 
   XCircle,
-  Trophy
+  Trophy,
+  ExternalLink,
 } from 'lucide-react';
 import { useApp } from '../../../context/useApp';
 import { bookingsService } from '../../../services/bookingsService';
@@ -20,9 +21,17 @@ import { recruitmentService } from '../../../services/recruitmentService';
 import { Booking, Application, UserRole, Position, StrongFoot } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
+import { EntityLink } from '../../common/EntityLink';
+import { teamsService } from '../../../services/teamsService';
+import { playersService } from '../../../services/playersService';
+import type { Player, Team } from '../../../types';
+import { PlayerCareerPanel } from '../Players/PlayerCareerPanel';
+import { validateSportsCv, type SportsCvErrors } from './sportsCvValidation';
 
 export const ProfileView: React.FC = () => {
   const { user, switchRole, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
+  const { profileId } = useParams();
+  const isOwner = !profileId;
   const location = useLocation();
   const navigate = useNavigate();
   const isEditCvOpen = location.pathname === '/profile/edit-cv';
@@ -37,6 +46,11 @@ export const ProfileView: React.FC = () => {
   };
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [myPlayer, setMyPlayer] = useState<Player | null>(null);
+  const [publicPlayer, setPublicPlayer] = useState<Player | null>(null);
+  const [isLoadingPublicPlayer, setIsLoadingPublicPlayer] = useState(false);
+  const [publicPlayerNotFound, setPublicPlayerNotFound] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Edit CV modal
@@ -46,17 +60,39 @@ export const ProfileView: React.FC = () => {
   const [cvFoot, setCvFoot] = useState<StrongFoot>(user?.sportsCv.strongFoot || 'Droitier');
   const [cvBio, setCvBio] = useState(user?.sportsCv.bio || '');
   const [cvCurrentTeam, setCvCurrentTeam] = useState(user?.sportsCv.currentTeam || '');
+  const [cvErrors, setCvErrors] = useState<SportsCvErrors>({});
+  const [isSavingCv, setIsSavingCv] = useState(false);
 
   useEffect(() => {
+    if (!profileId) return;
+    let isActive = true;
+    setIsLoadingPublicPlayer(true);
+    setPublicPlayerNotFound(false);
+    setPublicPlayer(null);
+    Promise.all([playersService.getById(profileId), teamsService.list().catch(() => [])])
+      .then(([player, teamList]) => {
+        if (!isActive) return;
+        setPublicPlayer(player);
+        setTeams(teamList);
+      })
+      .catch(() => { if (isActive) setPublicPlayerNotFound(true); })
+      .finally(() => { if (isActive) setIsLoadingPublicPlayer(false); });
+    return () => { isActive = false; };
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!isOwner || !user) return;
     async function loadUserData() {
       setIsLoadingData(true);
       try {
-        const [b, a] = await Promise.all([
+        const [b, a, teamsData] = await Promise.all([
           bookingsService.list(),
           recruitmentService.listMyApplications(),
+          teamsService.list().catch(() => []),
         ]);
         setBookings(b);
         setApplications(a);
+        setTeams(teamsData);
       } catch (err: any) {
         // eslint-disable-next-line no-console
         console.error('Failed to load profile sub-data:', err);
@@ -65,19 +101,33 @@ export const ProfileView: React.FC = () => {
       }
     }
     loadUserData();
-  }, []);
+  }, [isOwner, user]);
+
+  useEffect(() => {
+    if (!isOwner || !user?.name) return;
+    playersService.list({ query: user.name })
+      .then((players) => setMyPlayer(players.find((player) => player.name.toLowerCase() === user.name.toLowerCase()) ?? null))
+      .catch(() => setMyPlayer(null));
+  }, [isOwner, user?.name]);
 
   const handleSaveCv = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateSportsCv({
+    const cv = {
       primaryPosition: cvPosition,
       height: Number(cvHeight),
       weight: Number(cvWeight),
       strongFoot: cvFoot,
       bio: cvBio,
       currentTeam: cvCurrentTeam,
-    });
-    navigate('/profile', { replace: true });
+    };
+    const errors = validateSportsCv(cv);
+    setCvErrors(errors);
+    if (Object.keys(errors).length) return;
+
+    setIsSavingCv(true);
+    const saved = await updateSportsCv(cv);
+    setIsSavingCv(false);
+    if (saved) navigate('/profile', { replace: true });
   };
 
   const closeEditCv = () => navigate('/profile', { replace: true });
@@ -87,15 +137,29 @@ export const ProfileView: React.FC = () => {
       const ok = await bookingsService.cancelBooking(bookingId);
       if (ok) {
         showToast('Réservation annulée avec succès');
-        const updated = await bookingsService.list();
-        setBookings(updated);
+        setBookings((current) => current.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking,
+        ));
+      } else {
+        showToast('Réservation introuvable ou déjà supprimée.', 'error');
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, 'error');
+        return;
+      }
       showToast('Erreur lors de l’annulation', 'error');
     }
   };
 
-  if (!user) return null;
+  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-[#dce6d8] bg-white p-8 text-sm text-slate-500">Chargement du profil joueur…</div>;
+  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-[#dce6d8] bg-white p-8 text-sm text-slate-600">Ce profil joueur est introuvable ou indisponible.</div>;
+  if (isOwner && !user) return null;
+
+  const displayedPlayer = isOwner ? myPlayer : publicPlayer;
+  const displayedName = isOwner ? user!.name : publicPlayer!.name;
+  const displayedAvatar = isOwner ? user!.avatarUrl : publicPlayer!.avatarUrl;
+  const displayedTeam = isOwner ? user!.sportsCv.currentTeam : publicPlayer!.currentTeam;
 
   const rolesAvailable: UserRole[] = [
     'Joueur',
@@ -111,50 +175,58 @@ export const ProfileView: React.FC = () => {
       <div className="p-6 md:p-8 rounded-3xl bg-white border border-[#dce6d8] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <img
-            src={user.avatarUrl}
-            alt={user.name}
+            src={displayedAvatar}
+            alt={displayedName}
             className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover bg-slate-100 border-2 border-[#0e5632] shrink-0"
             referrerPolicy="no-referrer"
           />
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h1 className="text-xl md:text-2xl font-extrabold text-[#092c1a] tracking-tight">
-                {user.name}
+                {displayedName}
               </h1>
-              <Badge variant="emerald" size="sm">
-                {user.activeRole}
-              </Badge>
+              <Badge variant="emerald" size="sm">{isOwner ? user!.activeRole : 'Joueur'}</Badge>
+              {isOwner && myPlayer && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/profile/${encodeURIComponent(myPlayer.id)}`)}
+                  className="ml-2 inline-flex items-center gap-1 rounded-xl border border-[#dce6d8] px-3 py-2 text-xs font-bold text-[#0e5632] hover:bg-[#f2f8f0]"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Voir le profil public
+                </button>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-[#0e5632]" />
-                {user.city}
+                {isOwner ? user!.city : publicPlayer!.city}
               </span>
-              <span>·</span>
+              {isOwner && <><span>·</span>
               <span className="flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5 text-[#0e5632]" />
-                {user.email}
+                {user!.email}
               </span>
               <span>·</span>
               <span className="flex items-center gap-1">
                 <Phone className="w-3.5 h-3.5 text-[#0e5632]" />
-                {user.phone}
-              </span>
+                {user!.phone}
+              </span></>}
             </div>
             <p className="text-xs text-slate-600 pt-1">
-              Équipe officielle : <strong className="text-[#092c1a]">{user.sportsCv.currentTeam}</strong>
+              {displayedPlayer?.primaryPosition} · {displayedPlayer?.age} ans · {displayedPlayer?.level}<br />
+              Équipe officielle : <strong className="text-[#092c1a]">{displayedTeam || 'Sans équipe actuellement'}</strong>
             </p>
           </div>
         </div>
 
         {/* Role Switcher */}
-        <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] space-y-2 w-full md:w-auto">
+        {isOwner && <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] space-y-2 w-full md:w-auto">
           <span className="text-[11px] font-bold text-slate-500 block uppercase">
             Rôle actif actuel :
           </span>
           <div className="flex flex-wrap gap-1.5">
             {rolesAvailable.map((r) => {
-              const isActive = user.activeRole === r;
+              const isActive = user!.activeRole === r;
               return (
                 <button
                   key={r}
@@ -170,11 +242,11 @@ export const ProfileView: React.FC = () => {
               );
             })}
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#dce6d8] pb-2">
+      {isOwner && <div className="flex items-center gap-2 border-b border-[#dce6d8] pb-2">
         {[
           { label: 'CV Sportif & Infos', tab: 'profile' },
           { label: `Mes Réservations (${bookings.length})`, tab: 'bookings' },
@@ -192,65 +264,65 @@ export const ProfileView: React.FC = () => {
             {t.label}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* Tab 1: CV Sportif */}
-      {activeTab === 'profile' && (
+      {(activeTab === 'profile' || !isOwner) && (
         <div className="space-y-6">
           <div className="p-6 rounded-3xl bg-white border border-[#dce6d8] space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-extrabold text-[#092c1a]">CV Sportif Vérifié</h2>
-                <p className="text-xs text-slate-500">Transmis lors de vos candidatures d&apos;équipe</p>
+                <p className="text-xs text-slate-500">{isOwner ? 'Transmis lors de vos candidatures d’équipe' : 'Profil sportif public'}</p>
               </div>
-              <button
+              {isOwner && <button
                 onClick={() => {
-                  setCvPosition(user.sportsCv.primaryPosition);
-                  setCvHeight(user.sportsCv.height);
-                  setCvWeight(user.sportsCv.weight);
-                  setCvFoot(user.sportsCv.strongFoot);
-                  setCvBio(user.sportsCv.bio);
-                  setCvCurrentTeam(user.sportsCv.currentTeam);
+                  setCvPosition(user!.sportsCv.primaryPosition);
+                  setCvHeight(user!.sportsCv.height);
+                  setCvWeight(user!.sportsCv.weight);
+                  setCvFoot(user!.sportsCv.strongFoot);
+                  setCvBio(user!.sportsCv.bio);
+                  setCvCurrentTeam(user!.sportsCv.currentTeam);
                   navigate('/profile/edit-cv');
                 }}
                 className="px-4 py-2 min-h-[44px] rounded-2xl bg-[#eaf4ed] hover:bg-[#d5edd9] text-[#0e5632] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Modifier mon CV</span>
-              </button>
+              </button>}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
                 <span className="text-slate-400 block text-[11px] font-semibold">Poste principal</span>
-                <strong className="text-[#092c1a] text-sm block mt-0.5">{user.sportsCv.primaryPosition}</strong>
+                <strong className="text-[#092c1a] text-sm block mt-0.5">{isOwner ? user!.sportsCv.primaryPosition : publicPlayer!.primaryPosition}</strong>
               </div>
               <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
                 <span className="text-slate-400 block text-[11px] font-semibold">Pied fort</span>
-                <strong className="text-[#092c1a] text-sm block mt-0.5">{user.sportsCv.strongFoot}</strong>
+                <strong className="text-[#092c1a] text-sm block mt-0.5">{isOwner ? user!.sportsCv.strongFoot : publicPlayer!.strongFoot}</strong>
               </div>
               <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
                 <span className="text-slate-400 block text-[11px] font-semibold">Mensurations</span>
                 <strong className="text-[#092c1a] text-sm tabular-nums block mt-0.5">
-                  {user.sportsCv.height} cm · {user.sportsCv.weight} kg
+                  {isOwner ? user!.sportsCv.height : publicPlayer!.height} cm · {isOwner ? user!.sportsCv.weight : publicPlayer!.weight} kg
                 </strong>
               </div>
               <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
                 <span className="text-slate-400 block text-[11px] font-semibold">Expérience</span>
                 <strong className="text-[#092c1a] text-sm tabular-nums block mt-0.5">
-                  {user.sportsCv.experienceYears} ans
+                  {isOwner ? user!.sportsCv.experienceYears : publicPlayer!.age} ans
                 </strong>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] text-xs text-slate-700 leading-relaxed">
               <h3 className="font-bold text-[#092c1a] mb-1">Présentation sportive :</h3>
-              {user.sportsCv.bio}
+              {isOwner ? user!.sportsCv.bio : publicPlayer!.bio}
             </div>
           </div>
 
           {/* Reset Demo Data */}
-          <div className="p-5 rounded-3xl bg-[#fdf2f2] border border-[#fecaca] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {isOwner && <div className="p-5 rounded-3xl bg-[#fdf2f2] border border-[#fecaca] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-sm font-bold text-rose-800">Données de test locales</h3>
               <p className="text-xs text-rose-600 mt-0.5">
@@ -264,7 +336,22 @@ export const ProfileView: React.FC = () => {
               <RotateCcw className="w-4 h-4" />
               <span>Réinitialiser les données</span>
             </button>
-          </div>
+          </div>}
+          {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
+          {displayedPlayer && <section className="rounded-3xl border border-[#dce6d8] bg-white p-5 shadow-xs md:p-6">
+            <h2 className="text-lg font-extrabold text-[#092c1a]">Parcours en club</h2>
+            {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-[#dce6d8] pl-4">
+              {displayedPlayer.previousClubs.map((club) => {
+                const matchingTeam = teams.find((team) => team.name.toLowerCase() === club.toLowerCase())
+                  ?? teams.find((team) => team.clubName?.toLowerCase() === club.toLowerCase());
+                return <li key={club} className="text-sm font-semibold text-slate-700"><button type="button" onClick={() => matchingTeam ? navigate(`/teams/${encodeURIComponent(matchingTeam.id)}`) : navigate(`/teams?query=${encodeURIComponent(club)}`)} className="cursor-pointer text-left hover:text-[#0e5632] hover:underline">{club}</button></li>;
+              })}
+            </ol> : <p className="mt-3 text-sm text-slate-500">Aucun ancien club renseigné.</p>}
+            {displayedPlayer.currentTeam && <p className="mt-3 text-sm font-bold text-[#0e5632]">
+              <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">(actuel)</span>
+            </p>}
+          </section>}
+          {!isOwner && <p className="text-center text-xs text-slate-400">Cette fiche publique n’affiche ni coordonnées privées, ni réservations, ni candidatures.</p>}
         </div>
       )}
 
@@ -283,7 +370,7 @@ export const ProfileView: React.FC = () => {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-extrabold text-[#092c1a]">{b.pitchName}</h2>
+                    <h2 className="text-base font-extrabold text-[#092c1a]"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
                     <Badge
                       variant={b.status === 'CONFIRMED' ? 'emerald' : b.status === 'PENDING' ? 'amber' : 'rose'}
                       size="sm"
@@ -334,7 +421,7 @@ export const ProfileView: React.FC = () => {
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Club : {app.teamName} · Candidat : {app.applicantName} ({app.applicantPosition})
+                    Club : <EntityLink section="teams" id={teams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink> · Candidat : {app.applicantName} ({app.applicantPosition})
                   </p>
                   <p className="text-xs text-slate-600 italic mt-1">« {app.message} »</p>
                 </div>
@@ -381,19 +468,29 @@ export const ProfileView: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Taille (cm)</label>
                 <input
                   type="number"
+                  min={100}
+                  max={250}
+                  step={1}
                   value={cvHeight}
                   onChange={(e) => setCvHeight(Number(e.target.value))}
+                  aria-invalid={!!cvErrors.height}
                   className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
                 />
+                {cvErrors.height && <p className="mt-1 text-xs text-rose-600">{cvErrors.height}</p>}
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Poids (kg)</label>
                 <input
                   type="number"
+                  min={30}
+                  max={250}
+                  step={1}
                   value={cvWeight}
                   onChange={(e) => setCvWeight(Number(e.target.value))}
+                  aria-invalid={!!cvErrors.weight}
                   className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
                 />
+                {cvErrors.weight && <p className="mt-1 text-xs text-rose-600">{cvErrors.weight}</p>}
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Pied fort</label>
@@ -415,9 +512,12 @@ export const ProfileView: React.FC = () => {
                 type="text"
                 value={cvCurrentTeam}
                 onChange={(e) => setCvCurrentTeam(e.target.value)}
+                maxLength={80}
+                aria-invalid={!!cvErrors.currentTeam}
                 placeholder="Ex: Betsileo FC"
                 className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
               />
+              {cvErrors.currentTeam && <p className="mt-1 text-xs text-rose-600">{cvErrors.currentTeam}</p>}
             </div>
 
             <div>
@@ -426,8 +526,11 @@ export const ProfileView: React.FC = () => {
                 rows={3}
                 value={cvBio}
                 onChange={(e) => setCvBio(e.target.value)}
+                maxLength={1000}
+                aria-invalid={!!cvErrors.bio}
                 className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
               />
+              {cvErrors.bio && <p className="mt-1 text-xs text-rose-600">{cvErrors.bio}</p>}
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-3">
@@ -440,10 +543,11 @@ export const ProfileView: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+                disabled={isSavingCv}
+                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
               >
                 <Check className="w-4 h-4" />
-                <span>Enregistrer mon CV</span>
+                <span>{isSavingCv ? 'Enregistrement…' : 'Enregistrer mon CV'}</span>
               </button>
             </div>
           </form>

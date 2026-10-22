@@ -33,6 +33,7 @@ import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
+import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 
 export const StatsView: React.FC = () => {
@@ -279,11 +280,11 @@ export const StatsView: React.FC = () => {
                         />
                       </div>
                       <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
-                        {scorers[1].playerName}
+                        <EntityLink section="players" id={scorers[1].playerId}>{scorers[1].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
                         <img src={scorers[1].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        <span className="truncate">{scorers[1].teamName}</span>
+                        <EntityLink section="teams" id={scorers[1].teamId} className="truncate">{scorers[1].teamName}</EntityLink>
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#edf3ea]">
@@ -311,11 +312,11 @@ export const StatsView: React.FC = () => {
                         />
                       </div>
                       <h3 className="font-black text-[#092c1a] text-base truncate">
-                        {scorers[0].playerName}
+                        <EntityLink section="players" id={scorers[0].playerId}>{scorers[0].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs font-bold text-[#0e5632] flex items-center justify-center gap-1 mt-0.5">
                         <img src={scorers[0].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        <span className="truncate">{scorers[0].teamName}</span>
+                        <EntityLink section="teams" id={scorers[0].teamId} className="truncate">{scorers[0].teamName}</EntityLink>
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#edf3ea]">
@@ -342,11 +343,11 @@ export const StatsView: React.FC = () => {
                         />
                       </div>
                       <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
-                        {scorers[2].playerName}
+                        <EntityLink section="players" id={scorers[2].playerId}>{scorers[2].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
                         <img src={scorers[2].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        <span className="truncate">{scorers[2].teamName}</span>
+                        <EntityLink section="teams" id={scorers[2].teamId} className="truncate">{scorers[2].teamName}</EntityLink>
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#edf3ea]">
@@ -420,15 +421,13 @@ export const StatsView: React.FC = () => {
                                 alt={item.playerName}
                                 className="w-8 h-8 rounded-full object-cover bg-slate-100"
                               />
-                              <span className="font-extrabold text-[#092c1a] hover:text-[#0e5632] transition-colors">
-                                {item.playerName}
-                              </span>
+                              <EntityLink section="players" id={item.playerId} className="font-extrabold text-[#092c1a] transition-colors">{item.playerName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
                               <img src={item.teamLogo} alt="" className="w-4 h-4 rounded-full object-cover" />
-                              <span className="truncate max-w-[140px]">{item.teamName}</span>
+                              <EntityLink section="teams" id={item.teamId} className="truncate max-w-[140px]">{item.teamName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-3 px-3 text-center text-slate-500">
@@ -480,11 +479,11 @@ export const StatsView: React.FC = () => {
                         />
                       </div>
                       <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
-                        {assisters[1].playerName}
+                        <EntityLink section="players" id={assisters[1].playerId}>{assisters[1].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
                         <img src={assisters[1].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        <span className="truncate">{assisters[1].teamName}</span>
+                        <EntityLink section="teams" id={assisters[1].teamId} className="truncate">{assisters[1].teamName}</EntityLink>
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#edf3ea]">
@@ -512,11 +511,11 @@ export const StatsView: React.FC = () => {
                         />
                       </div>
                       <h3 className="font-black text-[#092c1a] text-base truncate">
-                        {assisters[0].playerName}
+                        <EntityLink section="players" id={assisters[0].playerId}>{assisters[0].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs font-bold text-[#0e5632] flex items-center justify-center gap-1 mt-0.5">
                         <img src={assisters[0].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        <span className="truncate">{assisters[0].teamName}</span>
+                        <EntityLink section="teams" id={assisters[0].teamId} className="truncate">{assisters[0].teamName}</EntityLink>
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#edf3ea]">
@@ -543,11 +542,11 @@ export const StatsView: React.FC = () => {
                         />
                       </div>
                       <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
-                        {assisters[2].playerName}
+                        <EntityLink section="players" id={assisters[2].playerId}>{assisters[2].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
                         <img src={assisters[2].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                        <span className="truncate">{assisters[2].teamName}</span>
+                        <EntityLink section="teams" id={assisters[2].teamId} className="truncate">{assisters[2].teamName}</EntityLink>
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-[#edf3ea]">
@@ -620,15 +619,13 @@ export const StatsView: React.FC = () => {
                                 alt={item.playerName}
                                 className="w-8 h-8 rounded-full object-cover bg-slate-100"
                               />
-                              <span className="font-extrabold text-[#092c1a]">
-                                {item.playerName}
-                              </span>
+                              <EntityLink section="players" id={item.playerId} className="font-extrabold text-[#092c1a]">{item.playerName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
                               <img src={item.teamLogo} alt="" className="w-4 h-4 rounded-full object-cover" />
-                              <span className="truncate max-w-[140px]">{item.teamName}</span>
+                              <EntityLink section="teams" id={item.teamId} className="truncate max-w-[140px]">{item.teamName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-3 px-3 text-center text-slate-500">
@@ -667,7 +664,7 @@ export const StatsView: React.FC = () => {
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <strong className="text-sm font-extrabold text-[#092c1a] block">
-                        {teamStats[0]?.teamName}
+                        <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
                         {teamStats[0]?.goalsFor} buts marqués ({teamStats[0]?.goalsPerMatch} / match)
@@ -682,7 +679,7 @@ export const StatsView: React.FC = () => {
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <strong className="text-sm font-extrabold text-[#092c1a] block">
-                        {teamStats[0]?.teamName}
+                        <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
                         {teamStats[0]?.goalsAgainst} buts concédés · {teamStats[0]?.cleanSheets} clean sheets
@@ -697,7 +694,7 @@ export const StatsView: React.FC = () => {
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <strong className="text-sm font-extrabold text-[#092c1a] block">
-                        {teamStats[0]?.teamName}
+                        <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs font-bold text-[#0e5632]">
                         {teamStats[0]?.points} pts · {teamStats[0]?.winRate}% victoires
@@ -759,7 +756,7 @@ export const StatsView: React.FC = () => {
                               />
                               <div>
                                 <strong className="font-extrabold text-[#092c1a] block">
-                                  {team.teamName}
+                                  <EntityLink section="teams" id={team.teamId}>{team.teamName}</EntityLink>
                                 </strong>
                                 <span className="text-[11px] text-slate-400 font-normal">
                                   {team.city}
@@ -786,13 +783,13 @@ export const StatsView: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className="font-bold text-[#0e5632] block truncate max-w-[130px]">
-                              {team.topScorer.name}
+                              <EntityLink section="players" id={team.topScorer.playerId}>{team.topScorer.name}</EntityLink>
                             </span>
                             <span className="text-[10px] text-slate-400">({team.topScorer.goals} buts)</span>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className="font-bold text-[#092c1a] block truncate max-w-[130px]">
-                              {team.topAssister.name}
+                              <EntityLink section="players" id={team.topAssister.playerId}>{team.topAssister.name}</EntityLink>
                             </span>
                             <span className="text-[10px] text-slate-400">({team.topAssister.assists} passes)</span>
                           </td>
@@ -865,11 +862,11 @@ export const StatsView: React.FC = () => {
                           />
                           <div>
                             <h3 className="font-black text-[#092c1a] text-sm group-hover:text-[#0e5632] transition-colors">
-                              {player.name}
+                              <EntityLink section="players" id={player.playerId}>{player.name}</EntityLink>
                             </h3>
                             <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                               <img src={player.teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                              <span className="truncate">{player.teamName}</span>
+                              <EntityLink section="teams" id={player.teamId} className="truncate">{player.teamName}</EntityLink>
                             </p>
                           </div>
                         </div>
@@ -934,7 +931,7 @@ export const StatsView: React.FC = () => {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-black text-[#092c1a]">
-                    {selectedTeamModal.teamName}
+                    <EntityLink section="teams" id={selectedTeamModal.teamId}>{selectedTeamModal.teamName}</EntityLink>
                   </h3>
                   <span className="text-sm font-black text-[#0e5632]">
                     {selectedTeamModal.points} Points
@@ -1006,7 +1003,7 @@ export const StatsView: React.FC = () => {
                   <div>
                     <span className="text-[10px] text-slate-400 block">Meilleur Buteur</span>
                     <strong className="font-extrabold text-[#092c1a]">
-                      {selectedTeamModal.topScorer.name}
+                      <EntityLink section="players" id={selectedTeamModal.topScorer.playerId}>{selectedTeamModal.topScorer.name}</EntityLink>
                     </strong>
                     <span className="text-slate-500 block">
                       {selectedTeamModal.topScorer.goals} buts inscrits
@@ -1021,7 +1018,7 @@ export const StatsView: React.FC = () => {
                   <div>
                     <span className="text-[10px] text-slate-400 block">Meilleur Passeur</span>
                     <strong className="font-extrabold text-[#092c1a]">
-                      {selectedTeamModal.topAssister.name}
+                      <EntityLink section="players" id={selectedTeamModal.topAssister.playerId}>{selectedTeamModal.topAssister.name}</EntityLink>
                     </strong>
                     <span className="text-slate-500 block">
                       {selectedTeamModal.topAssister.assists} passes décisives

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
 import { Header } from './components/layout/Header';
@@ -16,6 +16,11 @@ import { RecruitmentView } from './components/modules/Recruitment/RecruitmentVie
 import { MarketplaceView } from './components/modules/Marketplace/MarketplaceView';
 import { ProfileView } from './components/modules/Profile/ProfileView';
 import { StatsView } from './components/modules/Stats/StatsView';
+
+const LegacyPlayerRedirect: React.FC = () => {
+  const { playerId = '' } = useParams();
+  return <Navigate to={`/profile/${encodeURIComponent(playerId)}`} replace />;
+};
 
 const AppContent: React.FC = () => {
   const { setActiveSection } = useApp();
@@ -35,6 +40,9 @@ const AppContent: React.FC = () => {
         <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<HomeView />} />
           <Route path="/players" element={<PlayersView />} />
+          <Route path="/players/:playerId" element={<PlayersView />} />
+          <Route path="/profile/:profileId" element={<ProfileView />} />
+          <Route path="/player/:playerId" element={<LegacyPlayerRedirect />} />
           <Route path="/teams" element={<TeamsView />} />
           <Route path="/teams/:teamId" element={<TeamsView />} />
           <Route path="/matches" element={<MatchesView />} />
@@ -50,6 +58,9 @@ const AppContent: React.FC = () => {
           <Route path="/pitches/new" element={<PitchesView />} />
           <Route path="/profile" element={<ProfileView />} />
           <Route path="/profile/edit-cv" element={<ProfileView />} />
+          <Route path="/profile/bookings" element={<ProfileView />} />
+          <Route path="/profile/bookings/:bookingId" element={<ProfileView />} />
+          <Route path="/profile/applications" element={<ProfileView />} />
           <Route path="/notifications" element={<HomeView />} />
           <Route path="/stats" element={<StatsView />} />
           <Route path="*" element={<Navigate to="/" replace />} />

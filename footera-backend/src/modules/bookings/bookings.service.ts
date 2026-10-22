@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -6,6 +6,7 @@ import { RecordRepository } from '../../database/record.repository.js';
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService) {}
   async listPitches(filters: { city?: string; surface?: string } = {}) {
     const pitches: any[] = await this.records.list('pitches');
@@ -39,8 +40,13 @@ export class BookingsService {
   async cancelBooking(id: string) {
     const booking: any = await this.records.find('bookings', id);
     if (!booking) return false;
+    if (booking.status === 'CANCELLED') return true;
     await this.records.save('bookings', id, { ...booking, status: 'CANCELLED' });
-    await this.notifications.add({ title: 'Réservation annulée', message: `La réservation ${id} a été annulée.`, type: 'booking', targetSection: 'bookings', targetId: id });
+    try {
+      await this.notifications.add({ title: 'Réservation annulée', message: `La réservation ${id} a été annulée.`, type: 'booking', targetSection: 'bookings', targetId: id });
+    } catch (error) {
+      this.logger.warn(`Booking ${id} was cancelled, but its notification could not be created: ${String(error)}`);
+    }
     return true;
   }
 }

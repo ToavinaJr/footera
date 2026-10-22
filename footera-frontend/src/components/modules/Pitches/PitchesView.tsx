@@ -287,7 +287,16 @@ export const PitchesView: React.FC = () => {
             <div
               key={pitch.id}
               onClick={() => handleOpenBooking(pitch)}
-              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleOpenBooking(pitch);
+                }
+              }}
+              role="link"
+              tabIndex={0}
+              aria-label={`Voir le terrain ${pitch.name} et réserver`}
+              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-[#0e5632]"
             >
               <div>
                 <div className="relative h-48 bg-slate-100 overflow-hidden">
@@ -347,6 +356,10 @@ export const PitchesView: React.FC = () => {
                 </div>
                 <button
                   type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleOpenBooking(pitch);
+                  }}
                   className="px-4 py-2 bg-[#0e4d2e] group-hover:bg-[#0a3a23] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
                   Réserver créneau

@@ -174,12 +174,12 @@ export const statsService = {
 
       const sortedScorers = [...teamPlayers].sort((a, b) => b.goals - a.goals);
       const topScorer = sortedScorers.length > 0
-        ? { name: sortedScorers[0].name, goals: sortedScorers[0].goals, avatarUrl: sortedScorers[0].avatarUrl }
+        ? { name: sortedScorers[0].name, playerId: sortedScorers[0].id, goals: sortedScorers[0].goals, avatarUrl: sortedScorers[0].avatarUrl }
         : { name: 'Collectif', goals: team.stats.goalsFor };
 
       const sortedAssisters = [...teamPlayers].sort((a, b) => b.assists - a.assists);
       const topAssister = sortedAssisters.length > 0
-        ? { name: sortedAssisters[0].name, assists: sortedAssisters[0].assists, avatarUrl: sortedAssisters[0].avatarUrl }
+        ? { name: sortedAssisters[0].name, playerId: sortedAssisters[0].id, assists: sortedAssisters[0].assists, avatarUrl: sortedAssisters[0].avatarUrl }
         : { name: 'Collectif', assists: Math.round(team.stats.goalsFor * 0.7) };
 
       // Si un tournoi spécifique est sélectionné, on adapte les stats au tournoi

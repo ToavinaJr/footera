@@ -8,6 +8,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
+import { EntityLink } from '../../common/EntityLink';
 
 export const RecruitmentView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
@@ -171,7 +172,7 @@ export const RecruitmentView: React.FC = () => {
                         <Badge variant="emerald" size="sm">{ad.division}</Badge>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
-                        {ad.teamName} · {ad.city}
+                        <EntityLink section="teams" id={ad.teamId}>{ad.teamName}</EntityLink> · {ad.city}
                       </p>
                       <p className="text-xs text-slate-600 line-clamp-2 max-w-xl mt-1">
                         {ad.description}
@@ -224,7 +225,7 @@ export const RecruitmentView: React.FC = () => {
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-500">
-                      Club : <strong className="text-slate-800">{app.teamName}</strong> · Téléphone : {app.phone}
+                      Club : <strong className="text-slate-800"><EntityLink section="teams" id={ads.find((ad) => ad.id === app.adId)?.teamId}>{app.teamName}</EntityLink></strong> · Téléphone : {app.phone}
                     </p>
                     <p className="text-xs text-slate-600 italic mt-1">« {app.message} »</p>
                   </div>
@@ -253,7 +254,7 @@ export const RecruitmentView: React.FC = () => {
                 referrerPolicy="no-referrer"
               />
               <div>
-                <h3 className="text-sm font-bold text-[#092c1a]">{activeAd.teamName}</h3>
+                <h3 className="text-sm font-bold text-[#092c1a]"><EntityLink section="teams" id={activeAd.teamId}>{activeAd.teamName}</EntityLink></h3>
                 <span className="text-xs text-slate-500">{activeAd.city} · {activeAd.category}</span>
               </div>
             </div>
