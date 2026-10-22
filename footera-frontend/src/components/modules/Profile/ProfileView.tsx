@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   User, 
   Shield, 
@@ -21,14 +22,24 @@ import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 
 export const ProfileView: React.FC = () => {
-  const { user, switchRole, updateSportsCv, resetDemo, showToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'applications'>('profile');
+  const { user, switchRole, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isEditCvOpen = location.pathname === '/profile/edit-cv';
+  const activeTab: 'profile' | 'bookings' | 'applications' = location.pathname.startsWith('/profile/bookings')
+    ? 'bookings'
+    : location.pathname === '/profile/applications'
+      ? 'applications'
+      : 'profile';
+  const setActiveTab = (tab: 'profile' | 'bookings' | 'applications') => {
+    const path = tab === 'profile' ? '/profile' : `/profile/${tab}`;
+    navigate(path);
+  };
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Edit CV modal
-  const [isEditCvOpen, setIsEditCvOpen] = useState(false);
   const [cvPosition, setCvPosition] = useState<Position>(user?.sportsCv.primaryPosition || 'Milieu Central');
   const [cvHeight, setCvHeight] = useState(user?.sportsCv.height || 180);
   const [cvWeight, setCvWeight] = useState(user?.sportsCv.weight || 75);
@@ -66,8 +77,10 @@ export const ProfileView: React.FC = () => {
       bio: cvBio,
       currentTeam: cvCurrentTeam,
     });
-    setIsEditCvOpen(false);
+    navigate('/profile', { replace: true });
   };
+
+  const closeEditCv = () => navigate('/profile', { replace: true });
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -169,7 +182,7 @@ export const ProfileView: React.FC = () => {
         ].map((t) => (
           <button
             key={t.tab}
-            onClick={() => setActiveTab(t.tab as any)}
+            onClick={() => setActiveTab(t.tab as 'profile' | 'bookings' | 'applications')}
             className={`px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === t.tab
                 ? 'bg-[#0e5632] text-white shadow-xs'
@@ -198,7 +211,7 @@ export const ProfileView: React.FC = () => {
                   setCvFoot(user.sportsCv.strongFoot);
                   setCvBio(user.sportsCv.bio);
                   setCvCurrentTeam(user.sportsCv.currentTeam);
-                  setIsEditCvOpen(true);
+                  navigate('/profile/edit-cv');
                 }}
                 className="px-4 py-2 min-h-[44px] rounded-2xl bg-[#eaf4ed] hover:bg-[#d5edd9] text-[#0e5632] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
@@ -266,7 +279,7 @@ export const ProfileView: React.FC = () => {
             bookings.map((b) => (
               <div
                 key={b.id}
-                className="p-5 rounded-3xl bg-white border border-[#dce6d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+                className={`p-5 rounded-3xl bg-white border border-[#dce6d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${selectedResourceId === b.id ? 'ring-2 ring-[#c6f432]' : ''}`}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -335,7 +348,7 @@ export const ProfileView: React.FC = () => {
       {isEditCvOpen && (
         <Modal
           isOpen={isEditCvOpen}
-          onClose={() => setIsEditCvOpen(false)}
+          onClose={closeEditCv}
           title="Modifier mon CV Sportif"
           subtitle="Mettez à jour vos informations visibles par les recruteurs"
           maxWidth="md"
@@ -420,7 +433,7 @@ export const ProfileView: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
                 type="button"
-                onClick={() => setIsEditCvOpen(false)}
+                onClick={closeEditCv}
                 className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
                 Annuler

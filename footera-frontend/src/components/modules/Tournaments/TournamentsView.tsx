@@ -8,6 +8,7 @@ import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
+import { useRouteModal } from '../../../hooks/useRouteModal';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -30,6 +31,7 @@ const TOURNAMENT_BANNER_PRESETS = [
 
 export const TournamentsView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
+  const tournamentModal = useRouteModal('/tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,7 +47,6 @@ export const TournamentsView: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Create Tournament Modal
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formTitle, setFormTitle] = useState('');
   const [formFormat, setFormFormat] = useState<Tournament['format']>('11v11');
   const [formCity, setFormCity] = useState(user?.city || 'Fianarantsoa');
@@ -66,8 +67,9 @@ export const TournamentsView: React.FC = () => {
         const data = await tournamentsService.list();
         setTournaments(data);
 
-        if (selectedResourceId) {
-          const match = data.find((t) => t.id === selectedResourceId);
+        const resourceId = tournamentModal.resourceId || selectedResourceId;
+        if (resourceId) {
+          const match = data.find((t) => t.id === resourceId);
           if (match) setSelectedTournament(match);
         }
       } catch (err: any) {
@@ -77,7 +79,7 @@ export const TournamentsView: React.FC = () => {
       }
     }
     loadTournaments();
-  }, [selectedResourceId, showToast]);
+  }, [selectedResourceId, showToast, tournamentModal.resourceId]);
 
   useEffect(() => {
     if (selectedTournament) {
@@ -140,8 +142,6 @@ export const TournamentsView: React.FC = () => {
 
       const created = await tournamentsService.create(input);
       showToast(`Tournoi "${created.title}" créé et publié avec succès !`);
-      setIsCreateOpen(false);
-
       // Reset form
       setFormTitle('');
       setFormEntryFee('80');
@@ -150,7 +150,7 @@ export const TournamentsView: React.FC = () => {
       // Refresh list and select the new tournament
       const allUpdated = await tournamentsService.list();
       setTournaments(allUpdated);
-      setSelectedTournament(created);
+      tournamentModal.openDetail(created.id, true);
     } catch (err: any) {
       showToast(err.message || 'Erreur lors de la création du tournoi', 'error');
     } finally {
@@ -172,7 +172,7 @@ export const TournamentsView: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsCreateOpen(true)}
+          onClick={tournamentModal.openCreate}
           className="px-5 py-2.5 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -196,7 +196,7 @@ export const TournamentsView: React.FC = () => {
           {tournaments.map((tourn) => (
             <div
               key={tourn.id}
-              onClick={() => setSelectedTournament(tourn)}
+              onClick={() => tournamentModal.openDetail(tourn.id)}
               className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
             >
               <div>
@@ -267,7 +267,10 @@ export const TournamentsView: React.FC = () => {
       {selectedTournament && (
         <Modal
           isOpen={!!selectedTournament}
-          onClose={() => setSelectedTournament(null)}
+          onClose={() => {
+            setSelectedTournament(null);
+            tournamentModal.close();
+          }}
           title={selectedTournament.title}
           subtitle={`${selectedTournament.format} · ${selectedTournament.venue} (${selectedTournament.city})`}
           maxWidth="xl"
@@ -534,10 +537,10 @@ export const TournamentsView: React.FC = () => {
       )}
 
       {/* Create Tournament Modal */}
-      {isCreateOpen && (
+      {tournamentModal.mode === 'create' && (
         <Modal
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
+          isOpen={tournamentModal.mode === 'create'}
+          onClose={tournamentModal.close}
           title="Organiser un tournoi"
           subtitle="Configurez et lancez une nouvelle compétition officielle"
           maxWidth="lg"
@@ -719,7 +722,7 @@ export const TournamentsView: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
               <button
                 type="button"
-                onClick={() => setIsCreateOpen(false)}
+                onClick={tournamentModal.close}
                 className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler

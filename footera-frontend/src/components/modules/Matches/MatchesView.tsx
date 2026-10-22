@@ -7,16 +7,22 @@ import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
+import { useRouteModal } from '../../../hooks/useRouteModal';
 
 export const MatchesView: React.FC = () => {
   const { showToast, selectedResourceId } = useApp();
+  const matchModal = useRouteModal('/matches');
   const [matches, setMatches] = useState<Match[]>([]);
   const [standings, setStandings] = useState<LeagueStandingRow[]>([]);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'LIVE' | 'SCHEDULED' | 'FINISHED'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
 
   // Selected Match modal
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const selectedMatch = matchModal.resourceId
+    ? matches.find((match) => match.id === matchModal.resourceId) ?? null
+    : selectedResourceId
+      ? matches.find((match) => match.id === selectedResourceId) ?? null
+      : null;
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
@@ -30,10 +36,6 @@ export const MatchesView: React.FC = () => {
         setMatches(data);
         setStandings(stand);
 
-        if (selectedResourceId) {
-          const match = data.find((m) => m.id === selectedResourceId);
-          if (match) setSelectedMatch(match);
-        }
       } catch (err: any) {
         showToast(err.message || 'Erreur lors du chargement des matchs', 'error');
       } finally {
@@ -111,7 +113,7 @@ export const MatchesView: React.FC = () => {
             {matches.map((match) => (
               <div
                 key={match.id}
-                onClick={() => setSelectedMatch(match)}
+                onClick={() => matchModal.openDetail(match.id)}
                 className="p-5 sm:p-6 rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 transition-all cursor-pointer shadow-xs group"
               >
                 <div className="flex items-center justify-between text-xs text-slate-500 pb-3 mb-3 border-b border-[#edf3ea]">
@@ -240,7 +242,7 @@ export const MatchesView: React.FC = () => {
       {selectedMatch && (
         <Modal
           isOpen={!!selectedMatch}
-          onClose={() => setSelectedMatch(null)}
+          onClose={matchModal.close}
           title={selectedMatch.competition}
           subtitle={`${selectedMatch.venue} · ${selectedMatch.date}`}
           maxWidth="xl"

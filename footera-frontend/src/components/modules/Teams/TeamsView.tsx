@@ -10,7 +10,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 
 export const TeamsView: React.FC = () => {
-  const { showToast, selectedResourceId, toggleFavoriteTeam, user } = useApp();
+  const { showToast, selectedResourceId, toggleFavoriteTeam, user, navigateToResource } = useApp();
   const [activeTab, setActiveTab] = useState<'teams' | 'clubs'>('teams');
   const [teams, setTeams] = useState<Team[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -45,7 +45,10 @@ export const TeamsView: React.FC = () => {
 
         if (selectedResourceId) {
           const match = teamsData.find((t) => t.id === selectedResourceId);
-          if (match) setSelectedTeam(match);
+          if (match) {
+            setSelectedTeam(match);
+            setIsRosterModalOpen(true);
+          }
         }
       } catch (err: any) {
         showToast(err.message || 'Erreur lors du chargement des équipes', 'error');
@@ -240,9 +243,8 @@ export const TeamsView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedTeam(team);
                             setRosterTab('members');
-                            setIsRosterModalOpen(true);
+                            navigateToResource('teams', team.id);
                           }}
                           className="py-2 px-2 text-center text-xs font-bold text-[#0e5632] bg-[#f8faf7] hover:bg-[#eaf4ed] border border-[#dce6d8] rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
                         >
@@ -253,9 +255,8 @@ export const TeamsView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedTeam(team);
                             setRosterTab('stats');
-                            setIsRosterModalOpen(true);
+                            navigateToResource('teams', team.id);
                           }}
                           className="py-2 px-2 text-center text-xs font-bold text-[#092c1a] bg-[#f8faf7] hover:bg-[#eaf4ed] border border-[#dce6d8] rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
                         >
@@ -339,7 +340,11 @@ export const TeamsView: React.FC = () => {
       {isRosterModalOpen && selectedTeam && (
         <Modal
           isOpen={isRosterModalOpen}
-          onClose={() => setIsRosterModalOpen(false)}
+          onClose={() => {
+            setIsRosterModalOpen(false);
+            setSelectedTeam(null);
+            navigateToResource('teams');
+          }}
           title={`Effectif officiel — ${selectedTeam.name}`}
           subtitle={`${selectedTeam.members.length} joueurs inscrits · Coach ${selectedTeam.coachName}`}
           maxWidth="lg"

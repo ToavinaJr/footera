@@ -8,6 +8,7 @@ import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
+import { useRouteModal } from '../../../hooks/useRouteModal';
 
 const PITCH_IMAGE_PRESETS = [
   {
@@ -41,13 +42,16 @@ const AVAILABLE_AMENITIES = [
 
 export const PitchesView: React.FC = () => {
   const { showToast, selectedResourceId, user, navigateToResource } = useApp();
+  const pitchModal = useRouteModal('/pitches');
   const [pitches, setPitches] = useState<Pitch[]>([]);
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceType | 'Toutes'>('Toutes');
   const [cityFilter, setCityFilter] = useState('Toutes');
   const [isLoading, setIsLoading] = useState(true);
 
   // Selected Pitch for booking
-  const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
+  const selectedPitch = pitchModal.resourceId
+    ? pitches.find((pitch) => pitch.id === pitchModal.resourceId) ?? null
+    : null;
 
   // Booking Flow State
   const [bookingDate, setBookingDate] = useState('Samedi 24 Octobre 2026');
@@ -57,7 +61,6 @@ export const PitchesView: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Create Pitch Modal State
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formName, setFormName] = useState('');
   const [formComplexName, setFormComplexName] = useState('Complexe Sportif Municipal');
   const [formCity, setFormCity] = useState(user?.city || 'Fianarantsoa');
@@ -87,7 +90,6 @@ export const PitchesView: React.FC = () => {
         if (selectedResourceId) {
           const match = data.find((p) => p.id === selectedResourceId);
           if (match) {
-            setSelectedPitch(match);
             const firstAvail = match.availableSlots.find((s) => s.isAvailable);
             if (firstAvail) setSelectedSlot(firstAvail);
           }
@@ -102,7 +104,7 @@ export const PitchesView: React.FC = () => {
   }, [surfaceFilter, cityFilter, selectedResourceId, showToast]);
 
   const handleOpenBooking = (pitch: Pitch) => {
-    setSelectedPitch(pitch);
+    pitchModal.openDetail(pitch.id);
     const firstAvail = pitch.availableSlots.find((s) => s.isAvailable);
     setSelectedSlot(firstAvail || null);
     setTeamName(user?.sportsCv.currentTeam || '');
@@ -121,7 +123,7 @@ export const PitchesView: React.FC = () => {
       });
 
       showToast(`Créneau confirmé à ${selectedPitch.name} le ${bookingDate} !`, 'success');
-      setSelectedPitch(null);
+      pitchModal.close();
       setSelectedSlot(null);
     } catch (e: any) {
       showToast(e.message || 'Erreur lors de la réservation', 'error');
@@ -174,17 +176,15 @@ export const PitchesView: React.FC = () => {
 
       const created = await pitchesService.create(input);
       showToast(`Terrain "${created.name}" ajouté avec succès !`, 'success');
-      setIsCreateOpen(false);
-
       // Reset form fields
       setFormName('');
       setFormHourlyRate('50');
 
-      // Reload list and open booking dialog for the newly created pitch
+      // Reload the list and open the newly created pitch through its URL.
       const updated = await pitchesService.list();
       setPitches(updated);
-      setSelectedPitch(created);
-      setSelectedSlot(created.availableSlots[0]);
+      pitchModal.openDetail(created.id, true);
+      setSelectedSlot(created.availableSlots.find((slot) => slot.isAvailable) ?? null);
     } catch (err: any) {
       showToast(err.message || 'Erreur lors de l’ajout du terrain', 'error');
     } finally {
@@ -220,7 +220,7 @@ export const PitchesView: React.FC = () => {
 
         <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
           <button
-            onClick={() => setIsCreateOpen(true)}
+            onClick={pitchModal.openCreate}
             className="px-4 py-2 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -362,7 +362,7 @@ export const PitchesView: React.FC = () => {
         <Modal
           isOpen={!!selectedPitch}
           onClose={() => {
-            setSelectedPitch(null);
+            pitchModal.close();
             setSelectedSlot(null);
           }}
           title={`Réserver ${selectedPitch.name}`}
@@ -453,10 +453,10 @@ export const PitchesView: React.FC = () => {
       )}
 
       {/* Create Pitch Modal */}
-      {isCreateOpen && (
+      {pitchModal.mode === 'create' && (
         <Modal
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
+          isOpen={pitchModal.mode === 'create'}
+          onClose={pitchModal.close}
           title="Ajouter un terrain ou complexe"
           subtitle="Proposez votre terrain à la communauté pour réservations et matchs"
           maxWidth="lg"
@@ -628,7 +628,7 @@ export const PitchesView: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
               <button
                 type="button"
-                onClick={() => setIsCreateOpen(false)}
+                onClick={pitchModal.close}
                 className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler

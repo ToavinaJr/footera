@@ -7,5 +7,7 @@ export type NavigationSection =
   | 'pitches'
   | 'recruitment'
   | 'marketplace'
+  | 'notifications'
+  | 'bookings'
   | 'profile'
   | 'stats';

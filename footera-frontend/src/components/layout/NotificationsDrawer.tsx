@@ -74,7 +74,6 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
                 onClick={() => {
                   markNotificationRead(notif.id);
                   navigateToResource(notif.targetSection as NavigationSection, notif.targetId);
-                  onClose();
                 }}
                 className={`p-3.5 rounded-2xl cursor-pointer transition-all hover:bg-[#f3f7f1] flex items-start gap-3 ${
                   notif.isRead ? 'opacity-70 bg-white' : 'bg-[#eaf4ed]/50 border border-[#d6e8d6]'

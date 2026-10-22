@@ -7,6 +7,7 @@ import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
+import { useRouteModal } from '../../../hooks/useRouteModal';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {
@@ -40,16 +41,16 @@ const POPULAR_BRANDS = ['Nike', 'Adidas', 'Puma', 'Kipsta', 'Umbro', 'Mizuno'];
 
 export const MarketplaceView: React.FC = () => {
   const { showToast, user } = useApp();
+  const itemModal = useRouteModal('/marketplace');
   const [items, setItems] = useState<MarketplaceListing[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   // Detail Modal
-  const [selectedItem, setSelectedItem] = useState<MarketplaceListing | null>(null);
-
-  // Create Listing Modal
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const selectedItem = itemModal.resourceId
+    ? items.find((item) => item.id === itemModal.resourceId) ?? null
+    : null;
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState<MarketplaceListing['category']>('Crampons');
   const [formPrice, setFormPrice] = useState('');
@@ -114,8 +115,6 @@ export const MarketplaceView: React.FC = () => {
 
       const created = await marketplaceService.createListing(input);
       showToast('Votre article a été publié dans la Marketplace avec succès !', 'success');
-      setIsCreateOpen(false);
-
       // Reset fields
       setFormTitle('');
       setFormPrice('');
@@ -124,7 +123,7 @@ export const MarketplaceView: React.FC = () => {
       // Refresh listings
       const updated = await marketplaceService.list({ category: categoryFilter });
       setItems(updated);
-      setSelectedItem(created);
+      itemModal.openDetail(created.id, true);
     } catch {
       showToast('Erreur lors de la mise en vente', 'error');
     } finally {
@@ -147,7 +146,7 @@ export const MarketplaceView: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsCreateOpen(true)}
+          onClick={itemModal.openCreate}
           className="px-5 py-2.5 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -203,7 +202,7 @@ export const MarketplaceView: React.FC = () => {
           {items.map((item) => (
             <div
               key={item.id}
-              onClick={() => setSelectedItem(item)}
+              onClick={() => itemModal.openDetail(item.id)}
               className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
             >
               <div>
@@ -262,7 +261,7 @@ export const MarketplaceView: React.FC = () => {
       {selectedItem && (
         <Modal
           isOpen={!!selectedItem}
-          onClose={() => setSelectedItem(null)}
+          onClose={itemModal.close}
           title={selectedItem.title}
           subtitle={`${selectedItem.brand} · ${selectedItem.city}`}
           maxWidth="lg"
@@ -299,7 +298,7 @@ export const MarketplaceView: React.FC = () => {
             <button
               onClick={() => {
                 showToast(`Message transmis à ${selectedItem.sellerName} !`, 'success');
-                setSelectedItem(null);
+                itemModal.close();
               }}
               className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center cursor-pointer shadow-xs transition-colors"
             >
@@ -310,10 +309,10 @@ export const MarketplaceView: React.FC = () => {
       )}
 
       {/* Create Listing Modal */}
-      {isCreateOpen && (
+      {itemModal.mode === 'create' && (
         <Modal
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
+          isOpen={itemModal.mode === 'create'}
+          onClose={itemModal.close}
           title="Vendre un équipement"
           subtitle="Publiez votre article dans la marketplace de la communauté"
           maxWidth="lg"
@@ -469,7 +468,7 @@ export const MarketplaceView: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
               <button
                 type="button"
-                onClick={() => setIsCreateOpen(false)}
+                onClick={itemModal.close}
                 className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler

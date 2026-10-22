@@ -8,19 +8,26 @@ import { AppContext } from './app-context';
 import type { AppContextType, ToastMessage } from './app-context';
 import type { NavigationSection } from './navigation';
 
-const routeForSection = (section: NavigationSection) => section === 'home' ? '/' : `/${section}`;
+const routeForSection = (section: NavigationSection) => {
+  if (section === 'home') return '/';
+  if (section === 'bookings') return '/profile/bookings';
+  return `/${section}`;
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const sectionFromPath = location.pathname.split('/').filter(Boolean)[0] as NavigationSection | undefined;
   const validSections: NavigationSection[] = [
-    'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'profile', 'stats',
+    'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
   ];
   const activeSection: NavigationSection = sectionFromPath && validSections.includes(sectionFromPath)
     ? sectionFromPath
     : 'home';
-  const routeResourceId = location.pathname.match(/^\/(?:teams|pitches)\/([^/]+)\/?$/)?.[1];
+  const routeResourceMatch = location.pathname.match(
+    /^\/(?:teams|pitches|matches|recruitment)\/([^/]+)\/?$|^\/profile\/bookings\/([^/]+)\/?$/,
+  );
+  const routeResourceId = routeResourceMatch?.[1] ?? routeResourceMatch?.[2];
   const selectedResourceId = routeResourceId
     ? decodeURIComponent(routeResourceId)
     : (location.state as { resourceId?: string } | null)?.resourceId;
@@ -82,7 +89,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [navigate]);
 
   const navigateToResource = useCallback((section: NavigationSection, resourceId?: string) => {
-    const supportsDetailRoute = section === 'teams' || section === 'pitches';
+    const supportsDetailRoute = section === 'teams'
+      || section === 'pitches'
+      || section === 'marketplace'
+      || section === 'tournaments'
+      || section === 'matches'
+      || section === 'recruitment'
+      || section === 'bookings';
     let path = routeForSection(section);
     if (resourceId && supportsDetailRoute) {
       path = `${path}/${encodeURIComponent(resourceId)}`;

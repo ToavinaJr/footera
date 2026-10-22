@@ -33,7 +33,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
     { label: 'Terrains', section: 'pitches', icon: MapPin },
     { label: 'Marketplace', section: 'marketplace', icon: ShoppingBag },
     { label: 'Mercato & Recrutement', section: 'recruitment', icon: Briefcase },
-    { label: 'Notifications', section: 'matches', icon: Bell },
+    { label: 'Notifications', section: 'notifications', icon: Bell },
     { label: 'Paramètres & Profil', section: 'profile', icon: Settings },
   ];
 

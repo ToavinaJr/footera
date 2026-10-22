@@ -2,7 +2,7 @@
 
 Interface Footera développée avec React, TypeScript et Vite. Elle tourne par défaut sur `http://localhost:3001` et consomme l’API sous `/api/v1`.
 
-Les sections disposent maintenant de leurs routes : `/`, `/players`, `/teams`, `/matches`, `/tournaments`, `/pitches`, `/recruitment`, `/marketplace`, `/profile` et `/stats`. Les routes d’équipe et de terrain acceptent aussi un identifiant (`/teams/:teamId`, `/pitches/:pitchId`).
+Les sections disposent de leurs routes : `/`, `/players`, `/teams`, `/matches`, `/tournaments`, `/pitches`, `/recruitment`, `/marketplace`, `/profile` et `/stats`. Les fiches d’équipe, match, annonce de recrutement, terrain, article et tournoi ont des URLs dédiées. Les formulaires de création et l’édition du CV s’ouvrent aussi par URL ; les notifications sont accessibles via `/notifications` et leurs liens ouvrent la ressource concernée.
 
 ## Développement local
 

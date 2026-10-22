@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, Bell, User, X, BarChart3 } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
@@ -7,9 +8,25 @@ import { SidebarDrawer } from './SidebarDrawer';
 
 export const Header: React.FC = () => {
   const { activeSection, setActiveSection, unreadNotificationsCount, user } = useApp();
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isNotifOpen = location.pathname === '/notifications';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
+
+  const openNotifications = () => {
+    if (!isNotifOpen) {
+      navigate('/notifications', { state: { backgroundLocation: location } });
+    }
+  };
+
+  const closeNotifications = () => {
+    const hasBackgroundRoute = Boolean(
+      (location.state as { backgroundLocation?: unknown } | null)?.backgroundLocation,
+    );
+    if (hasBackgroundRoute) navigate(-1);
+    else navigate('/', { replace: true });
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +103,7 @@ export const Header: React.FC = () => {
 
             {/* Notification Trigger with Red Badge */}
             <button
-              onClick={() => setIsNotifOpen(true)}
+              onClick={openNotifications}
               aria-label={`Notifications (${unreadNotificationsCount} non lues)`}
               className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[#0d3822] hover:bg-[#eaf4ed] transition-colors cursor-pointer"
             >
@@ -125,7 +142,7 @@ export const Header: React.FC = () => {
       <SidebarDrawer isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Notifications Drawer */}
-      <NotificationsDrawer isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
+      <NotificationsDrawer isOpen={isNotifOpen} onClose={closeNotifications} />
     </>
   );
 };

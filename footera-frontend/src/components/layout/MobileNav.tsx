@@ -10,7 +10,7 @@ export const MobileNav: React.FC = () => {
     { label: 'Accueil', section: 'home', icon: Home },
     { label: 'Explorer', section: 'players', icon: Compass },
     { label: 'Matchs', section: 'matches', icon: Trophy },
-    { label: 'Alertes', section: 'matches', icon: Bell },
+    { label: 'Alertes', section: 'notifications', icon: Bell },
     { label: 'Profil', section: 'profile', icon: User },
   ];
 

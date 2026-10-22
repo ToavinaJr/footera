@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
 import { Header } from './components/layout/Header';
@@ -19,9 +19,11 @@ import { StatsView } from './components/modules/Stats/StatsView';
 
 const AppContent: React.FC = () => {
   const { setActiveSection } = useApp();
+  const location = useLocation();
+  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
   return (
-    <div className="min-h-full flex flex-col bg-[#f5f8f4] text-[#12281e] font-sans selection:bg-[#c6f432] selection:text-[#092c1a]">
+    <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-[#092c1a]">
       {/* Discreet Demo / Data Mode Banner */}
       <DemoBanner />
 
@@ -30,18 +32,25 @@ const AppContent: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
-        <Routes>
+        <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<HomeView />} />
           <Route path="/players" element={<PlayersView />} />
           <Route path="/teams" element={<TeamsView />} />
           <Route path="/teams/:teamId" element={<TeamsView />} />
           <Route path="/matches" element={<MatchesView />} />
           <Route path="/tournaments" element={<TournamentsView />} />
+          <Route path="/tournaments/new" element={<TournamentsView />} />
+          <Route path="/tournaments/:tournamentId" element={<TournamentsView />} />
           <Route path="/pitches" element={<PitchesView />} />
           <Route path="/pitches/:pitchId" element={<PitchesView />} />
           <Route path="/recruitment" element={<RecruitmentView />} />
           <Route path="/marketplace" element={<MarketplaceView />} />
+          <Route path="/marketplace/new" element={<MarketplaceView />} />
+          <Route path="/marketplace/:listingId" element={<MarketplaceView />} />
+          <Route path="/pitches/new" element={<PitchesView />} />
           <Route path="/profile" element={<ProfileView />} />
+          <Route path="/profile/edit-cv" element={<ProfileView />} />
+          <Route path="/notifications" element={<HomeView />} />
           <Route path="/stats" element={<StatsView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -54,32 +63,32 @@ const AppContent: React.FC = () => {
       <ToastContainer />
 
       {/* Footer */}
-      <footer className="border-t border-[#e2ebe0] bg-white py-8 px-4 text-center text-xs text-slate-500 hidden md:block">
+      <footer className="border-t border-border-subtle bg-white py-8 px-4 text-center text-xs text-slate-500 hidden md:block">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-[#0e5632] flex items-center justify-center font-bold text-[#c6f432] text-xs">
+            <div className="w-6 h-6 rounded-lg bg-pitch-primary flex items-center justify-center font-bold text-lime-volt text-xs">
               F
             </div>
             <span className="font-extrabold text-[#092c1a]">FOOTERA</span>
             <span>— Plateforme unifiée de l&apos;écosystème footballistique</span>
           </div>
           <div className="flex items-center gap-5 text-slate-500 font-medium">
-            <button onClick={() => setActiveSection('players')} className="hover:text-[#0e5632] cursor-pointer">
+            <button onClick={() => setActiveSection('players')} className="hover:text-pitch-primary cursor-pointer">
               Joueurs
             </button>
-            <button onClick={() => setActiveSection('teams')} className="hover:text-[#0e5632] cursor-pointer">
+            <button onClick={() => setActiveSection('teams')} className="hover:text-pitch-primary cursor-pointer">
               Équipes
             </button>
-            <button onClick={() => setActiveSection('matches')} className="hover:text-[#0e5632] cursor-pointer">
+            <button onClick={() => setActiveSection('matches')} className="hover:text-pitch-primary cursor-pointer">
               Matchs
             </button>
-            <button onClick={() => setActiveSection('stats')} className="hover:text-[#0e5632] cursor-pointer font-bold text-[#0e5632]">
+            <button onClick={() => setActiveSection('stats')} className="hover:text-pitch-primary cursor-pointer font-bold text-pitch-primary">
               Stats & Buteurs
             </button>
-            <button onClick={() => setActiveSection('pitches')} className="hover:text-[#0e5632] cursor-pointer">
+            <button onClick={() => setActiveSection('pitches')} className="hover:text-pitch-primary cursor-pointer">
               Terrains
             </button>
-            <button onClick={() => setActiveSection('marketplace')} className="hover:text-[#0e5632] cursor-pointer">
+            <button onClick={() => setActiveSection('marketplace')} className="hover:text-pitch-primary cursor-pointer">
               Marketplace
             </button>
           </div>

@@ -7,9 +7,11 @@ import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
+import { useRouteModal } from '../../../hooks/useRouteModal';
 
 export const RecruitmentView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
+  const adModal = useRouteModal('/recruitment');
   const [activeTab, setActiveTab] = useState<'ads' | 'my-applications'>('ads');
   const [ads, setAds] = useState<RecruitmentAd[]>([]);
   const [myApplications, setMyApplications] = useState<Application[]>([]);
@@ -20,7 +22,11 @@ export const RecruitmentView: React.FC = () => {
   const [positionFilter, setPositionFilter] = useState('Tous');
 
   // Ad Detail & Apply
-  const [activeAd, setActiveAd] = useState<RecruitmentAd | null>(null);
+  const activeAd = adModal.resourceId
+    ? ads.find((ad) => ad.id === adModal.resourceId) ?? null
+    : selectedResourceId
+      ? ads.find((ad) => ad.id === selectedResourceId) ?? null
+      : null;
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState('');
   const [applicantPhone, setApplicantPhone] = useState(user?.phone || '06 12 34 56 78');
@@ -37,10 +43,6 @@ export const RecruitmentView: React.FC = () => {
         setAds(adsData);
         setMyApplications(appsData);
 
-        if (selectedResourceId) {
-          const match = adsData.find((a) => a.id === selectedResourceId);
-          if (match) setActiveAd(match);
-        }
       } catch (err: any) {
         showToast(err.message || 'Erreur lors du chargement du Mercato', 'error');
       } finally {
@@ -61,6 +63,7 @@ export const RecruitmentView: React.FC = () => {
       showToast(`Candidature transmise à ${activeAd.teamName} !`);
       setIsApplyModalOpen(false);
       setApplyMessage('');
+      adModal.close();
       const updatedApps = await recruitmentService.listMyApplications();
       setMyApplications(updatedApps);
       setActiveTab('my-applications');
@@ -152,7 +155,7 @@ export const RecruitmentView: React.FC = () => {
               {ads.map((ad) => (
                 <div
                   key={ad.id}
-                  onClick={() => setActiveAd(ad)}
+                  onClick={() => adModal.openDetail(ad.id)}
                   className="p-5 sm:p-6 rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 transition-all cursor-pointer shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-4">
@@ -183,7 +186,7 @@ export const RecruitmentView: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveAd(ad);
+                        adModal.openDetail(ad.id);
                         setIsApplyModalOpen(true);
                       }}
                       className="px-5 py-2.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
@@ -236,7 +239,7 @@ export const RecruitmentView: React.FC = () => {
       {activeAd && (
         <Modal
           isOpen={!!activeAd}
-          onClose={() => setActiveAd(null)}
+          onClose={adModal.close}
           title={activeAd.positionSought}
           subtitle={`${activeAd.teamName} · ${activeAd.division}`}
           maxWidth="lg"
