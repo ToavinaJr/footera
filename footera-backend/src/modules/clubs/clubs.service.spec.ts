@@ -2,14 +2,14 @@ import { ForbiddenException, BadRequestException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { ClubsService } from './clubs.service.js';
 
-function makeService(activeRole = 'Entraîneur', currentTeam = 'Betsileo FC') {
+function makeService(activeRole = 'Entraîneur', currentTeam = 'Betsileo FC', roles = ['Entraîneur']) {
   const club = { id: 'club_betsileo', logoUrl: '/old.png', teams: [{ id: 'team_betsileo' }] };
   const repository = {
     list: vi.fn(async () => [{ id: 'team_betsileo', name: 'Betsileo FC' }]),
     find: vi.fn(async () => club),
     save: vi.fn(async (_table, _id, payload) => payload),
   };
-  const accounts = { profile: vi.fn(async () => ({ activeRole, sportsCv: { currentTeam } })) };
+  const accounts = { profile: vi.fn(async () => ({ activeRole, roles, sportsCv: { currentTeam } })) };
   return { service: new ClubsService(repository as any, accounts as any), repository };
 }
 
@@ -22,6 +22,12 @@ describe('ClubsService logo security', () => {
     expect(repository.save).toHaveBeenCalledOnce();
   });
 
+  it('allows the action when the coach role is assigned, even if another mode is active', async () => {
+    const { service, repository } = makeService('Joueur', 'Betsileo FC', ['Joueur', 'Entraîneur']);
+    await expect(service.updateLogo('club_betsileo', safeLogoUrl)).resolves.toMatchObject({ logoUrl: safeLogoUrl });
+    expect(repository.save).toHaveBeenCalledOnce();
+  });
+
   it('rejects remote URLs and javascript URLs', async () => {
     const { service } = makeService();
     await expect(service.updateLogo('club_betsileo', 'https://evil.example/logo.png')).rejects.toBeInstanceOf(BadRequestException);
@@ -29,7 +35,7 @@ describe('ClubsService logo security', () => {
   });
 
   it('rejects users without the coach role or without a team association', async () => {
-    const nonCoach = makeService('Joueur');
+    const nonCoach = makeService('Joueur', 'Betsileo FC', ['Joueur']);
     await expect(nonCoach.service.updateLogo('club_betsileo', safeLogoUrl)).rejects.toBeInstanceOf(ForbiddenException);
     const otherTeam = makeService('Entraîneur', 'Other FC');
     await expect(otherTeam.service.updateLogo('club_betsileo', safeLogoUrl)).rejects.toBeInstanceOf(ForbiddenException);

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -18,6 +18,9 @@ export class MarketplaceService {
   async create(input: any) {
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo de l’article');
     const user: any = await this.accounts.profile();
+    if (!user?.roles?.includes('Vendeur')) {
+      throw new ForbiddenException('Votre compte doit disposer du rôle Vendeur pour publier un article.');
+    }
     const id = `mkt_${randomUUID()}`;
     const item = { ...input, id, sellerName: user?.name || 'Vendeur Footera', sellerRating: 5, createdAt: "À l'instant", isAvailable: true };
     await this.records.create('marketplace', id, item);

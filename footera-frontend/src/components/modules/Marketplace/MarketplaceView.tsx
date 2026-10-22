@@ -446,7 +446,7 @@ export const MarketplaceView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Photo illustrative de l&apos;article
               </label>
-              <ImageUploadField purpose="marketplace" label="Importer une photo" onUploaded={setFormImageUrl} disabled={isSubmitting || user?.activeRole !== 'Vendeur'} disabledHint="Passez au rôle Vendeur pour importer l’image." />
+              <ImageUploadField purpose="marketplace" label="Importer une photo" onUploaded={setFormImageUrl} disabled={isSubmitting || !user?.roles?.includes('Vendeur')} disabledHint="Le rôle Vendeur doit être attribué à votre compte pour importer l’image." />
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {MARKETPLACE_IMAGE_PRESETS.map((preset) => {
                   const isSelected = formImageUrl === preset.url;

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -55,6 +55,10 @@ export class BookingsService {
     return { total: Object.values(perDate).reduce((total, price) => total + price, 0), perDate };
   }
   async createPitch(input: any) {
+    const user: any = await this.accounts.profile();
+    if (!user?.roles?.includes('Gestionnaire Terrain')) {
+      throw new ForbiddenException('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
+    }
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');
     const id = `pitch_${randomUUID()}`;
     const rate = Number(input.hourlyRate);

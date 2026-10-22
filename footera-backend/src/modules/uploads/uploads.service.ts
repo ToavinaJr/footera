@@ -119,8 +119,8 @@ export class UploadsService {
         : purpose === 'club-logo' ? 'Entraîneur' : undefined;
     if (requiredRole) {
       const user: any = await this.accounts.profile();
-      if (user?.activeRole !== requiredRole) {
-        throw new ForbiddenException(`Le rôle ${requiredRole} est requis pour cet upload.`);
+      if (!user?.roles?.includes(requiredRole)) {
+        throw new ForbiddenException(`Votre compte doit disposer du rôle ${requiredRole} pour cet upload.`);
       }
     }
     this.enforceRateLimit(clientIp);

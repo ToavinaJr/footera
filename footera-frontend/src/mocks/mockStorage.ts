@@ -162,13 +162,21 @@ class MockStorageRepository {
   }
 
   getClubs(): Club[] {
-    return structuredClone(this.clubs);
+    const currentTeam = this.teams.find((team) => team.name === this.profile.sportsCv.currentTeam);
+    return structuredClone(this.clubs.map((club) => ({
+      ...club,
+      canManageLogo: Boolean(
+        this.profile.roles.includes('Entraîneur')
+        && currentTeam
+        && club.teams.some((team) => team.id === currentTeam.id),
+      ),
+    })));
   }
 
   updateClubLogo(clubId: string, logoUrl: string): Club {
     const club = this.clubs.find((candidate) => candidate.id === clubId);
     const team = this.teams.find((candidate) => candidate.name === this.profile.sportsCv.currentTeam);
-    if (this.profile.activeRole !== 'Entraîneur' || !club || !team || !club.teams.some((item) => item.id === team.id)) {
+    if (!this.profile.roles.includes('Entraîneur') || !club || !team || !club.teams.some((item) => item.id === team.id)) {
       throw new Error('Vous ne pouvez modifier que le logo du club de votre équipe avec le rôle Entraîneur.');
     }
     club.logoUrl = logoUrl;
@@ -312,6 +320,9 @@ class MockStorageRepository {
     hourlyRate: number;
     amenities: string[];
   }): Pitch {
+    if (!this.profile.roles.includes('Gestionnaire Terrain')) {
+      throw new Error('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
+    }
     const id = `pitch_${Date.now()}`;
     const availableSlots: Pitch['availableSlots'] = [
       { id: `${id}_slot_1`, time: '09:00 - 10:30', price: input.hourlyRate, isAvailable: true },
@@ -461,6 +472,9 @@ class MockStorageRepository {
   }
 
   createMarketplaceListing(data: Omit<MarketplaceListing, 'id' | 'createdAt' | 'isAvailable' | 'sellerName' | 'sellerRating'>): MarketplaceListing {
+    if (!this.profile.roles.includes('Vendeur')) {
+      throw new Error('Votre compte doit disposer du rôle Vendeur pour publier un article.');
+    }
     const newListing: MarketplaceListing = {
       ...data,
       id: `mkt_${Date.now()}`,

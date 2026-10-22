@@ -12,7 +12,7 @@ export class ClubsService {
       this.accounts.profile(),
       this.records.list<any>('teams'),
     ]);
-    const currentTeam = user?.activeRole === 'Entraîneur'
+    const currentTeam = user?.roles?.includes('Entraîneur')
       ? teams.find((team: any) => team.name === user?.sportsCv?.currentTeam)
       : undefined;
     return clubs.map((club: any) => ({
@@ -29,7 +29,7 @@ export class ClubsService {
       this.records.list<any>('teams'),
     ]);
     if (!club) throw new NotFoundException('Club introuvable.');
-    if (user?.activeRole !== 'Entraîneur') throw new ForbiddenException('Le rôle Entraîneur est requis pour modifier le logo du club.');
+    if (!user?.roles?.includes('Entraîneur')) throw new ForbiddenException('Votre compte doit disposer du rôle Entraîneur pour modifier le logo du club.');
     const currentTeam = (teams as any[]).find((team: any) => team.name === user?.sportsCv?.currentTeam);
     const canManage = currentTeam && (club.teams || []).some((team: any) => team.id === currentTeam.id);
     if (!canManage) throw new ForbiddenException('Vous ne pouvez modifier que le logo du club de votre équipe.');
