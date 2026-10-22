@@ -1,0 +1,740 @@
+import React, { useState, useEffect } from 'react';
+import { Trophy, Calendar, MapPin, Users, Award, Shield, CheckCircle2, Plus, Sparkles, Building2, Layers, Target } from 'lucide-react';
+import { tournamentsService, CreateTournamentInput } from '../../../services/tournamentsService';
+import { statsService } from '../../../services/statsService';
+import { Tournament, TopScorerItem, TopAssisterItem } from '../../../types';
+import { Badge } from '../../common/Badge';
+import { Modal } from '../../common/Modal';
+import { CardSkeleton } from '../../common/Skeleton';
+import { EmptyState } from '../../common/EmptyState';
+import { useApp } from '../../../context/AppContext';
+
+const TOURNAMENT_BANNER_PRESETS = [
+  {
+    name: 'Nuit & Projecteurs',
+    url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    name: 'Pelouse de Finale',
+    url: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    name: 'Arène Five & Futsal',
+    url: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    name: 'Coupe & Gloire',
+    url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1000&q=80',
+  },
+];
+
+export const TournamentsView: React.FC = () => {
+  const { showToast, selectedResourceId, user } = useApp();
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Detail Modal
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
+  const [tournModalTab, setTournModalTab] = useState<'overview' | 'scorers' | 'assists'>('overview');
+  const [tournScorers, setTournScorers] = useState<TopScorerItem[]>([]);
+  const [tournAssisters, setTournAssisters] = useState<TopAssisterItem[]>([]);
+
+  // Register Modal
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [registerTeamName, setRegisterTeamName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Create Tournament Modal
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [formTitle, setFormTitle] = useState('');
+  const [formFormat, setFormFormat] = useState<Tournament['format']>('11v11');
+  const [formCity, setFormCity] = useState(user?.city || 'Fianarantsoa');
+  const [formVenue, setFormVenue] = useState('Stade Moderne Ampasambazaha');
+  const [formStartDate, setFormStartDate] = useState('15 Nov 2026');
+  const [formEndDate, setFormEndDate] = useState('22 Nov 2026');
+  const [formMaxTeams, setFormMaxTeams] = useState<number>(16);
+  const [formEntryFee, setFormEntryFee] = useState<string>('80');
+  const [formPrizePool, setFormPrizePool] = useState<string>('1200');
+  const [formOrganizer, setFormOrganizer] = useState(user?.sportsCv.currentTeam || 'Comité Footera Matsiatra');
+  const [formBannerUrl, setFormBannerUrl] = useState(TOURNAMENT_BANNER_PRESETS[0].url);
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    async function loadTournaments() {
+      setIsLoading(true);
+      try {
+        const data = await tournamentsService.list();
+        setTournaments(data);
+
+        if (selectedResourceId) {
+          const match = data.find((t) => t.id === selectedResourceId);
+          if (match) setSelectedTournament(match);
+        }
+      } catch (err: any) {
+        showToast(err.message || 'Erreur lors du chargement des tournois', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadTournaments();
+  }, [selectedResourceId, showToast]);
+
+  useEffect(() => {
+    if (selectedTournament) {
+      setTournModalTab('overview');
+      statsService.getTopScorers({ tournamentId: selectedTournament.id }).then(setTournScorers);
+      statsService.getTopAssisters({ tournamentId: selectedTournament.id }).then(setTournAssisters);
+    }
+  }, [selectedTournament?.id]);
+
+  const handleRegister = async () => {
+    if (!selectedTournament || !registerTeamName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const ok = await tournamentsService.registerTeam(selectedTournament.id, registerTeamName);
+      if (ok) {
+        showToast(`Inscription validée pour ${registerTeamName} !`, 'success');
+        setIsRegisterOpen(false);
+        setRegisterTeamName('');
+        const updated = await tournamentsService.getById(selectedTournament.id);
+        setSelectedTournament(updated);
+        const allUpdated = await tournamentsService.list();
+        setTournaments(allUpdated);
+      }
+    } catch {
+      showToast('Erreur lors de l’inscription au tournoi', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateTournament = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formTitle.trim() || !formVenue.trim() || !formCity.trim()) {
+      showToast('Veuillez remplir tous les champs obligatoires.', 'info');
+      return;
+    }
+
+    const fee = parseFloat(formEntryFee);
+    const prize = parseFloat(formPrizePool);
+    if (isNaN(fee) || fee < 0 || isNaN(prize) || prize < 0) {
+      showToast('Veuillez entrer des montants valides pour les frais et dotations.', 'info');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const input: CreateTournamentInput = {
+        title: formTitle.trim(),
+        format: formFormat,
+        city: formCity.trim(),
+        venue: formVenue.trim(),
+        startDate: formStartDate.trim(),
+        endDate: formEndDate.trim(),
+        maxTeams: Number(formMaxTeams),
+        entryFee: fee,
+        prizePool: prize,
+        bannerUrl: formBannerUrl || TOURNAMENT_BANNER_PRESETS[0].url,
+        organizer: formOrganizer.trim() || 'Organisation Officielle',
+      };
+
+      const created = await tournamentsService.create(input);
+      showToast(`Tournoi "${created.title}" créé et publié avec succès !`);
+      setIsCreateOpen(false);
+
+      // Reset form
+      setFormTitle('');
+      setFormEntryFee('80');
+      setFormPrizePool('1200');
+
+      // Refresh list and select the new tournament
+      const allUpdated = await tournamentsService.list();
+      setTournaments(allUpdated);
+      setSelectedTournament(created);
+    } catch (err: any) {
+      showToast(err.message || 'Erreur lors de la création du tournoi', 'error');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 pb-16">
+      {/* Header with CTA */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+            Tournois & Compétitions
+          </h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-1">
+            Participez aux tournois majeurs (11v11, Five, Futsal), remportez des dotations et hissez votre club au sommet.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="px-5 py-2.5 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Organiser un tournoi</span>
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      ) : tournaments.length === 0 ? (
+        <EmptyState
+          icon={Trophy}
+          title="Aucun tournoi disponible"
+          description="De nouvelles compétitions seront bientôt publiées."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {tournaments.map((tourn) => (
+            <div
+              key={tourn.id}
+              onClick={() => setSelectedTournament(tourn)}
+              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
+            >
+              <div>
+                <div className="relative h-44 bg-slate-100 overflow-hidden">
+                  <img
+                    src={tourn.bannerUrl}
+                    alt={tourn.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                  <div className="absolute top-3 right-3">
+                    <span className="px-3 py-1 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-xs shadow-xs">
+                      {tourn.status === 'INSCRIPTIONS_OUVERTES' ? 'Inscriptions ouvertes' : 'En cours'}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <span className="text-xs font-bold text-[#c6f432] block mb-0.5">
+                      {tourn.format} · {tourn.organizer}
+                    </span>
+                    <h3 className="text-lg font-extrabold text-white truncate">
+                      {tourn.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-[#0e5632] shrink-0" />
+                      <span>{tourn.startDate}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-[#0e5632] shrink-0" />
+                      <span className="truncate">{tourn.city}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#e2ebe0] flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-slate-500 text-[11px] block font-medium">Dotation Vainqueur</span>
+                      <strong className="text-[#0e5632] font-extrabold text-base tabular-nums">
+                        {tourn.prizePool.toLocaleString()} €
+                      </strong>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-slate-500 text-[11px] block font-medium">Équipes engagées</span>
+                      <strong className="text-[#092c1a] font-extrabold text-sm tabular-nums">
+                        {tourn.registeredTeams} / {tourn.maxTeams}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-[#f8faf7] border-t border-[#edf3ea] flex items-center justify-between text-xs">
+                <span className="text-slate-500 font-medium">{tourn.venue}</span>
+                <span className="font-bold text-[#0e5632] group-hover:translate-x-0.5 transition-transform">
+                  Consulter le tournoi →
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tournament Details Modal */}
+      {selectedTournament && (
+        <Modal
+          isOpen={!!selectedTournament}
+          onClose={() => setSelectedTournament(null)}
+          title={selectedTournament.title}
+          subtitle={`${selectedTournament.format} · ${selectedTournament.venue} (${selectedTournament.city})`}
+          maxWidth="xl"
+        >
+          <div className="space-y-6">
+            <div className="relative h-48 rounded-2xl overflow-hidden bg-slate-100">
+              <img
+                src={selectedTournament.bannerUrl}
+                alt={selectedTournament.title}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <span className="text-xs font-bold text-[#c6f432] uppercase tracking-wider block">
+                  Organisé par {selectedTournament.organizer}
+                </span>
+                <h2 className="text-xl font-extrabold text-white">{selectedTournament.title}</h2>
+              </div>
+            </div>
+
+            {/* Tournament Navigation Tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setTournModalTab('overview')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  tournModalTab === 'overview'
+                    ? 'bg-[#0e5632] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-[#092c1a]'
+                }`}
+              >
+                Aperçu & Inscription
+              </button>
+              <button
+                type="button"
+                onClick={() => setTournModalTab('scorers')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  tournModalTab === 'scorers'
+                    ? 'bg-[#0e5632] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-[#092c1a]'
+                }`}
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span>Buteurs ({tournScorers.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTournModalTab('assists')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  tournModalTab === 'assists'
+                    ? 'bg-[#0e5632] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-[#092c1a]'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Passeurs ({tournAssisters.length})</span>
+              </button>
+            </div>
+
+            {tournModalTab === 'overview' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
+                    <span className="text-slate-500 text-[11px] block">Prize Pool</span>
+                    <strong className="text-[#0e5632] text-base font-extrabold tabular-nums">
+                      {selectedTournament.prizePool.toLocaleString()} €
+                    </strong>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
+                    <span className="text-slate-500 text-[11px] block">Frais d&apos;inscription</span>
+                    <strong className="text-[#092c1a] text-base font-extrabold tabular-nums">
+                      {selectedTournament.entryFee} €
+                    </strong>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
+                    <span className="text-slate-500 text-[11px] block">Places</span>
+                    <strong className="text-[#059669] text-base font-extrabold tabular-nums">
+                      {Math.max(0, selectedTournament.maxTeams - selectedTournament.registeredTeams)} restantes
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#e2ebe0] space-y-2 text-xs text-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-500">Dates de la compétition :</span>
+                    <span className="font-bold text-[#092c1a]">{selectedTournament.startDate} au {selectedTournament.endDate}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-500">Lieu & Infrastructure :</span>
+                    <span className="font-bold text-[#092c1a]">{selectedTournament.venue}, {selectedTournament.city}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-500">Format de jeu :</span>
+                    <span className="font-bold text-[#0e5632]">{selectedTournament.format}</span>
+                  </div>
+                </div>
+
+                {selectedTournament.registeredTeams < selectedTournament.maxTeams ? (
+                  <button
+                    onClick={() => {
+                      setRegisterTeamName(user?.sportsCv.currentTeam || '');
+                      setIsRegisterOpen(true);
+                    }}
+                    className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span>Inscrire mon équipe au tournoi ({selectedTournament.entryFee} €)</span>
+                  </button>
+                ) : (
+                  <div className="p-3.5 text-center text-xs font-bold text-amber-800 bg-amber-50 rounded-2xl border border-amber-200">
+                    Ce tournoi est complet pour cette édition.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tournModalTab === 'scorers' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-700">Classement des buteurs dans ce tournoi</span>
+                  <span className="text-slate-400 font-semibold">{tournScorers.length} joueurs</span>
+                </div>
+                <div className="rounded-2xl border border-[#dce6d8] overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-[#f8faf7] text-slate-500 font-bold border-b border-[#dce6d8]">
+                        <th className="py-2.5 px-3 text-center w-8">#</th>
+                        <th className="py-2.5 px-3">Buteur</th>
+                        <th className="py-2.5 px-3">Club</th>
+                        <th className="py-2.5 px-3 text-center">MJ</th>
+                        <th className="py-2.5 px-3 text-center text-[#0e5632] font-black">Buts</th>
+                        <th className="py-2.5 px-3 text-center">Ratio</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#edf3ea]">
+                      {tournScorers.map((s) => (
+                        <tr key={s.playerId} className="hover:bg-[#f6f9f5]">
+                          <td className="py-2.5 px-3 text-center font-bold text-slate-600">
+                            {s.rank}
+                          </td>
+                          <td className="py-2.5 px-3 font-extrabold text-[#092c1a]">
+                            <div className="flex items-center gap-2">
+                              <img src={s.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                              <span>{s.playerName}</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600 font-medium">
+                            {s.teamName}
+                          </td>
+                          <td className="py-2.5 px-3 text-center text-slate-500 tabular-nums font-semibold">
+                            {s.matchesPlayed}
+                          </td>
+                          <td className="py-2.5 px-3 text-center tabular-nums">
+                            <span className="px-2 py-0.5 rounded-full bg-[#e8f5e6] text-[#0e5632] font-black text-xs">
+                              {s.goals}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-bold text-slate-700 tabular-nums">
+                            {s.ratio}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {tournModalTab === 'assists' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-700">Classement des passeurs dans ce tournoi</span>
+                  <span className="text-slate-400 font-semibold">{tournAssisters.length} joueurs</span>
+                </div>
+                <div className="rounded-2xl border border-[#dce6d8] overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-[#f8faf7] text-slate-500 font-bold border-b border-[#dce6d8]">
+                        <th className="py-2.5 px-3 text-center w-8">#</th>
+                        <th className="py-2.5 px-3">Passeur</th>
+                        <th className="py-2.5 px-3">Club</th>
+                        <th className="py-2.5 px-3 text-center">MJ</th>
+                        <th className="py-2.5 px-3 text-center text-[#0e5632] font-black">Passes</th>
+                        <th className="py-2.5 px-3 text-center">Clés</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#edf3ea]">
+                      {tournAssisters.map((a) => (
+                        <tr key={a.playerId} className="hover:bg-[#f6f9f5]">
+                          <td className="py-2.5 px-3 text-center font-bold text-slate-600">
+                            {a.rank}
+                          </td>
+                          <td className="py-2.5 px-3 font-extrabold text-[#092c1a]">
+                            <div className="flex items-center gap-2">
+                              <img src={a.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                              <span>{a.playerName}</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600 font-medium">
+                            {a.teamName}
+                          </td>
+                          <td className="py-2.5 px-3 text-center text-slate-500 tabular-nums font-semibold">
+                            {a.matchesPlayed}
+                          </td>
+                          <td className="py-2.5 px-3 text-center tabular-nums">
+                            <span className="px-2 py-0.5 rounded-full bg-[#f2f9ec] text-[#0e5632] font-black text-xs">
+                              {a.assists}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-bold text-slate-700 tabular-nums">
+                            {a.keyPasses}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Register Team Modal */}
+      {isRegisterOpen && selectedTournament && (
+        <Modal
+          isOpen={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          title="Inscription d'équipe"
+          subtitle={selectedTournament.title}
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Nom officiel de l&apos;équipe participante *
+              </label>
+              <input
+                type="text"
+                value={registerTeamName}
+                onChange={(e) => setRegisterTeamName(e.target.value)}
+                placeholder="Ex: Betsileo FC"
+                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-3">
+              <button
+                onClick={() => setIsRegisterOpen(false)}
+                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleRegister}
+                disabled={!registerTeamName.trim() || isSubmitting}
+                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isSubmitting ? 'Validation...' : 'Confirmer l’inscription'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Create Tournament Modal */}
+      {isCreateOpen && (
+        <Modal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          title="Organiser un tournoi"
+          subtitle="Configurez et lancez une nouvelle compétition officielle"
+          maxWidth="lg"
+        >
+          <form onSubmit={handleCreateTournament} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Titre officiel du tournoi *
+              </label>
+              <input
+                type="text"
+                required
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                placeholder="Ex: Tournoi National des Éperviers 2026"
+                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Format de jeu *</label>
+                <select
+                  value={formFormat}
+                  onChange={(e) => setFormFormat(e.target.value as Tournament['format'])}
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                >
+                  <option value="11v11">11 contre 11 (Grand terrain)</option>
+                  <option value="7v7">Foot à 7</option>
+                  <option value="5v5 (Five)">Five (5v5)</option>
+                  <option value="Futsal">Futsal officiel</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nombre d&apos;équipes max *</label>
+                <select
+                  value={formMaxTeams}
+                  onChange={(e) => setFormMaxTeams(Number(e.target.value))}
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                >
+                  <option value={8}>8 équipes (Quarts, Demis, Finale)</option>
+                  <option value={12}>12 équipes (Poules + Finales)</option>
+                  <option value={16}>16 équipes (Format standard mondial)</option>
+                  <option value={24}>24 équipes (Grande compétition)</option>
+                  <option value={32}>32 équipes (Mondial des clubs)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Ville hôte *</label>
+                <input
+                  type="text"
+                  required
+                  value={formCity}
+                  onChange={(e) => setFormCity(e.target.value)}
+                  placeholder="Ex: Fianarantsoa"
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Stade ou Complexe d&apos;accueil *</label>
+                <input
+                  type="text"
+                  required
+                  value={formVenue}
+                  onChange={(e) => setFormVenue(e.target.value)}
+                  placeholder="Ex: Stade Moderne Ampasambazaha"
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Date de début *</label>
+                <input
+                  type="text"
+                  required
+                  value={formStartDate}
+                  onChange={(e) => setFormStartDate(e.target.value)}
+                  placeholder="Ex: 15 Nov 2026"
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Date de fin / Finales *</label>
+                <input
+                  type="text"
+                  required
+                  value={formEndDate}
+                  onChange={(e) => setFormEndDate(e.target.value)}
+                  placeholder="Ex: 22 Nov 2026"
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Dotation Vainqueur / Prize Pool (€) *</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="50"
+                  value={formPrizePool}
+                  onChange={(e) => setFormPrizePool(e.target.value)}
+                  placeholder="1200"
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Frais d&apos;inscription par équipe (€) *</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="5"
+                  value={formEntryFee}
+                  onChange={(e) => setFormEntryFee(e.target.value)}
+                  placeholder="80"
+                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Organisateur / Comité responsable *</label>
+              <input
+                type="text"
+                required
+                value={formOrganizer}
+                onChange={(e) => setFormOrganizer(e.target.value)}
+                placeholder="Ex: Ligue Régionale de Football Matsiatra"
+                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+              />
+            </div>
+
+            {/* Banner Theme Presets */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Visuel officiel du tournoi
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {TOURNAMENT_BANNER_PRESETS.map((preset) => {
+                  const isSelected = formBannerUrl === preset.url;
+                  return (
+                    <button
+                      type="button"
+                      key={preset.url}
+                      onClick={() => setFormBannerUrl(preset.url)}
+                      className={`relative h-20 rounded-2xl overflow-hidden border-2 text-left transition-all cursor-pointer ${
+                        isSelected ? 'border-[#0e5632] ring-2 ring-[#c6f432]' : 'border-transparent hover:opacity-90'
+                      }`}
+                    >
+                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 flex items-end p-2">
+                        <span className="text-[11px] font-bold text-white leading-tight">
+                          {preset.name}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#c6f432] text-[#092c1a] flex items-center justify-center font-bold text-[10px]">
+                          ✓
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={isCreating}
+                className="px-6 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isCreating ? 'Création en cours...' : 'Publier et ouvrir le tournoi'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+};

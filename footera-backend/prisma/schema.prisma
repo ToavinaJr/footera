@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Domain-specific tables keep each aggregate isolated while preserving the
+// current API payload during the first migration from the sql.js prototype.
+model UserRecord {
+  id      String @id
+  payload Json
+  @@map("users")
+}
+model PlayerRecord {
+  id      String @id
+  payload Json
+  @@map("players")
+}
+model TeamRecord {
+  id      String @id
+  payload Json
+  @@map("teams")
+}
+model ClubRecord {
+  id      String @id
+  payload Json
+  @@map("clubs")
+}
+model MatchRecord {
+  id      String @id
+  payload Json
+  @@map("matches")
+}
+model TournamentRecord {
+  id      String @id
+  payload Json
+  @@map("tournaments")
+}
+model PitchRecord {
+  id      String @id
+  payload Json
+  @@map("pitches")
+}
+model BookingRecord {
+  id      String @id
+  payload Json
+  @@map("bookings")
+}
+model RecruitmentAdRecord {
+  id      String @id
+  payload Json
+  @@map("recruitment_ads")
+}
+model ApplicationRecord {
+  id      String @id
+  payload Json
+  @@map("applications")
+}
+model MarketplaceRecord {
+  id      String @id
+  payload Json
+  @@map("marketplace")
+}
+model NotificationRecord {
+  id      String @id
+  payload Json
+  @@map("notifications")
+}
+model LeagueStandingRecord {
+  id      String @id
+  payload Json
+  @@map("league_standings")
+}
+model ActivityFeedRecord {
+  id      String @id
+  payload Json
+  @@map("activity_feed")
+}

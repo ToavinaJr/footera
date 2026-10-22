@@ -1,0 +1,32 @@
+import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
+import { RecruitmentService } from '../modules/recruitment/recruitment.service.js';
+
+@Controller('recruitment')
+export class RecruitmentController {
+  constructor(private readonly recruitment: RecruitmentService) {}
+
+  @Get('ads')
+  listAds(@Query('q') query?: string, @Query('position') position?: string) {
+    return this.recruitment.listAds({ query, position });
+  }
+
+  @Get('ads/:id')
+  async getAdById(@Param('id') id: string) {
+    const ad = await this.recruitment.getAd(id);
+    if (!ad) throw new NotFoundException('Annonce introuvable');
+    return ad;
+  }
+
+  @Post('ads/:id/apply')
+  apply(
+    @Param('id') id: string,
+    @Body() body: { message: string; phone: string },
+  ) {
+    return this.recruitment.apply(id, body);
+  }
+
+  @Get('my-applications')
+  getMyApplications() {
+    return this.recruitment.listApplications();
+  }
+}

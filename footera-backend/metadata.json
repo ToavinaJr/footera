@@ -1,0 +1,8 @@
+{
+  "name": "Footera — Football Ecosystem Platform",
+  "description": "Plateforme complète pour l'écosystème du football : joueurs, clubs, terrains, tournois, recrutement et marketplace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
