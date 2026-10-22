@@ -17,7 +17,7 @@ export interface CreatePitchInput {
 }
 
 export const pitchesService = {
-  async list(filters?: { city?: string; surface?: SurfaceType | 'Toutes' }): Promise<Pitch[]> {
+  async list(filters?: { city?: string; surface?: SurfaceType | 'Toutes'; date?: string }): Promise<Pitch[]> {
     if (IS_MOCK_MODE) {
       let pitches = mockStorage.getPitches();
       if (filters?.city && filters.city !== 'Toutes') {
@@ -26,20 +26,43 @@ export const pitchesService = {
       if (filters?.surface && filters.surface !== 'Toutes') {
         pitches = pitches.filter((p) => p.surface === filters.surface);
       }
+      if (filters?.date) {
+        const bookings = mockStorage.getBookings();
+        pitches = pitches.map((pitch) => {
+          const bookedTimes = new Set(bookings
+            .filter((booking) => booking.pitchId === pitch.id && booking.date === filters.date && booking.status !== 'CANCELLED')
+            .map((booking) => booking.time));
+          return { ...pitch, availableSlots: pitch.availableSlots.map((slot) => ({
+            ...slot,
+            isAvailable: slot.isAvailable && !bookedTimes.has(slot.time),
+          })) };
+        });
+      }
       return mockDelay(pitches, 200);
     }
     const params = new URLSearchParams();
     if (filters?.city && filters.city !== 'Toutes') params.set('city', filters.city);
+    if (filters?.date) params.set('date', filters.date);
     return apiClient<Pitch[]>(`pitches?${params.toString()}`);
   },
 
-  async getById(id: string): Promise<Pitch> {
+  async getById(id: string, date?: string): Promise<Pitch> {
     if (IS_MOCK_MODE) {
       const p = mockStorage.getPitchById(id);
       if (!p) throw new Error('Terrain introuvable');
-      return mockDelay(p, 150);
+      if (!date) return mockDelay(p, 150);
+      const bookedTimes = new Set(mockStorage.getBookings()
+        .filter((booking) => booking.pitchId === p.id && booking.date === date && booking.status !== 'CANCELLED')
+        .map((booking) => booking.time));
+      return mockDelay({ ...p, availableSlots: p.availableSlots.map((slot) => ({
+        ...slot,
+        isAvailable: slot.isAvailable && !bookedTimes.has(slot.time),
+      })) }, 150);
     }
-    return apiClient<Pitch>(`pitches/${id}`);
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    const query = params.size ? `?${params.toString()}` : '';
+    return apiClient<Pitch>(`pitches/${id}${query}`);
   },
 
   async create(input: CreatePitchInput): Promise<Pitch> {

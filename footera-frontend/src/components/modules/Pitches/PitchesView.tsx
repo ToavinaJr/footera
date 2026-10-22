@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Shield, Check, Plus, Building2, CheckSquare, Square, Sparkles } from 'lucide-react';
 import { pitchesService, CreatePitchInput } from '../../../services/pitchesService';
@@ -55,6 +55,8 @@ export const PitchesView: React.FC = () => {
   const isBookingRoute = location.pathname.endsWith('/book');
   const pitchModal = useRouteModal('/pitches');
   const [pitches, setPitches] = useState<Pitch[]>([]);
+  const hasLoadedPitches = useRef(false);
+  const pitchRequestId = useRef(0);
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceType | 'Toutes'>('Toutes');
   const [cityFilter, setCityFilter] = useState('Toutes');
   const [isLoading, setIsLoading] = useState(true);
@@ -93,22 +95,28 @@ export const PitchesView: React.FC = () => {
 
   useEffect(() => {
     async function loadPitches() {
-      setIsLoading(true);
+      const requestId = ++pitchRequestId.current;
+      // Keep the current pitch mounted while refreshing date-specific availability.
+      setIsLoading(!hasLoadedPitches.current);
       try {
         const data = await pitchesService.list({
           surface: surfaceFilter,
           city: cityFilter,
+          date: routePitchId ? bookingDate : undefined,
         });
+        if (requestId !== pitchRequestId.current) return;
         setPitches(data);
+        hasLoadedPitches.current = true;
 
       } catch (err: any) {
+        if (requestId !== pitchRequestId.current) return;
         showToast(err.message || 'Erreur lors du chargement des terrains', 'error');
       } finally {
-        setIsLoading(false);
+        if (requestId === pitchRequestId.current) setIsLoading(false);
       }
     }
     loadPitches();
-  }, [surfaceFilter, cityFilter, selectedResourceId, showToast]);
+  }, [surfaceFilter, cityFilter, selectedResourceId, showToast, routePitchId, bookingDate]);
 
   useEffect(() => {
     if (!selectedPitch) return;
@@ -292,6 +300,9 @@ export const PitchesView: React.FC = () => {
               <div><h2 className="text-lg font-extrabold text-[#092c1a]">Créneaux disponibles</h2><p className="mt-1 text-xs text-slate-500">Sélectionnez un ou plusieurs créneaux à réserver.</p></div>
               <Calendar className="h-5 w-5 text-[#0e5632]" />
             </div>
+            <div className="mt-4 flex flex-wrap gap-2" aria-label="Date des créneaux">
+              {dateOptions.map((date) => <button key={date} type="button" onClick={() => handleBookingDateChange(date)} aria-pressed={bookingDate === date} className={`rounded-xl border px-3 py-2 text-xs font-bold ${bookingDate === date ? 'border-[#0e5632] bg-[#0e5632] text-white' : 'border-[#dce6d8] bg-white text-[#0e5632]'}`}>{date}</button>)}
+            </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {detailPitch.availableSlots.map((slot) => {
                 const isSelected = selectedSlots.some((selected) => selected.date === bookingDate && selected.slot.id === slot.id);
@@ -300,7 +311,7 @@ export const PitchesView: React.FC = () => {
                   <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-[#0e4d2e] text-white' : 'border border-[#dce6d8] bg-white text-[#0e5632] hover:bg-[#f2f8f0]'}`}>{!slot.isAvailable ? 'Indisponible' : isSelected ? 'Sélectionné' : 'Sélectionner'}</button>
                 </div>;
               })}
-              {!detailPitch.availableSlots.length && <p className="text-sm text-slate-500">Aucun créneau renseigné pour le moment.</p>}
+              {!detailPitch.availableSlots.some((slot) => slot.isAvailable) && <p className="text-sm text-slate-500">Aucun créneau disponible pour cette date.</p>}
             </div>
             {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-[#edf3ea] pt-4 sm:flex-row sm:items-center">
               <p className="text-sm text-slate-600"><strong className="text-[#092c1a]">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-[#0e5632]">{selectedSlotsTotal} €</strong> au total</p>

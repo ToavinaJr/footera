@@ -334,6 +334,12 @@ class MockStorageRepository {
     totalPrice: number;
   }): Booking {
     const pitch = this.pitches.find((p) => p.id === input.pitchId);
+    const slot = pitch?.availableSlots.find((candidate) => candidate.time === input.time && candidate.isAvailable);
+    const alreadyBooked = this.bookings.some((booking) => booking.pitchId === input.pitchId
+      && booking.date === input.date && booking.time === input.time && booking.status !== 'CANCELLED');
+    if (!slot || alreadyBooked) {
+      throw new Error('Ce créneau n’est plus disponible pour cette date.');
+    }
     const newBooking: Booking = {
       id: `bkg_${Date.now()}`,
       pitchId: input.pitchId,
@@ -343,7 +349,7 @@ class MockStorageRepository {
       date: input.date,
       time: input.time,
       durationMinutes: 90,
-      totalPrice: input.totalPrice,
+      totalPrice: slot.price,
       bookerName: this.profile.name,
       bookerPhone: this.profile.phone,
       teamName: input.teamName || this.profile.sportsCv.currentTeam,

@@ -6,13 +6,13 @@ export class PitchesController {
   constructor(private readonly bookings: BookingsService) {}
 
   @Get()
-  list(@Query('city') city?: string, @Query('surface') surface?: string) {
-    return this.bookings.listPitches({ city, surface });
+  list(@Query('city') city?: string, @Query('surface') surface?: string, @Query('date') date?: string) {
+    return this.bookings.listPitches({ city, surface, date });
   }
 
   @Get(':id')
-  async getById(@Param('id') id: string) {
-    const pitch = await this.bookings.getPitch(id);
+  async getById(@Param('id') id: string, @Query('date') date?: string) {
+    const pitch = await this.bookings.getPitch(id, date);
     if (!pitch) throw new NotFoundException('Terrain introuvable');
     return pitch;
   }
