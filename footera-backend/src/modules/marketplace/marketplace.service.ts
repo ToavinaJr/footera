@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
+import { validateImageUrl } from '../uploads/image-url.validation.js';
 
 @Injectable()
 export class MarketplaceService {
@@ -15,6 +16,7 @@ export class MarketplaceService {
       && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice));
   }
   async create(input: any) {
+    input.imageUrl = validateImageUrl(input.imageUrl, 'Photo de l’article');
     const user: any = await this.accounts.profile();
     const id = `mkt_${randomUUID()}`;
     const item = { ...input, id, sellerName: user?.name || 'Vendeur Footera', sellerRating: 5, createdAt: "À l'instant", isAvailable: true };

@@ -14,8 +14,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 FROM node:24-alpine AS runtime
-ENV NODE_ENV=production PORT=3000
+ENV NODE_ENV=production PORT=3000 UPLOAD_DIR=/data/uploads
 WORKDIR /app
+RUN mkdir -p /data/uploads && chown node:node /data/uploads
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build --chown=node:node /app/dist ./dist

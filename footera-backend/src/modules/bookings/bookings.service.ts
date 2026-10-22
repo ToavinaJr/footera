@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
+import { validateImageUrl } from '../uploads/image-url.validation.js';
 
 @Injectable()
 export class BookingsService {
@@ -36,6 +37,7 @@ export class BookingsService {
     };
   }
   async createPitch(input: any) {
+    input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');
     const id = `pitch_${randomUUID()}`;
     const pitch = { ...input, id, rating: 5, reviewsCount: 1, amenities: input.amenities || [], availableSlots: input.availableSlots || [] };
     await this.records.create('pitches', id, pitch);

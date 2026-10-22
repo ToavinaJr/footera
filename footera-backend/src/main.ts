@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
+import express from 'express';
+import { resolve } from 'node:path';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
@@ -14,6 +16,16 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
+  const uploadDirectory = resolve(process.env.UPLOAD_DIR || 'uploads');
+  app.use('/api/v1/uploads', express.static(uploadDirectory, {
+    dotfiles: 'deny',
+    index: false,
+    setHeaders(response) {
+      response.setHeader('X-Content-Type-Options', 'nosniff');
+      response.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+      response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    },
+  }));
   app.setGlobalPrefix('api/v1');
   await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');
 }

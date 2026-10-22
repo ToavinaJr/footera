@@ -11,6 +11,7 @@ import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useSearchParams } from 'react-router-dom';
 import { finiteNumberOr, formatFiniteNumber } from '../../../utils/numberFormat';
+import { ImageUploadField } from '../../common/ImageUploadField';
 
 export const TeamsView: React.FC = () => {
   const { showToast, selectedResourceId, toggleFavoriteTeam, user, navigateToResource } = useApp();
@@ -35,6 +36,13 @@ export const TeamsView: React.FC = () => {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
+  const [updatingClubLogoId, setUpdatingClubLogoId] = useState<string | null>(null);
+
+  const manageableClubIds = new Set(user?.activeRole === 'Entraîneur'
+    ? clubs.filter((club) => club.teams.some((clubTeam) => teams.some((team) =>
+      team.id === clubTeam.id && team.name === user.sportsCv.currentTeam,
+    ))).map((club) => club.id)
+    : []);
 
   useEffect(() => {
     async function loadData() {
@@ -327,6 +335,24 @@ export const TeamsView: React.FC = () => {
                   {club.teamsCount} équipes
                 </Badge>
               </div>
+
+              {manageableClubIds.has(club.id) && <ImageUploadField
+                purpose="club-logo"
+                label={updatingClubLogoId === club.id ? 'Enregistrement…' : 'Importer le logo du club'}
+                disabled={updatingClubLogoId !== null}
+                onUploaded={async (logoUrl) => {
+                  setUpdatingClubLogoId(club.id);
+                  try {
+                    const updatedClub = await teamsService.updateClubLogo(club.id, logoUrl);
+                    setClubs((current) => current.map((item) => item.id === updatedClub.id ? updatedClub : item));
+                    showToast('Logo du club mis à jour.');
+                  } catch (error) {
+                    showToast(error instanceof Error ? error.message : 'Impossible de modifier le logo du club.', 'error');
+                  } finally {
+                    setUpdatingClubLogoId(null);
+                  }
+                }}
+              />}
 
               <div className="text-xs text-slate-600 space-y-1">
                 <div>Stade officiel : <strong className="text-[#092c1a]">{club.stadiumName}</strong></div>

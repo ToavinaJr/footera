@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateSportsCvPayload } from './sports-cv.validation.js';
+import { validateImageUrl } from '../uploads/image-url.validation.js';
 
 const USER_ID = 'usr_me';
 
@@ -27,6 +28,7 @@ export class AccountsService {
     if (typeof partial.email === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(partial.email)) {
       throw new BadRequestException('Adresse e-mail invalide.');
     }
+    if (partial.avatarUrl !== undefined) partial.avatarUrl = validateImageUrl(partial.avatarUrl, 'Photo de profil');
     const current = await this.profile();
     return current ? this.records.save('users', USER_ID, {
       ...current,

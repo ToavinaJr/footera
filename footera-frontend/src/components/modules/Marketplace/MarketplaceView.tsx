@@ -8,6 +8,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
+import { ImageUploadField } from '../../common/ImageUploadField';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {
@@ -445,6 +446,7 @@ export const MarketplaceView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Photo illustrative de l&apos;article
               </label>
+              <ImageUploadField purpose="marketplace" label="Importer une photo" onUploaded={setFormImageUrl} disabled={isSubmitting || user?.activeRole !== 'Vendeur'} disabledHint="Passez au rôle Vendeur pour importer l’image." />
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {MARKETPLACE_IMAGE_PRESETS.map((preset) => {
                   const isSelected = formImageUrl === preset.url;

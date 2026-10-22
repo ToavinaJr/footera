@@ -44,6 +44,16 @@ export const teamsService = {
     return apiClient<Club[]>('clubs');
   },
 
+  async updateClubLogo(clubId: string, logoUrl: string): Promise<Club> {
+    if (IS_MOCK_MODE) {
+      return mockDelay(mockStorage.updateClubLogo(clubId, logoUrl), 250);
+    }
+    return apiClient<Club>(`clubs/${encodeURIComponent(clubId)}/logo`, {
+      method: 'PATCH',
+      body: JSON.stringify({ logoUrl }),
+    });
+  },
+
   async joinTeam(teamId: string, message: string): Promise<{ success: boolean; message: string }> {
     if (IS_MOCK_MODE) {
       const res = mockStorage.joinTeam(teamId, message);

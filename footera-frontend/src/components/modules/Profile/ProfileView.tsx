@@ -27,9 +27,10 @@ import { playersService } from '../../../services/playersService';
 import type { Player, Team } from '../../../types';
 import { PlayerCareerPanel } from '../Players/PlayerCareerPanel';
 import { validateSportsCv, type SportsCvErrors } from './sportsCvValidation';
+import { ImageUploadField } from '../../common/ImageUploadField';
 
 export const ProfileView: React.FC = () => {
-  const { user, switchRole, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
+  const { user, switchRole, updateProfile, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
   const { profileId } = useParams();
   const isOwner = !profileId;
   const location = useLocation();
@@ -174,12 +175,19 @@ export const ProfileView: React.FC = () => {
       {/* Profile Header */}
       <div className="p-6 md:p-8 rounded-3xl bg-white border border-[#dce6d8] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <img
-            src={displayedAvatar}
-            alt={displayedName}
-            className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover bg-slate-100 border-2 border-pitch-primary shrink-0"
-            referrerPolicy="no-referrer"
-          />
+          <div className="shrink-0 space-y-2">
+            <img
+              src={displayedAvatar}
+              alt={displayedName}
+              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover bg-slate-100 border-2 border-pitch-primary"
+              referrerPolicy="no-referrer"
+            />
+            {isOwner && <ImageUploadField
+              purpose="avatar"
+              label="Changer la photo"
+              onUploaded={async (avatarUrl) => updateProfile({ avatarUrl })}
+            />}
+          </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h1 className="text-xl md:text-2xl font-extrabold text-[#092c1a] tracking-tight">

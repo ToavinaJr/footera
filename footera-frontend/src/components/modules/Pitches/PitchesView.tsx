@@ -11,6 +11,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 import { formatFiniteNumber } from '../../../utils/numberFormat';
+import { ImageUploadField } from '../../common/ImageUploadField';
 
 const PITCH_IMAGE_PRESETS = [
   {
@@ -739,6 +740,7 @@ export const PitchesView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Photo principale du terrain
               </label>
+              <ImageUploadField purpose="pitch" label="Importer une photo du terrain" onUploaded={setFormImageUrl} disabled={isCreating || user?.activeRole !== 'Gestionnaire Terrain'} disabledHint="Passez au rôle Gestionnaire Terrain pour importer l’image." />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {PITCH_IMAGE_PRESETS.map((preset) => {
                   const isSelected = formImageUrl === preset.url;

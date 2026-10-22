@@ -165,6 +165,18 @@ class MockStorageRepository {
     return structuredClone(this.clubs);
   }
 
+  updateClubLogo(clubId: string, logoUrl: string): Club {
+    const club = this.clubs.find((candidate) => candidate.id === clubId);
+    const team = this.teams.find((candidate) => candidate.name === this.profile.sportsCv.currentTeam);
+    if (this.profile.activeRole !== 'Entraîneur' || !club || !team || !club.teams.some((item) => item.id === team.id)) {
+      throw new Error('Vous ne pouvez modifier que le logo du club de votre équipe avec le rôle Entraîneur.');
+    }
+    club.logoUrl = logoUrl;
+    saveToStorage(STORAGE_KEYS.CLUBS, this.clubs);
+    emitChange();
+    return structuredClone(club);
+  }
+
   joinTeam(teamId: string, message: string): { success: boolean; message: string } {
     const team = this.teams.find((t) => t.id === teamId);
     if (!team) return { success: false, message: 'Équipe introuvable' };

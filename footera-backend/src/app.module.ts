@@ -13,6 +13,7 @@ import { RecruitmentModule } from './modules/recruitment/recruitment.module.js';
 import { StatsModule } from './modules/stats/stats.module.js';
 import { TeamsModule } from './modules/teams/teams.module.js';
 import { TournamentsModule } from './modules/tournaments/tournaments.module.js';
+import { UploadsModule } from './modules/uploads/uploads.module.js';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TournamentsModule } from './modules/tournaments/tournaments.module.js';
     MarketplaceModule,
     NotificationsModule,
     StatsModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

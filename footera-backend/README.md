@@ -17,6 +17,12 @@ API REST NestJS avec PostgreSQL et Prisma ORM. Le serveur écoute par défaut su
 
 5. Lancer le serveur avec `npm run start:dev`.
 
+## Images envoyées
+
+L’API accepte les images PNG, JPEG et WebP de 5 Mo maximum via `POST /api/v1/uploads/images` (multipart : `file` et `purpose`). Elle vérifie le MIME et la signature binaire, refuse SVG et les images dépassant 20 mégapixels, génère un nom aléatoire et applique une limite de 20 uploads par adresse IP et par heure. Les images sont servies sous `/api/v1/uploads/` avec `nosniff` et CSP restrictive. `UPLOAD_DIR` configure le répertoire de stockage ; en production, montez-le sur un volume persistant.
+
+Les tests de sécurité upload sont exécutés par `npm run test` : ils couvrent SVG, MIME falsifié, dépassement de taille, dimensions dangereuses, quota et autorisation de modification d’un logo. Le backend actuel reste une API de démonstration sans authentification réelle ; la limite IP et les contrôles de rôle ne remplacent pas une identité vérifiée. Ne l’exposez pas en production avant d’ajouter une authentification serveur et un stockage objet durable.
+
 ## Commandes utiles
 
 | Commande | Usage |
