@@ -9,16 +9,18 @@ export class StatsController {
   getTopScorers(
     @Query('tournamentId') tournamentId?: string,
     @Query('teamId') teamId?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.stats.topScorers({ tournamentId, teamId });
+    return this.stats.topScorers({ tournamentId, teamId, limit: this.parseLimit(limit) });
   }
 
   @Get('top-assisters')
   getTopAssisters(
     @Query('tournamentId') tournamentId?: string,
     @Query('teamId') teamId?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.stats.topAssisters({ tournamentId, teamId });
+    return this.stats.topAssisters({ tournamentId, teamId, limit: this.parseLimit(limit) });
   }
 
   @Get('teams')
@@ -33,5 +35,11 @@ export class StatsController {
     @Query('searchQuery') searchQuery?: string,
   ) {
     return this.stats.playerStats({ teamId, position, searchQuery });
+  }
+
+  private parseLimit(value?: string): number | undefined {
+    if (!value) return undefined;
+    const limit = Number.parseInt(value, 10);
+    return Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : undefined;
   }
 }

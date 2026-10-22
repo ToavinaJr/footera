@@ -15,6 +15,13 @@ export class TeamsController {
     return this.teams.myTeam();
   }
 
+  @Get(':id/detail')
+  async getDetail(@Param('id') id: string) {
+    const team = await this.teams.getDetail(id);
+    if (!team) throw new NotFoundException('Ã‰quipe introuvable');
+    return team;
+  }
+
   @Get(':id')
   async getById(@Param('id') id: string) {
     const team = await this.teams.getById(id);

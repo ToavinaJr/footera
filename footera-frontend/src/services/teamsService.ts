@@ -1,7 +1,7 @@
 import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
-import { Team, Club } from '../types';
+import { Team, TeamDetail, Club } from '../types';
 
 export const teamsService = {
   async list(filters?: { query?: string; category?: string; city?: string }): Promise<Team[]> {
@@ -28,6 +28,25 @@ export const teamsService = {
       return mockDelay(team, 150);
     }
     return apiClient<Team>(`teams/${id}`);
+  },
+
+  async getDetail(id: string): Promise<TeamDetail> {
+    if (IS_MOCK_MODE) {
+      const team = mockStorage.getTeamById(id);
+      if (!team) throw new Error('Équipe introuvable');
+      const matches = mockStorage.getMatches().filter((match) => match.homeTeam.id === id || match.awayTeam.id === id);
+      const decorate = (match: (typeof matches)[number]) => ({
+        ...match,
+        isHome: match.homeTeam.id === id,
+        goalScorers: match.events.filter((event) => event.type === 'goal'),
+      });
+      return mockDelay({
+        ...team,
+        recentMatches: matches.filter((match) => match.status === 'FINISHED').map(decorate),
+        upcomingMatches: matches.filter((match) => match.status === 'SCHEDULED').map(decorate),
+      }, 150);
+    }
+    return apiClient<TeamDetail>(`teams/${encodeURIComponent(id)}/detail`);
   },
 
   async getMyTeam(): Promise<Team | undefined> {

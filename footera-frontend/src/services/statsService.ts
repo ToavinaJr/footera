@@ -7,11 +7,12 @@ export const statsService = {
   /**
    * Récupère le classement des meilleurs buteurs, avec filtres par tournoi et par équipe
    */
-  async getTopScorers(filters?: { tournamentId?: string; teamId?: string }): Promise<TopScorerItem[]> {
+  async getTopScorers(filters?: { tournamentId?: string; teamId?: string; limit?: number }): Promise<TopScorerItem[]> {
     if (!IS_MOCK_MODE) {
       const params = new URLSearchParams();
       if (filters?.tournamentId && filters.tournamentId !== 'all') params.set('tournamentId', filters.tournamentId);
       if (filters?.teamId && filters.teamId !== 'all') params.set('teamId', filters.teamId);
+      if (filters?.limit) params.set('limit', String(filters.limit));
       return apiClient<TopScorerItem[]>(`stats/top-scorers?${params.toString()}`);
     }
     const players = mockStorage.getPlayers();
@@ -76,7 +77,7 @@ export const statsService = {
     const ranked = list.map((item, idx) => ({ ...item, rank: idx + 1 }));
 
     if (IS_MOCK_MODE) {
-      return mockDelay(ranked, 150);
+      return mockDelay(filters?.limit ? ranked.slice(0, filters.limit) : ranked, 150);
     }
     return ranked;
   },
@@ -84,11 +85,12 @@ export const statsService = {
   /**
    * Récupère le classement des meilleurs passeurs, avec filtres par tournoi et par équipe
    */
-  async getTopAssisters(filters?: { tournamentId?: string; teamId?: string }): Promise<TopAssisterItem[]> {
+  async getTopAssisters(filters?: { tournamentId?: string; teamId?: string; limit?: number }): Promise<TopAssisterItem[]> {
     if (!IS_MOCK_MODE) {
       const params = new URLSearchParams();
       if (filters?.tournamentId && filters.tournamentId !== 'all') params.set('tournamentId', filters.tournamentId);
       if (filters?.teamId && filters.teamId !== 'all') params.set('teamId', filters.teamId);
+      if (filters?.limit) params.set('limit', String(filters.limit));
       return apiClient<TopAssisterItem[]>(`stats/top-assisters?${params.toString()}`);
     }
     const players = mockStorage.getPlayers();
@@ -146,7 +148,7 @@ export const statsService = {
     const ranked = list.map((item, idx) => ({ ...item, rank: idx + 1 }));
 
     if (IS_MOCK_MODE) {
-      return mockDelay(ranked, 150);
+      return mockDelay(filters?.limit ? ranked.slice(0, filters.limit) : ranked, 150);
     }
     return ranked;
   },

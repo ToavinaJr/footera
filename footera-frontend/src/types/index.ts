@@ -102,6 +102,7 @@ export interface Team {
     losses: number;
     goalsFor: number;
     goalsAgainst: number;
+    goalsPerMatch?: number;
     points: number;
     position: number;
   };
@@ -154,6 +155,7 @@ export interface Match {
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED';
   date: string;
   playedAt?: string;
+  scheduledAt?: string;
   time: string;
   venue: string;
   pitchName?: string;
@@ -162,6 +164,16 @@ export interface Match {
   minute?: number;
   events: MatchEvent[];
   stats?: MatchStats;
+}
+
+export interface TeamMatch extends Match {
+  goalScorers: MatchEvent[];
+  isHome: boolean;
+}
+
+export interface TeamDetail extends Team {
+  recentMatches: TeamMatch[];
+  upcomingMatches: TeamMatch[];
 }
 
 export interface LeagueStandingRow {

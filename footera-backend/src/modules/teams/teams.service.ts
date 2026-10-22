@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
+import { buildTeamMatchSummary } from './team-match-summary.js';
 
 @Injectable()
 export class TeamsService {
@@ -12,15 +13,48 @@ export class TeamsService {
   ) {}
 
   async list(filters: { query?: string; category?: string } = {}) {
-    const teams = await this.records.list<any>('teams');
+    const [teams, matches] = await Promise.all([
+      this.records.list<any>('teams'),
+      this.records.list<any>('matches'),
+    ]);
     return teams.filter((team) => {
       const query = filters.query?.toLowerCase();
       return (!query || `${team.name} ${team.city}`.toLowerCase().includes(query))
         && (!filters.category || filters.category === 'Toutes' || team.category === filters.category);
+    }).map((team) => {
+      const { recentForm } = buildTeamMatchSummary(team.id, matches);
+      return {
+        ...team,
+        recentForm,
+        stats: {
+          ...team.stats,
+          goalsPerMatch: team.stats?.matchesPlayed
+            ? Number((team.stats.goalsFor / team.stats.matchesPlayed).toFixed(2))
+            : 0,
+        },
+      };
     });
   }
 
   getById(id: string) { return this.records.find('teams', id); }
+
+  async getDetail(id: string) {
+    const [team, matches] = await Promise.all([
+      this.records.find<any>('teams', id),
+      this.records.list<any>('matches'),
+    ]);
+    if (!team) return null;
+    return {
+      ...team,
+      ...buildTeamMatchSummary(id, matches),
+      stats: {
+        ...team.stats,
+        goalsPerMatch: team.stats?.matchesPlayed
+          ? Number((team.stats.goalsFor / team.stats.matchesPlayed).toFixed(2))
+          : 0,
+      },
+    };
+  }
 
   async myTeam() {
     const user: any = await this.accounts.profile();

@@ -9,7 +9,7 @@ const FALLBACK_LOGO = 'https://images.unsplash.com/photo-1517466787929-bc90951d0
 export class StatsService {
   constructor(private readonly playersService: PlayersService, private readonly teamsService: TeamsService, private readonly tournamentsService: TournamentsService) {}
 
-  async topScorers(filters: { tournamentId?: string; teamId?: string } = {}) {
+  async topScorers(filters: { tournamentId?: string; teamId?: string; limit?: number } = {}) {
     const [players, teams, tournaments]: any[] = await Promise.all([this.playersService.list(), this.teamsService.list(), this.tournamentsService.list()]);
     const tournament = tournaments.find((item: any) => item.id === filters.tournamentId);
     let rows = players.map((player: any) => {
@@ -20,10 +20,11 @@ export class StatsService {
       return { playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl, teamId: team.id, teamName: team.name, teamLogo: team.logoUrl, tournamentId: tournament?.id, tournamentTitle: tournament?.title, position: player.primaryPosition, matchesPlayed, goals, penalties: Math.max(0, Math.floor(goals * .2)), ratio: matchesPlayed ? Number((goals / matchesPlayed).toFixed(2)) : 0, minutesPerGoal: goals ? Math.round(matchesPlayed * 85 / goals) : 0 };
     });
     if (filters.teamId && filters.teamId !== 'all') rows = rows.filter((row: any) => row.teamId === filters.teamId);
-    return rows.sort((a: any, b: any) => b.goals - a.goals || b.ratio - a.ratio).map((row: any, index: number) => ({ ...row, rank: index + 1 }));
+    const ranked = rows.sort((a: any, b: any) => b.goals - a.goals || b.ratio - a.ratio).map((row: any, index: number) => ({ ...row, rank: index + 1 }));
+    return filters.limit ? ranked.slice(0, filters.limit) : ranked;
   }
 
-  async topAssisters(filters: { tournamentId?: string; teamId?: string } = {}) {
+  async topAssisters(filters: { tournamentId?: string; teamId?: string; limit?: number } = {}) {
     const [players, teams, tournaments]: any[] = await Promise.all([this.playersService.list(), this.teamsService.list(), this.tournamentsService.list()]);
     const tournament = tournaments.find((item: any) => item.id === filters.tournamentId);
     let rows = players.map((player: any) => {
@@ -34,7 +35,8 @@ export class StatsService {
       return { playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl, teamId: team.id, teamName: team.name, teamLogo: team.logoUrl, tournamentId: tournament?.id, tournamentTitle: tournament?.title, position: player.primaryPosition, matchesPlayed, assists, keyPasses: Math.round(assists * 2.8 + matchesPlayed), ratio: matchesPlayed ? Number((assists / matchesPlayed).toFixed(2)) : 0 };
     });
     if (filters.teamId && filters.teamId !== 'all') rows = rows.filter((row: any) => row.teamId === filters.teamId);
-    return rows.sort((a: any, b: any) => b.assists - a.assists || b.ratio - a.ratio).map((row: any, index: number) => ({ ...row, rank: index + 1 }));
+    const ranked = rows.sort((a: any, b: any) => b.assists - a.assists || b.ratio - a.ratio).map((row: any, index: number) => ({ ...row, rank: index + 1 }));
+    return filters.limit ? ranked.slice(0, filters.limit) : ranked;
   }
 
   async teamStats(filters: { tournamentId?: string } = {}) {
