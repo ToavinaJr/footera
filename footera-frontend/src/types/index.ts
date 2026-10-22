@@ -118,6 +118,7 @@ export interface Club {
   teamsCount: number;
   membersTotal: number;
   presidentName: string;
+  canManageLogo?: boolean;
   teams: { id: string; name: string; category: string }[];
 }
 
@@ -174,6 +175,7 @@ export interface TeamMatch extends Match {
 export interface TeamDetail extends Team {
   recentMatches: TeamMatch[];
   upcomingMatches: TeamMatch[];
+  topScorers: Array<{ playerId: string; playerName: string; goals: number }>;
 }
 
 export interface LeagueStandingRow {
@@ -226,6 +228,7 @@ export interface Tournament {
   endDate: string;
   maxTeams: number;
   registeredTeams: number;
+  remainingTeams?: number;
   entryFee: number; // in EUR
   prizePool: number; // in EUR
   status: 'INSCRIPTIONS_OUVERTES' | 'EN_COURS' | 'TERMINE';

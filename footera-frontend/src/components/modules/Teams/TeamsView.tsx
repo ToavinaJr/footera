@@ -10,7 +10,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useSearchParams } from 'react-router-dom';
-import { finiteNumberOr, formatFiniteNumber } from '../../../utils/numberFormat';
+import { formatFiniteNumber } from '../../../utils/numberFormat';
 import { ImageUploadField } from '../../common/ImageUploadField';
 
 export const TeamsView: React.FC = () => {
@@ -37,12 +37,6 @@ export const TeamsView: React.FC = () => {
   const [joinMessage, setJoinMessage] = useState('');
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
   const [updatingClubLogoId, setUpdatingClubLogoId] = useState<string | null>(null);
-
-  const manageableClubIds = new Set(user?.activeRole === 'Entraîneur'
-    ? clubs.filter((club) => club.teams.some((clubTeam) => teams.some((team) =>
-      team.id === clubTeam.id && team.name === user.sportsCv.currentTeam,
-    ))).map((club) => club.id)
-    : []);
 
   useEffect(() => {
     async function loadData() {
@@ -337,7 +331,7 @@ export const TeamsView: React.FC = () => {
                 </Badge>
               </div>
 
-              {manageableClubIds.has(club.id) && <ImageUploadField
+              {club.canManageLogo && <ImageUploadField
                 purpose="club-logo"
                 label={updatingClubLogoId === club.id ? 'Enregistrement…' : 'Importer le logo du club'}
                 disabled={updatingClubLogoId !== null}

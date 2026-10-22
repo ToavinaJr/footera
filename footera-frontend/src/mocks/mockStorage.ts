@@ -311,13 +311,20 @@ class MockStorageRepository {
     imageUrl: string;
     hourlyRate: number;
     amenities: string[];
-    availableSlots: Pitch['availableSlots'];
   }): Pitch {
+    const id = `pitch_${Date.now()}`;
+    const availableSlots: Pitch['availableSlots'] = [
+      { id: `${id}_slot_1`, time: '09:00 - 10:30', price: input.hourlyRate, isAvailable: true },
+      { id: `${id}_slot_2`, time: '14:00 - 15:30', price: input.hourlyRate, isAvailable: true },
+      { id: `${id}_slot_3`, time: '18:00 - 19:30', price: Math.round(input.hourlyRate * 1.1), isAvailable: true },
+      { id: `${id}_slot_4`, time: '20:00 - 21:30', price: Math.round(input.hourlyRate * 1.15), isAvailable: true },
+    ];
     const newPitch: Pitch = {
       ...input,
-      id: `pitch_${Date.now()}`,
+      id,
       rating: 5.0,
       reviewsCount: 1,
+      availableSlots,
     };
     this.pitches.unshift(newPitch);
     saveToStorage(STORAGE_KEYS.PITCHES, this.pitches);

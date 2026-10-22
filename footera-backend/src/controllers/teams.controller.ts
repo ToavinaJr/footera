@@ -6,8 +6,8 @@ export class TeamsController {
   constructor(private readonly teams: TeamsService) {}
 
   @Get()
-  list(@Query('q') query?: string, @Query('category') category?: string) {
-    return this.teams.list({ query, category });
+  list(@Query('q') query?: string, @Query('category') category?: string, @Query('city') city?: string) {
+    return this.teams.list({ query, category, city });
   }
 
   @Get('my-team')

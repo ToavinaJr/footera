@@ -7,10 +7,11 @@ import { RecordRepository } from '../../database/record.repository.js';
 @Injectable()
 export class RecruitmentService {
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService) {}
-  async listAds(filters: { query?: string; position?: string } = {}) {
+  async listAds(filters: { query?: string; position?: string; division?: string } = {}) {
     const ads = await this.records.list<any>('recruitmentAds');
     return ads.filter((ad) => (!filters.query || `${ad.teamName} ${ad.city} ${ad.description}`.toLowerCase().includes(filters.query.toLowerCase()))
-      && (!filters.position || filters.position === 'Tous' || ad.positionSought === filters.position));
+      && (!filters.position || filters.position === 'Tous' || ad.positionSought === filters.position)
+      && (!filters.division || filters.division === 'Toutes' || ad.division === filters.division));
   }
   getAd(id: string) { return this.records.find('recruitmentAds', id); }
   async listApplications() { return (await this.records.list<any>('applications')).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)); }

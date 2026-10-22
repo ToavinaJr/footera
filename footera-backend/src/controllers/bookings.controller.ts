@@ -10,6 +10,11 @@ export class BookingsController {
     return this.bookings.listBookings();
   }
 
+  @Post('quote')
+  quote(@Body() body: { pitchId: string; selections: Array<{ date: string; time: string }> }) {
+    return this.bookings.quoteBookings(body);
+  }
+
   @Post()
   create(@Body() body: any) {
     return this.bookings.createBooking(body);

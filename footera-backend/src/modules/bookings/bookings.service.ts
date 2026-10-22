@@ -36,10 +36,35 @@ export class BookingsService {
       })),
     };
   }
+  async quoteBookings(input: { pitchId: string; selections: Array<{ date: string; time: string }> }) {
+    const pitch: any = await this.records.find('pitches', input.pitchId);
+    if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
+    const bookings: any[] = await this.records.list('bookings');
+    const perDate: Record<string, number> = {};
+    const seen = new Set<string>();
+    for (const selection of input.selections) {
+      const key = `${selection.date}:${selection.time}`;
+      if (seen.has(key)) throw new ConflictException('Un créneau est sélectionné plusieurs fois.');
+      seen.add(key);
+      const slot = pitch.availableSlots?.find((candidate: any) => candidate.time === selection.time && candidate.isAvailable);
+      const alreadyBooked = bookings.some((booking) => booking.pitchId === input.pitchId
+        && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+      if (!slot || alreadyBooked) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} n’est plus disponible.`);
+      perDate[selection.date] = Number(perDate[selection.date] || 0) + Number(slot.price || 0);
+    }
+    return { total: Object.values(perDate).reduce((total, price) => total + price, 0), perDate };
+  }
   async createPitch(input: any) {
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');
     const id = `pitch_${randomUUID()}`;
-    const pitch = { ...input, id, rating: 5, reviewsCount: 1, amenities: input.amenities || [], availableSlots: input.availableSlots || [] };
+    const rate = Number(input.hourlyRate);
+    const availableSlots = [
+      { id: `${id}_slot_1`, time: '09:00 - 10:30', price: rate, isAvailable: true },
+      { id: `${id}_slot_2`, time: '14:00 - 15:30', price: rate, isAvailable: true },
+      { id: `${id}_slot_3`, time: '18:00 - 19:30', price: Math.round(rate * 1.1), isAvailable: true },
+      { id: `${id}_slot_4`, time: '20:00 - 21:30', price: Math.round(rate * 1.15), isAvailable: true },
+    ];
+    const pitch = { ...input, id, rating: 5, reviewsCount: 1, amenities: input.amenities || [], availableSlots };
     await this.records.create('pitches', id, pitch);
     await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: 'booking', targetSection: 'pitches', targetId: id });
     return pitch;

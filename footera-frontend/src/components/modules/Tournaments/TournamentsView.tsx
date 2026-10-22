@@ -350,7 +350,7 @@ export const TournamentsView: React.FC = () => {
                   <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
                     <span className="text-slate-500 text-caption block">Places</span>
                     <strong className="text-[#059669] text-base font-extrabold tabular-nums">
-                      {Math.max(0, selectedTournament.maxTeams - selectedTournament.registeredTeams)} restantes
+                      {selectedTournament.remainingTeams ?? 0} restantes
                     </strong>
                   </div>
                 </div>

@@ -18,6 +18,8 @@ export const teamsService = {
     }
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
+    if (filters?.category && filters.category !== 'Toutes') params.set('category', filters.category);
+    if (filters?.city && filters.city !== 'Toutes') params.set('city', filters.city);
     return apiClient<Team[]>(`teams?${params.toString()}`);
   },
 
@@ -40,10 +42,16 @@ export const teamsService = {
         isHome: match.homeTeam.id === id,
         goalScorers: match.events.filter((event) => event.type === 'goal'),
       });
+      const recentMatches = matches.filter((match) => match.status === 'FINISHED').map(decorate);
       return mockDelay({
         ...team,
-        recentMatches: matches.filter((match) => match.status === 'FINISHED').map(decorate),
+        recentForm: team.recentForm,
+        recentMatches,
         upcomingMatches: matches.filter((match) => match.status === 'SCHEDULED').map(decorate),
+        topScorers: [...team.members]
+          .sort((left, right) => (right.goals ?? 0) - (left.goals ?? 0))
+          .slice(0, 3)
+          .map((member) => ({ playerId: member.playerId, playerName: member.name, goals: member.goals ?? 0 })),
       }, 150);
     }
     return apiClient<TeamDetail>(`teams/${encodeURIComponent(id)}/detail`);

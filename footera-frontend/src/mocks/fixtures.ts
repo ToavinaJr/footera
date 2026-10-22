@@ -332,7 +332,7 @@ export const INITIAL_TEAMS: Team[] = [
     coachName: 'Hery Rakoto',
     membersCount: 20,
     isRecruiting: true,
-    recentForm: ['D', 'D', 'N', 'V', 'D'],
+    recentForm: [],
     nextMatch: {
       id: 'match_betsileo_next',
       opponentName: 'AS Analakely',
@@ -425,7 +425,7 @@ export const INITIAL_TEAMS: Team[] = [
     coachName: 'Jean-Claude Rasoanaivo',
     membersCount: 22,
     isRecruiting: false,
-    recentForm: ['V', 'V', 'N', 'V', 'V'],
+    recentForm: ['V'],
     nextMatch: {
       id: 'match_betsileo_next',
       opponentName: 'Betsileo FC',
@@ -474,7 +474,7 @@ export const INITIAL_TEAMS: Team[] = [
     coachName: 'Didier Vasseur',
     membersCount: 22,
     isRecruiting: true,
-    recentForm: ['V', 'N', 'V', 'V', 'D'],
+    recentForm: ['D'],
     stats: {
       matchesPlayed: 16,
       wins: 10,
@@ -510,7 +510,7 @@ export const INITIAL_TEAMS: Team[] = [
     coachName: 'Marc Antoine',
     membersCount: 24,
     isRecruiting: true,
-    recentForm: ['V', 'D', 'N', 'V', 'V'],
+    recentForm: [],
     stats: {
       matchesPlayed: 16,
       wins: 9,
@@ -691,6 +691,7 @@ export const INITIAL_MATCHES: Match[] = [
     },
     status: 'SCHEDULED',
     date: 'Samedi 24 Octobre',
+    scheduledAt: '2026-10-24T15:30:00+03:00',
     time: '15:30',
     venue: 'Stade Municipal de Fianarantsoa',
     pitchName: 'Terrain principal',

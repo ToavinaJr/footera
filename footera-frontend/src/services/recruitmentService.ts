@@ -18,6 +18,8 @@ export const recruitmentService = {
     }
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
+    if (filters?.position && filters.position !== 'Tous') params.set('position', filters.position);
+    if (filters?.division && filters.division !== 'Toutes') params.set('division', filters.division);
     return apiClient<RecruitmentAd[]>(`recruitment/ads?${params.toString()}`);
   },
 

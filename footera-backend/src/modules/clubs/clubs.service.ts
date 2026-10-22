@@ -6,7 +6,20 @@ import { validateImageUrl } from '../uploads/image-url.validation.js';
 @Injectable()
 export class ClubsService {
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService) {}
-  list() { return this.records.list('clubs'); }
+  async list() {
+    const [clubs, user, teams]: any[] = await Promise.all([
+      this.records.list<any>('clubs'),
+      this.accounts.profile(),
+      this.records.list<any>('teams'),
+    ]);
+    const currentTeam = user?.activeRole === 'Entraîneur'
+      ? teams.find((team: any) => team.name === user?.sportsCv?.currentTeam)
+      : undefined;
+    return clubs.map((club: any) => ({
+      ...club,
+      canManageLogo: Boolean(currentTeam && (club.teams || []).some((team: any) => team.id === currentTeam.id)),
+    }));
+  }
 
   async updateLogo(clubId: string, logoUrl: string) {
     const validatedLogoUrl = validateImageUrl(logoUrl, 'Logo du club');

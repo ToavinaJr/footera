@@ -34,6 +34,7 @@ export const marketplaceService = {
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
     if (filters?.category && filters.category !== 'Toutes') params.set('category', filters.category);
+    if (filters?.maxPrice && filters.maxPrice > 0) params.set('maxPrice', String(filters.maxPrice));
     return apiClient<MarketplaceListing[]>(`marketplace?${params.toString()}`);
   },
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Shield, Check, Plus, Building2, CheckSquare, Square, Sparkles } from 'lucide-react';
 import { pitchesService, CreatePitchInput } from '../../../services/pitchesService';
-import { bookingsService } from '../../../services/bookingsService';
+import { BookingQuote, bookingsService } from '../../../services/bookingsService';
 import { Pitch, PitchSlot, SurfaceType } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
@@ -73,6 +73,8 @@ export const PitchesView: React.FC = () => {
   // Booking Flow State
   const [bookingDate, setBookingDate] = useState('Samedi 24 Octobre 2026');
   const [selectedSlots, setSelectedSlots] = useState<SelectedPitchSlot[]>([]);
+  const [bookingQuote, setBookingQuote] = useState<BookingQuote | null>(null);
+  const [isQuotingBooking, setIsQuotingBooking] = useState(false);
   const [teamName, setTeamName] = useState(user?.sportsCv.currentTeam || '');
   const [phone, setPhone] = useState(user?.phone || '06 12 34 56 78');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,6 +132,30 @@ export const PitchesView: React.FC = () => {
   useEffect(() => {
     if (!isBookingRoute) setSelectedSlots([]);
   }, [routePitchId, isBookingRoute]);
+
+  useEffect(() => {
+    let active = true;
+    if (!selectedPitch || selectedSlots.length === 0) {
+      setBookingQuote(null);
+      setIsQuotingBooking(false);
+      return;
+    }
+    setIsQuotingBooking(true);
+    bookingsService.quote({
+      pitchId: selectedPitch.id,
+      selections: selectedSlots.map(({ date, slot }) => ({ date, time: slot.time })),
+    }).then((quote) => {
+      if (active) setBookingQuote(quote);
+    }).catch((error: unknown) => {
+      if (active) {
+        setBookingQuote(null);
+        showToast(error instanceof Error ? error.message : 'Impossible de calculer le devis.', 'error');
+      }
+    }).finally(() => {
+      if (active) setIsQuotingBooking(false);
+    });
+    return () => { active = false; };
+  }, [selectedPitch?.id, selectedSlots, showToast]);
 
   const toggleSlot = (slot: PitchSlot) => {
     if (!slot.isAvailable) return;
@@ -203,14 +229,6 @@ export const PitchesView: React.FC = () => {
 
     setIsCreating(true);
     try {
-      // Build default initial available slots
-      const initialSlots: PitchSlot[] = [
-        { id: `slot_${Date.now()}_1`, time: '09:00 - 10:30', price: rate, isAvailable: true },
-        { id: `slot_${Date.now()}_2`, time: '14:00 - 15:30', price: rate, isAvailable: true },
-        { id: `slot_${Date.now()}_3`, time: '18:00 - 19:30', price: Math.round(rate * 1.1), isAvailable: true },
-        { id: `slot_${Date.now()}_4`, time: '20:00 - 21:30', price: Math.round(rate * 1.15), isAvailable: true },
-      ];
-
       const input: CreatePitchInput = {
         name: formName.trim(),
         complexName: formComplexName.trim(),
@@ -221,7 +239,6 @@ export const PitchesView: React.FC = () => {
         imageUrl: formImageUrl || PITCH_IMAGE_PRESETS[0].url,
         hourlyRate: rate,
         amenities: formAmenities.length > 0 ? formAmenities : ['Éclairage nocturne LED', 'Vestiaires'],
-        availableSlots: initialSlots,
       };
 
       const created = await pitchesService.create(input);
@@ -258,9 +275,9 @@ export const PitchesView: React.FC = () => {
     (groups[selection.date] ??= []).push(selection.slot);
     return groups;
   }, {});
-  const selectedSlotsTotal = selectedSlots.reduce((total, selection) => total + selection.slot.price, 0);
   const selectedSlotsForCurrentDate = selectedSlots.filter((selection) => selection.date === bookingDate);
-  const currentDateTotal = selectedSlotsForCurrentDate.reduce((total, selection) => total + selection.slot.price, 0);
+  const selectedSlotsTotal = bookingQuote?.total ?? 0;
+  const currentDateTotal = bookingQuote?.perDate[bookingDate] ?? 0;
 
   if (routePitchId && !isBookingRoute && pitchModal.mode !== 'create') {
     if (isLoading) return <CardSkeleton />;
@@ -315,7 +332,7 @@ export const PitchesView: React.FC = () => {
               {!detailPitch.availableSlots.some((slot) => slot.isAvailable) && <p className="text-sm text-slate-500">Aucun créneau disponible pour cette date.</p>}
             </div>
             {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-pitch-separator pt-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-slate-600"><strong className="text-pitch-ink">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-pitch-primary">{selectedSlotsTotal} €</strong> au total</p>
+              <p className="text-sm text-slate-600"><strong className="text-pitch-ink">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-pitch-primary">{isQuotingBooking ? 'Calcul du devis…' : `${selectedSlotsTotal} € au total`}</strong></p>
               <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover">Réserver les créneaux sélectionnés</button>
             </div>}
           </div>
@@ -561,7 +578,7 @@ export const PitchesView: React.FC = () => {
                 <div>
                   <span className="text-slate-500 block font-medium">{selectedSlotsForCurrentDate.length} créneau(x) · total</span>
                   <span className="text-xl font-extrabold text-pitch-primary tabular-nums">
-                    {currentDateTotal} € TTC
+                    {isQuotingBooking ? 'Calcul…' : `${currentDateTotal} € TTC`}
                   </span>
                 </div>
                 <div className="text-right text-slate-500">
@@ -574,7 +591,7 @@ export const PitchesView: React.FC = () => {
             {selectedSlots.length > 0 && <aside className="rounded-2xl border border-pitch-line bg-white p-4" aria-label="Récapitulatif des créneaux sélectionnés">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-extrabold text-pitch-ink">Rappel de votre sélection</p>
-                <p className="text-xs font-bold text-pitch-primary">{selectedSlots.length} créneau(x) · {selectedSlotsTotal} €</p>
+                <p className="text-xs font-bold text-pitch-primary">{selectedSlots.length} créneau(x) · {isQuotingBooking ? 'Calcul du devis…' : `${selectedSlotsTotal} €`}</p>
               </div>
               <ul className="mt-2 space-y-1.5">
                 {Object.entries(selectedSlotsByDate).map(([date, slots]) => <li key={date} className="flex flex-wrap justify-between gap-x-3 text-xs text-slate-600">
@@ -586,7 +603,7 @@ export const PitchesView: React.FC = () => {
             <div className="pt-2">
               <button
                 onClick={handleConfirmBooking}
-                disabled={!selectedSlots.length || isSubmitting}
+                disabled={!selectedSlots.length || !bookingQuote || isSubmitting || isQuotingBooking}
                 className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Validation...' : `Valider ${selectedSlots.length} créneau(x)`}

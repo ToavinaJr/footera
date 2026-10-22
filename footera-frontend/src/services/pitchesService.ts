@@ -1,7 +1,7 @@
 import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
-import { Pitch, SurfaceType, PitchSlot } from '../types';
+import { Pitch, SurfaceType } from '../types';
 
 export interface CreatePitchInput {
   name: string;
@@ -13,7 +13,6 @@ export interface CreatePitchInput {
   imageUrl: string;
   hourlyRate: number;
   amenities: string[];
-  availableSlots: PitchSlot[];
 }
 
 export const pitchesService = {
@@ -42,6 +41,7 @@ export const pitchesService = {
     }
     const params = new URLSearchParams();
     if (filters?.city && filters.city !== 'Toutes') params.set('city', filters.city);
+    if (filters?.surface && filters.surface !== 'Toutes') params.set('surface', filters.surface);
     if (filters?.date) params.set('date', filters.date);
     return apiClient<Pitch[]>(`pitches?${params.toString()}`);
   },

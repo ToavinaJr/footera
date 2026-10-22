@@ -12,15 +12,17 @@ export class TeamsService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  async list(filters: { query?: string; category?: string } = {}) {
+  async list(filters: { query?: string; category?: string; city?: string } = {}) {
     const [teams, matches] = await Promise.all([
       this.records.list<any>('teams'),
       this.records.list<any>('matches'),
     ]);
     return teams.filter((team) => {
       const query = filters.query?.toLowerCase();
+      const city = filters.city?.toLowerCase();
       return (!query || `${team.name} ${team.city}`.toLowerCase().includes(query))
-        && (!filters.category || filters.category === 'Toutes' || team.category === filters.category);
+        && (!filters.category || filters.category === 'Toutes' || team.category === filters.category)
+        && (!city || city === 'toutes' || team.city.toLowerCase().includes(city));
     }).map((team) => {
       const { recentForm } = buildTeamMatchSummary(team.id, matches);
       return {
@@ -47,6 +49,10 @@ export class TeamsService {
     return {
       ...team,
       ...buildTeamMatchSummary(id, matches),
+      topScorers: [...(team.members || [])]
+        .sort((left: any, right: any) => Number(right.goals || 0) - Number(left.goals || 0))
+        .slice(0, 3)
+        .map((member: any) => ({ playerId: member.playerId, playerName: member.name, goals: Number(member.goals || 0) })),
       stats: {
         ...team.stats,
         goalsPerMatch: team.stats?.matchesPlayed

@@ -6,8 +6,8 @@ export class RecruitmentController {
   constructor(private readonly recruitment: RecruitmentService) {}
 
   @Get('ads')
-  listAds(@Query('q') query?: string, @Query('position') position?: string) {
-    return this.recruitment.listAds({ query, position });
+  listAds(@Query('q') query?: string, @Query('position') position?: string, @Query('division') division?: string) {
+    return this.recruitment.listAds({ query, position, division });
   }
 
   @Get('ads/:id')

@@ -6,7 +6,13 @@ import { RecordRepository } from '../../database/record.repository.js';
 @Injectable()
 export class TournamentsService {
   constructor(private readonly records: RecordRepository, private readonly notifications: NotificationsService) {}
-  list() { return this.records.list('tournaments'); }
+  async list() {
+    const tournaments: any[] = await this.records.list('tournaments');
+    return tournaments.map((tournament) => ({
+      ...tournament,
+      remainingTeams: Math.max(0, Number(tournament.maxTeams || 0) - Number(tournament.registeredTeams || 0)),
+    }));
+  }
   getById(id: string) { return this.records.find('tournaments', id); }
   async create(input: any) {
     const id = `tourn_${randomUUID()}`;
