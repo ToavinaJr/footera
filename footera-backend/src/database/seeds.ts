@@ -566,6 +566,57 @@ export const SEED_MATCHES = [
     competition: 'Championnat R2 — 18e Journée',
     events: [],
   },
+  {
+    id: 'match_betsileo_next',
+    homeTeam: {
+      id: 'team_betsileo',
+      name: 'Betsileo FC',
+      logoUrl: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80',
+      score: 0,
+    },
+    awayTeam: {
+      id: 'team_analakely',
+      name: 'AS Analakely',
+      logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=96&h=96&q=80',
+      score: 0,
+    },
+    status: 'SCHEDULED',
+    date: 'Samedi 24 Octobre',
+    time: '15:30',
+    venue: 'Stade Municipal de Fianarantsoa',
+    pitchName: 'Terrain principal',
+    city: 'Fianarantsoa',
+    competition: 'Championnat R2 - 18e Journee',
+    events: [],
+  },
+  {
+    id: 'match_analakely_history',
+    homeTeam: {
+      id: 'team_analakely',
+      name: 'AS Analakely',
+      logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=96&h=96&q=80',
+      score: 3,
+    },
+    awayTeam: {
+      id: 'team_01',
+      name: 'FC Etoile Belleville',
+      logoUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=96&h=96&q=80',
+      score: 1,
+    },
+    status: 'FINISHED',
+    date: 'Dimanche 11 Octobre',
+    time: '16:00',
+    venue: 'Stade Mahamasina, Antananarivo',
+    pitchName: 'Terrain central',
+    city: 'Antananarivo',
+    competition: 'Championnat R2 - 16e Journee',
+    events: [
+      { minute: 14, type: 'goal', teamId: 'team_analakely', player: 'Mika Randrianasolo' },
+      { minute: 33, type: 'goal', teamId: 'team_01', player: 'Lucas Martin' },
+      { minute: 58, type: 'goal', teamId: 'team_analakely', player: 'Mika Randrianasolo', assist: 'Tiana Rakoto' },
+      { minute: 81, type: 'goal', teamId: 'team_analakely', player: 'Fara Andrianina' },
+    ],
+  },
 ];
 
 export const SEED_TOURNAMENTS = [

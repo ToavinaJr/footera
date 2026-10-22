@@ -155,6 +155,7 @@ export interface Match {
   date: string;
   time: string;
   venue: string;
+  pitchName?: string;
   city: string;
   competition: string;
   minute?: number;

@@ -10,6 +10,7 @@ import { ToastContainer } from './components/common/Toast';
 const HomeView = lazy(() => import('./components/modules/Home/HomeView').then((module) => ({ default: module.HomeView })));
 const PlayersView = lazy(() => import('./components/modules/Players/PlayersView').then((module) => ({ default: module.PlayersView })));
 const TeamsView = lazy(() => import('./components/modules/Teams/TeamsView').then((module) => ({ default: module.TeamsView })));
+const TeamDetailView = lazy(() => import('./components/modules/Teams/TeamDetailView').then((module) => ({ default: module.TeamDetailView })));
 const MatchesView = lazy(() => import('./components/modules/Matches/MatchesView').then((module) => ({ default: module.MatchesView })));
 const TournamentsView = lazy(() => import('./components/modules/Tournaments/TournamentsView').then((module) => ({ default: module.TournamentsView })));
 const PitchesView = lazy(() => import('./components/modules/Pitches/PitchesView').then((module) => ({ default: module.PitchesView })));
@@ -46,8 +47,9 @@ const AppContent: React.FC = () => {
           <Route path="/profile/:profileId" element={<ProfileView />} />
           <Route path="/player/:playerId" element={<LegacyPlayerRedirect />} />
           <Route path="/teams" element={<TeamsView />} />
-          <Route path="/teams/:teamId" element={<TeamsView />} />
+          <Route path="/teams/:teamId" element={<TeamDetailView />} />
           <Route path="/matches" element={<MatchesView />} />
+          <Route path="/matches/:matchId" element={<MatchesView />} />
           <Route path="/tournaments" element={<TournamentsView />} />
           <Route path="/tournaments/new" element={<TournamentsView />} />
           <Route path="/tournaments/:tournamentId" element={<TournamentsView />} />
