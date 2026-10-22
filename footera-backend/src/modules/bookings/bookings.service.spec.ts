@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { BookingsService } from './bookings.service.js';
 
@@ -31,5 +31,67 @@ describe('BookingsService pitch permissions', () => {
     const { service } = makeService({ activeRole: 'Joueur', roles: ['Joueur'] });
     expect(service.getPitchOptions().surfaces).toContain('Indoor Five');
     expect(service.getPitchOptions().amenities).toContain('Éclairage nocturne LED');
+  });
+});
+
+describe('BookingsService bookings and ratings', () => {
+  const pitchRecord: any = {
+    id: 'pitch-test', name: 'Terrain test', complexName: 'Complexe test', surface: 'Indoor Five',
+    rating: 4.8, reviewsCount: 2,
+    availableSlots: [
+      { id: 's1', time: '09:00 - 10:30', price: 50, isAvailable: true },
+      { id: 's2', time: '18:00 - 19:30', price: 65, isAvailable: true },
+    ],
+  };
+
+  function makeBookingService() {
+    let pitch = structuredClone(pitchRecord);
+    const created: any[] = [];
+    const records = {
+      find: vi.fn(async (collection: string, id: string) => collection === 'pitches' && id === pitch.id ? pitch : null),
+      list: vi.fn(async (collection: string) => collection === 'bookings' ? created : []),
+      create: vi.fn(async (_collection: string, _id: string, payload: any) => { created.push(payload); return payload; }),
+      save: vi.fn(async (_collection: string, _id: string, payload: any) => { pitch = payload; return payload; }),
+    };
+    const accounts = { profile: vi.fn(async () => ({ id: 'user-1', name: 'Alex', roles: ['Joueur'], sportsCv: {} })) };
+    const notifications = { add: vi.fn(async () => undefined) };
+    return { service: new BookingsService(records as any, accounts as any, notifications as any), records, created, getPitch: () => pitch };
+  }
+
+  it('quotes selected slot prices from backend data rather than client-supplied prices', async () => {
+    const { service } = makeBookingService();
+    await expect(service.quoteBookings({
+      pitchId: 'pitch-test',
+      selections: [{ date: '2026-10-24', time: '09:00 - 10:30' }, { date: '2026-10-25', time: '18:00 - 19:30' }],
+    })).resolves.toEqual({ total: 115, perDate: { '2026-10-24': 50, '2026-10-25': 65 } });
+  });
+
+  it('rejects duplicate or already reserved selections before creating any booking', async () => {
+    const { service, created } = makeBookingService();
+    await expect(service.createBookings({
+      pitchId: 'pitch-test',
+      selections: [{ date: '2026-10-24', time: '09:00 - 10:30' }, { date: '2026-10-24', time: '09:00 - 10:30' }],
+    })).rejects.toBeInstanceOf(ConflictException);
+    expect(created).toHaveLength(0);
+  });
+
+  it('creates bookings using the current backend slot price', async () => {
+    const { service } = makeBookingService();
+    const created = await service.createBookings({
+      pitchId: 'pitch-test', selections: [{ date: '2026-10-24', time: '18:00 - 19:30' }],
+    });
+    expect(created[0].totalPrice).toBe(65);
+  });
+
+  it('persists one review per user and recalculates the public aggregate', async () => {
+    const { service, records, getPitch } = makeBookingService();
+    await service.ratePitch('pitch-test', { rating: 4, comment: 'Très bien' });
+    const updated = await service.ratePitch('pitch-test', { rating: 2, comment: 'Après visite' });
+    expect(records.save).toHaveBeenCalledTimes(2);
+    expect(getPitch().reviews).toHaveLength(1);
+    expect(updated.reviewsCount).toBe(3);
+    expect(updated.rating).toBe(3.87);
+    expect(updated.myRating).toBe(2);
+    await expect(service.getPitch('pitch-test')).resolves.toMatchObject({ myRating: 2, myReview: { comment: 'Après visite' } });
   });
 });

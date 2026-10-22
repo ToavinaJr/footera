@@ -60,6 +60,7 @@ export const PitchesView: React.FC = () => {
   const detailPitch = routePitchId && !isBookingRoute && pitchModal.mode !== 'create'
     ? pitches.find((pitch) => pitch.id === routePitchId) ?? null
     : null;
+  const quotePitch = selectedPitch ?? detailPitch;
 
   // Booking Flow State
   const [bookingDate, setBookingDate] = useState('Samedi 24 Octobre 2026');
@@ -69,6 +70,9 @@ export const PitchesView: React.FC = () => {
   const [teamName, setTeamName] = useState(user?.sportsCv.currentTeam || '');
   const [phone, setPhone] = useState(user?.phone || '06 12 34 56 78');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Create Pitch Modal State
   const [formName, setFormName] = useState('');
@@ -131,14 +135,14 @@ export const PitchesView: React.FC = () => {
 
   useEffect(() => {
     let active = true;
-    if (!selectedPitch || selectedSlots.length === 0) {
+    if (!quotePitch || selectedSlots.length === 0) {
       setBookingQuote(null);
       setIsQuotingBooking(false);
       return;
     }
     setIsQuotingBooking(true);
     bookingsService.quote({
-      pitchId: selectedPitch.id,
+      pitchId: quotePitch.id,
       selections: selectedSlots.map(({ date, slot }) => ({ date, time: slot.time })),
     }).then((quote) => {
       if (active) setBookingQuote(quote);
@@ -151,7 +155,12 @@ export const PitchesView: React.FC = () => {
       if (active) setIsQuotingBooking(false);
     });
     return () => { active = false; };
-  }, [selectedPitch?.id, selectedSlots, showToast]);
+  }, [quotePitch?.id, selectedSlots, showToast]);
+
+  useEffect(() => {
+    setReviewRating(detailPitch?.myRating ?? 0);
+    setReviewComment(detailPitch?.myReview?.comment ?? '');
+  }, [detailPitch?.id, detailPitch?.myRating, detailPitch?.myReview?.comment]);
 
   const toggleSlot = (slot: PitchSlot) => {
     if (!slot.isAvailable) return;
@@ -176,31 +185,33 @@ export const PitchesView: React.FC = () => {
   const handleConfirmBooking = async () => {
     if (!selectedPitch || !selectedSlots.length) return;
     setIsSubmitting(true);
-    let completedCount = 0;
     try {
-      for (const slot of selectedSlots) {
-        await bookingsService.requestBooking({
-          pitchId: selectedPitch.id,
-          date: slot.date,
-          time: slot.slot.time,
-          teamName: teamName.trim() || undefined,
-          totalPrice: slot.slot.price,
-        });
-        completedCount += 1;
-      }
-
-      showToast(`${completedCount} créneau(x) confirmé(s) sur ${selectedPitch.name}.`, 'success');
+      const created = await bookingsService.requestBookings({
+        pitchId: selectedPitch.id,
+        selections: selectedSlots.map(({ date, slot }) => ({ date, time: slot.time })),
+        teamName: teamName.trim() || undefined,
+      });
+      showToast(`${created.length} créneau(x) confirmé(s) sur ${selectedPitch.name}.`, 'success');
       navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
       setSelectedSlots([]);
     } catch (e: any) {
-      if (completedCount) {
-        setSelectedSlots((current) => current.slice(completedCount));
-        showToast(`${completedCount} créneau(x) réservé(s), les suivants ont échoué : ${e.message || 'erreur inconnue'}`, 'error');
-        return;
-      }
       showToast(e.message || 'Erreur lors de la réservation', 'error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRatePitch = async () => {
+    if (!detailPitch || !reviewRating) return;
+    setIsSubmittingReview(true);
+    try {
+      const updatedPitch = await pitchesService.rate(detailPitch.id, { rating: reviewRating, comment: reviewComment });
+      setPitches((current) => current.map((pitch) => pitch.id === updatedPitch.id ? updatedPitch : pitch));
+      showToast('Votre évaluation du terrain a été enregistrée.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Impossible d’enregistrer votre évaluation.', 'error');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -291,7 +302,7 @@ export const PitchesView: React.FC = () => {
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-7">
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.surface}</strong></div>
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.dimensions}</strong></div>
-            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-pitch-ink"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{formatFiniteNumber(detailPitch.rating, 1)} ({formatFiniteNumber(detailPitch.reviewsCount)} avis)</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-pitch-ink">{detailPitch.reviewsCount > 0 && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}{detailPitch.reviewsCount > 0 ? `${formatFiniteNumber(detailPitch.rating, 1)} (${formatFiniteNumber(detailPitch.reviewsCount)} avis)` : 'Pas encore noté'}</strong></div>
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-pitch-primary">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
           </div>
         </section>
@@ -321,11 +332,29 @@ export const PitchesView: React.FC = () => {
               })}
               {!detailPitch.availableSlots.some((slot) => slot.isAvailable) && <p className="text-sm text-slate-500">Aucun créneau disponible pour cette date.</p>}
             </div>
-            {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-pitch-separator pt-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-slate-600"><strong className="text-pitch-ink">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-pitch-primary">{isQuotingBooking ? 'Calcul du devis…' : `${selectedSlotsTotal} € au total`}</strong></p>
-              <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover">Réserver les créneaux sélectionnés</button>
+            {selectedSlots.length > 0 && <div className="mt-5 rounded-2xl border border-pitch-line bg-pitch-panel p-4">
+              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                <p className="text-sm text-slate-600"><strong className="text-pitch-ink">Rappel : {selectedSlots.length} créneau(x)</strong> · <strong className="text-pitch-primary">{isQuotingBooking ? 'Calcul du devis…' : bookingQuote ? `${selectedSlotsTotal} € au total` : 'Devis indisponible'}</strong></p>
+                <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover">Réserver les créneaux sélectionnés</button>
+              </div>
+              <ul className="mt-3 space-y-2 border-t border-pitch-line pt-3">
+                {Object.entries(selectedSlotsByDate).map(([date, slots]) => <li key={date} className="flex flex-wrap justify-between gap-2 text-xs text-slate-600"><span className="font-bold text-pitch-ink">{date}</span><span>{slots.map((slot) => slot.time).join(' · ')}{bookingQuote && ` · ${formatFiniteNumber(bookingQuote.perDate[date])} €`}</span></li>)}
+              </ul>
             </div>}
           </div>
+        </section>
+
+        <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div><h2 className="text-lg font-extrabold text-pitch-ink">Évaluer ce terrain</h2><p className="mt-1 text-sm text-slate-500">Votre note contribue à la note affichée aux autres joueurs.</p></div>
+            <p className="flex items-center gap-1 text-sm font-bold text-pitch-ink"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{detailPitch.reviewsCount ? `${formatFiniteNumber(detailPitch.rating, 1)} / 5 · ${formatFiniteNumber(detailPitch.reviewsCount)} avis` : 'Aucun avis pour le moment'}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-1" role="radiogroup" aria-label="Votre note sur cinq">
+            {[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" role="radio" aria-checked={reviewRating === value} aria-label={`${value} sur 5`} onClick={() => setReviewRating(value)} className="rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-pitch-primary"><Star className={`h-7 w-7 ${reviewRating >= value ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} /></button>)}
+          </div>
+          <label className="mt-3 block text-xs font-bold text-slate-700" htmlFor="pitch-review-comment">Commentaire (facultatif)</label>
+          <textarea id="pitch-review-comment" value={reviewComment} onChange={(event) => setReviewComment(event.target.value.slice(0, 500))} maxLength={500} rows={3} placeholder="Décrivez votre expérience sur ce terrain…" className="mt-1 w-full resize-y rounded-xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary focus:outline-hidden" />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-500">{reviewComment.length}/500 caractères · une note par compte, modifiable à tout moment</span><button type="button" disabled={!reviewRating || isSubmittingReview} onClick={handleRatePitch} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover disabled:cursor-not-allowed disabled:opacity-50">{isSubmittingReview ? 'Enregistrement…' : detailPitch.myRating ? 'Mettre à jour mon avis' : 'Publier mon avis'}</button></div>
         </section>
       </div>
     );
@@ -433,9 +462,7 @@ export const PitchesView: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-pitch-ink/85 backdrop-blur-xs text-lime-volt px-2.5 py-1 rounded-full text-xs font-extrabold shadow-xs">
-                    <Star className="w-3.5 h-3.5 fill-lime-volt" />
-                    <span>{formatFiniteNumber(pitch.rating, 1)}</span>
-                    <span className="text-white/60 font-medium">({formatFiniteNumber(pitch.reviewsCount)})</span>
+                    {pitch.reviewsCount > 0 ? <><Star className="w-3.5 h-3.5 fill-lime-volt" /><span>{formatFiniteNumber(pitch.rating, 1)}</span><span className="text-white/60 font-medium">({formatFiniteNumber(pitch.reviewsCount)})</span></> : <span>Pas encore noté</span>}
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
                     <span className="text-xs font-bold text-lime-volt block mb-0.5">

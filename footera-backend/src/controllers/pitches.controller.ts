@@ -15,6 +15,11 @@ export class PitchesController {
     return this.bookings.getPitchOptions();
   }
 
+  @Post(':id/reviews')
+  rate(@Param('id') id: string, @Body() body: { rating: number; comment?: string }) {
+    return this.bookings.ratePitch(id, body);
+  }
+
   @Get(':id')
   async getById(@Param('id') id: string, @Query('date') date?: string) {
     const pitch = await this.bookings.getPitch(id, date);

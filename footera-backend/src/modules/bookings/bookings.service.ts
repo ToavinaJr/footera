@@ -37,9 +37,14 @@ export class BookingsService {
   }
   async getPitch(id: string, date?: string) {
     const pitch: any = await this.records.find('pitches', id);
-    if (!pitch || !date) return pitch;
+    if (!pitch) return pitch;
+    const user: any = await this.accounts.profile();
+    const reviews = Array.isArray(pitch.reviews) ? pitch.reviews : [];
+    const myReview = reviews.find((review: any) => review.userId === user?.id);
+    const pitchWithReview = { ...pitch, reviews, myRating: myReview?.rating, myReview };
+    if (!date) return pitchWithReview;
     const bookings = await this.records.list<any>('bookings');
-    return this.withDateAvailability(pitch, bookings, date);
+    return this.withDateAvailability(pitchWithReview, bookings, date);
   }
   private withDateAvailability(pitch: any, bookings: any[], date?: string) {
     if (!date) return pitch;
@@ -55,12 +60,19 @@ export class BookingsService {
     };
   }
   async quoteBookings(input: { pitchId: string; selections: Array<{ date: string; time: string }> }) {
+    if (!input?.pitchId || !Array.isArray(input.selections) || input.selections.length === 0 || input.selections.length > 30) {
+      throw new BadRequestException('Sélection de créneaux invalide.');
+    }
     const pitch: any = await this.records.find('pitches', input.pitchId);
     if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
     const bookings: any[] = await this.records.list('bookings');
     const perDate: Record<string, number> = {};
     const seen = new Set<string>();
     for (const selection of input.selections) {
+      if (typeof selection?.date !== 'string' || !selection.date.trim() || selection.date.length > 80
+        || typeof selection?.time !== 'string' || !selection.time.trim() || selection.time.length > 40) {
+        throw new BadRequestException('Date ou horaire de créneau invalide.');
+      }
       const key = `${selection.date}:${selection.time}`;
       if (seen.has(key)) throw new ConflictException('Un créneau est sélectionné plusieurs fois.');
       seen.add(key);
@@ -68,9 +80,97 @@ export class BookingsService {
       const alreadyBooked = bookings.some((booking) => booking.pitchId === input.pitchId
         && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
       if (!slot || alreadyBooked) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} n’est plus disponible.`);
-      perDate[selection.date] = Number(perDate[selection.date] || 0) + Number(slot.price || 0);
+      const price = Number(slot.price);
+      if (!Number.isFinite(price) || price < 0) throw new ConflictException('Le tarif de ce créneau est invalide.');
+      perDate[selection.date] = Number(perDate[selection.date] || 0) + price;
     }
     return { total: Object.values(perDate).reduce((total, price) => total + price, 0), perDate };
+  }
+
+  async createBookings(input: { pitchId: string; selections: Array<{ date: string; time: string }>; teamName?: string }) {
+    // Recompute and revalidate on the server; never trust the displayed quote or client-submitted prices.
+    await this.quoteBookings(input);
+    const [pitch, user, currentBookings]: any[] = await Promise.all([
+      this.records.find('pitches', input.pitchId),
+      this.accounts.profile(),
+      this.records.list('bookings'),
+    ]);
+    if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
+
+    const selections = input.selections;
+    for (const selection of selections) {
+      const reserved = currentBookings.some((booking: any) => booking.pitchId === input.pitchId
+        && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+      if (reserved) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} vient d’être réservé.`);
+    }
+
+    const bookings = selections.map((selection) => {
+      const slot = pitch.availableSlots.find((candidate: any) => candidate.time === selection.time && candidate.isAvailable);
+      if (!slot) throw new ConflictException(`Le créneau ${selection.time} n’est plus disponible.`);
+      const id = `bkg_${randomUUID()}`;
+      return {
+        id, pitchId: input.pitchId, pitchName: pitch.name || 'Terrain réservé',
+        complexName: pitch.complexName || 'Complexe Footera', surface: pitch.surface || 'Synthétique',
+        date: selection.date, time: selection.time, durationMinutes: 90, totalPrice: Number(slot.price),
+        bookerName: user?.name || 'Joueur Footera', bookerPhone: user?.phone || '',
+        teamName: input.teamName?.trim() || user?.sportsCv?.currentTeam || 'Footera FC',
+        status: 'CONFIRMED', createdAt: new Date().toISOString(),
+      };
+    });
+
+    for (const booking of bookings) await this.records.create('bookings', booking.id, booking);
+    for (const booking of bookings) {
+      await this.notifications.add({
+        title: 'Réservation confirmée',
+        message: `Créneau validé le ${booking.date} à ${booking.time} (${booking.pitchName}).`,
+        type: 'booking', targetSection: 'bookings', targetId: booking.id,
+      });
+    }
+    return bookings;
+  }
+
+  async ratePitch(pitchId: string, input: { rating: number; comment?: string }) {
+    const rating = Number(input?.rating);
+    const comment = typeof input?.comment === 'string' ? input.comment.trim() : '';
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.length > 500) {
+      throw new BadRequestException('La note doit être comprise entre 1 et 5 et le commentaire ne doit pas dépasser 500 caractères.');
+    }
+    const [pitch, user]: any[] = await Promise.all([
+      this.records.find('pitches', pitchId),
+      this.accounts.profile(),
+    ]);
+    if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
+    if (!user?.id) throw new ForbiddenException('Connectez-vous pour noter ce terrain.');
+
+    const reviews = Array.isArray(pitch.reviews) ? pitch.reviews : [];
+    const existingIndex = reviews.findIndex((review: any) => review.userId === user.id);
+    const previous = existingIndex >= 0 ? reviews[existingIndex] : undefined;
+    const review = {
+      userId: user.id,
+      reviewerName: user.name || 'Joueur Footera',
+      rating,
+      comment,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedReviews = [...reviews];
+    if (existingIndex >= 0) updatedReviews[existingIndex] = review;
+    else updatedReviews.push(review);
+
+    const baseRating = Number(pitch.ratingBase ?? pitch.rating ?? 0);
+    const baseCount = Number(pitch.reviewsCountBase ?? pitch.reviewsCount ?? 0);
+    const totalRatings = baseCount + updatedReviews.length;
+    const updatedPitch = {
+      ...pitch,
+      ratingBase: baseRating,
+      reviewsCountBase: baseCount,
+      reviews: updatedReviews,
+      rating: totalRatings ? Number(((baseRating * baseCount + updatedReviews.reduce((sum: number, item: any) => sum + item.rating, 0)) / totalRatings).toFixed(2)) : 0,
+      reviewsCount: totalRatings,
+      myRating: review.rating,
+      myReview: review,
+    };
+    if (previous?.rating === rating && previous?.comment === comment) return updatedPitch;
+    return this.records.save('pitches', pitchId, updatedPitch);
   }
   async createPitch(input: any) {
     const user: any = await this.accounts.profile();
@@ -84,37 +184,27 @@ export class BookingsService {
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');
     const id = `pitch_${randomUUID()}`;
     const rate = Number(input.hourlyRate);
+    if (!Number.isFinite(rate) || rate < 5 || rate > 1_000_000) {
+      throw new BadRequestException('Le tarif par créneau doit être compris entre 5 et 1 000 000.');
+    }
     const availableSlots = [
       { id: `${id}_slot_1`, time: '09:00 - 10:30', price: rate, isAvailable: true },
       { id: `${id}_slot_2`, time: '14:00 - 15:30', price: rate, isAvailable: true },
       { id: `${id}_slot_3`, time: '18:00 - 19:30', price: Math.round(rate * 1.1), isAvailable: true },
       { id: `${id}_slot_4`, time: '20:00 - 21:30', price: Math.round(rate * 1.15), isAvailable: true },
     ];
-    const pitch = { ...input, id, rating: 5, reviewsCount: 1, amenities: input.amenities || [], availableSlots };
+    const pitch = { ...input, id, rating: 0, reviewsCount: 0, reviews: [], amenities: input.amenities || [], availableSlots };
     await this.records.create('pitches', id, pitch);
     await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: 'booking', targetSection: 'pitches', targetId: id });
     return pitch;
   }
   async listBookings() { return (await this.records.list<any>('bookings')).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); }
   async createBooking(input: any) {
-    const [pitch, user]: any[] = await Promise.all([this.getPitch(input.pitchId), this.accounts.profile()]);
-    if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
-    const existingBookings = await this.records.list<any>('bookings');
-    const slot = (pitch.availableSlots || []).find((candidate: any) => candidate.time === input.time && candidate.isAvailable);
-    const alreadyBooked = existingBookings.some((booking) => booking.pitchId === input.pitchId
-      && booking.date === input.date && booking.time === input.time && booking.status !== 'CANCELLED');
-    if (!slot || alreadyBooked) throw new ConflictException('Ce créneau n’est plus disponible pour cette date.');
-    const id = `bkg_${randomUUID()}`;
-    const booking = {
-      id, pitchId: input.pitchId, pitchName: pitch?.name || 'Terrain réservé',
-      complexName: pitch?.complexName || 'Complexe Footera', surface: pitch?.surface || 'Synthétique',
-      date: input.date, time: input.time, durationMinutes: 90, totalPrice: slot.price,
-      bookerName: user?.name || 'Joueur Footera', bookerPhone: user?.phone || '',
-      teamName: input.teamName || user?.sportsCv?.currentTeam || 'Footera FC',
-      status: 'CONFIRMED', createdAt: new Date().toISOString(),
-    };
-    await this.records.create('bookings', id, booking);
-    await this.notifications.add({ title: 'Réservation confirmée', message: `Créneau validé le ${booking.date} à ${booking.time} (${booking.pitchName}).`, type: 'booking', targetSection: 'bookings', targetId: id });
+    const [booking] = await this.createBookings({
+      pitchId: input.pitchId,
+      selections: [{ date: input.date, time: input.time }],
+      teamName: input.teamName,
+    });
     return booking;
   }
   async cancelBooking(id: string) {

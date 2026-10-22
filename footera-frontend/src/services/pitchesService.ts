@@ -15,6 +15,11 @@ export interface CreatePitchInput {
   amenities: string[];
 }
 
+export interface RatePitchInput {
+  rating: number;
+  comment?: string;
+}
+
 export const pitchesService = {
   async getOptions(): Promise<PitchOptions> {
     if (IS_MOCK_MODE) {
@@ -29,7 +34,11 @@ export const pitchesService = {
 
   async list(filters?: { city?: string; surface?: SurfaceType | 'Toutes'; date?: string }): Promise<Pitch[]> {
     if (IS_MOCK_MODE) {
-      let pitches = mockStorage.getPitches();
+      const userId = mockStorage.getProfile().id;
+      let pitches = mockStorage.getPitches().map((pitch) => {
+        const myReview = pitch.reviews?.find((review) => review.userId === userId);
+        return { ...pitch, myReview, myRating: myReview?.rating };
+      });
       if (filters?.city && filters.city !== 'Toutes') {
         pitches = pitches.filter((p) => p.city.toLowerCase().includes(filters.city!.toLowerCase()));
       }
@@ -61,11 +70,13 @@ export const pitchesService = {
     if (IS_MOCK_MODE) {
       const p = mockStorage.getPitchById(id);
       if (!p) throw new Error('Terrain introuvable');
-      if (!date) return mockDelay(p, 150);
+      const myReview = p.reviews?.find((review) => review.userId === mockStorage.getProfile().id);
+      const pitch = { ...p, myReview, myRating: myReview?.rating };
+      if (!date) return mockDelay(pitch, 150);
       const bookedTimes = new Set(mockStorage.getBookings()
         .filter((booking) => booking.pitchId === p.id && booking.date === date && booking.status !== 'CANCELLED')
         .map((booking) => booking.time));
-      return mockDelay({ ...p, availableSlots: p.availableSlots.map((slot) => ({
+      return mockDelay({ ...pitch, availableSlots: p.availableSlots.map((slot) => ({
         ...slot,
         isAvailable: slot.isAvailable && !bookedTimes.has(slot.time),
       })) }, 150);
@@ -74,6 +85,14 @@ export const pitchesService = {
     if (date) params.set('date', date);
     const query = params.size ? `?${params.toString()}` : '';
     return apiClient<Pitch>(`pitches/${id}${query}`);
+  },
+
+  async rate(id: string, input: RatePitchInput): Promise<Pitch> {
+    if (IS_MOCK_MODE) return mockDelay(mockStorage.ratePitch(id, input.rating, input.comment), 250);
+    return apiClient<Pitch>(`pitches/${encodeURIComponent(id)}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
   },
 
   async create(input: CreatePitchInput): Promise<Pitch> {

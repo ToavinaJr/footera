@@ -13,6 +13,7 @@ import {
   UserProfile,
   LeagueStandingRow,
   ActivityFeedItem,
+  PitchReview,
 } from '../types';
 
 import {
@@ -309,6 +310,43 @@ class MockStorageRepository {
     return this.pitches.find((p) => p.id === id);
   }
 
+  ratePitch(id: string, rating: number, comment = ''): Pitch {
+    const pitch = this.pitches.find((item) => item.id === id);
+    if (!pitch) throw new Error('Terrain introuvable.');
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.trim().length > 500) {
+      throw new Error('La note doit être comprise entre 1 et 5 et le commentaire ne doit pas dépasser 500 caractères.');
+    }
+    const reviews = pitch.reviews ?? [];
+    const existingIndex = reviews.findIndex((review) => review.userId === this.profile.id);
+    const updatedReview: PitchReview = {
+      userId: this.profile.id,
+      reviewerName: this.profile.name,
+      rating,
+      comment: comment.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    const updatedReviews = [...reviews];
+    if (existingIndex >= 0) updatedReviews[existingIndex] = updatedReview;
+    else updatedReviews.push(updatedReview);
+    const ratingBase = pitch.ratingBase ?? pitch.rating;
+    const countBase = pitch.reviewsCountBase ?? pitch.reviewsCount;
+    const count = countBase + updatedReviews.length;
+    const updatedPitch = {
+      ...pitch,
+      ratingBase,
+      reviewsCountBase: countBase,
+      reviews: updatedReviews,
+      rating: count ? Number(((ratingBase * countBase + updatedReviews.reduce((sum, review) => sum + review.rating, 0)) / count).toFixed(2)) : 0,
+      reviewsCount: count,
+      myRating: rating,
+      myReview: updatedReview,
+    };
+    this.pitches = this.pitches.map((item) => item.id === id ? updatedPitch : item);
+    saveToStorage(STORAGE_KEYS.PITCHES, this.pitches);
+    emitChange();
+    return structuredClone(updatedPitch);
+  }
+
   createPitch(input: {
     name: string;
     complexName: string;
@@ -333,8 +371,9 @@ class MockStorageRepository {
     const newPitch: Pitch = {
       ...input,
       id,
-      rating: 5.0,
-      reviewsCount: 1,
+      rating: 0,
+      reviewsCount: 0,
+      reviews: [],
       availableSlots,
     };
     this.pitches.unshift(newPitch);

@@ -11,6 +11,12 @@ export interface CreateBookingInput {
   totalPrice: number;
 }
 
+export interface CreateBookingsInput {
+  pitchId: string;
+  selections: Array<{ date: string; time: string }>;
+  teamName?: string;
+}
+
 export interface BookingQuoteInput {
   pitchId: string;
   selections: Array<{ date: string; time: string }>;
@@ -56,6 +62,34 @@ export const bookingsService = {
       return mockDelay(b, 400);
     }
     return apiClient<Booking>('bookings', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  async requestBookings(input: CreateBookingsInput): Promise<Booking[]> {
+    if (IS_MOCK_MODE) {
+      const pitch = mockStorage.getPitchById(input.pitchId);
+      if (!pitch || !Array.isArray(input.selections) || !input.selections.length) throw new Error('Sélection de créneaux invalide.');
+      const seen = new Set<string>();
+      const currentBookings = mockStorage.getBookings();
+      for (const selection of input.selections) {
+        const key = `${selection.date}:${selection.time}`;
+        const slot = pitch.availableSlots.find((candidate) => candidate.time === selection.time && candidate.isAvailable);
+        const isBooked = currentBookings.some((booking) => booking.pitchId === input.pitchId
+          && booking.date === selection.date && booking.time === selection.time && booking.status !== 'CANCELLED');
+        if (seen.has(key) || !slot || isBooked) throw new Error('Un des créneaux sélectionnés n’est plus disponible.');
+        seen.add(key);
+      }
+      const created = input.selections.map((selection) => mockStorage.createBooking({
+        pitchId: input.pitchId,
+        ...selection,
+        teamName: input.teamName,
+        totalPrice: 0,
+      }));
+      return mockDelay(created, 400);
+    }
+    return apiClient<Booking[]>('bookings/batch', {
       method: 'POST',
       body: JSON.stringify(input),
     });

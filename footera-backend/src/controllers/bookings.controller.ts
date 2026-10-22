@@ -15,6 +15,11 @@ export class BookingsController {
     return this.bookings.quoteBookings(body);
   }
 
+  @Post('batch')
+  createBatch(@Body() body: { pitchId: string; selections: Array<{ date: string; time: string }>; teamName?: string }) {
+    return this.bookings.createBookings(body);
+  }
+
   @Post()
   create(@Body() body: any) {
     return this.bookings.createBooking(body);

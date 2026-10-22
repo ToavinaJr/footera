@@ -253,6 +253,14 @@ export interface PitchSlot {
   isAvailable: boolean;
 }
 
+export interface PitchReview {
+  userId: string;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
 export interface Pitch {
   id: string;
   name: string;
@@ -265,6 +273,12 @@ export interface Pitch {
   hourlyRate: number;
   rating: number;
   reviewsCount: number;
+  /** Internal aggregate baseline used when appending user-submitted reviews. */
+  ratingBase?: number;
+  reviewsCountBase?: number;
+  reviews?: PitchReview[];
+  myRating?: number;
+  myReview?: PitchReview;
   amenities: string[];
   availableSlots: PitchSlot[];
 }
