@@ -93,7 +93,7 @@ export const HomeView: React.FC = () => {
       {/* Hero: Prochain match de mon équipe & Relance d'effectif */}
       {myTeam && (
         <section aria-label="Espace Mon Équipe" className="rounded-3xl bg-white border border-pitch-line shadow-sm overflow-hidden">
-          <div className="p-6 md:p-8 bg-gradient-to-r from-[#0d3822] via-pitch-action to-pitch-ink text-white">
+          <div className="p-6 md:p-8 bg-linear-to-r from-[#0d3822] via-pitch-action to-pitch-ink text-white">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               {/* Team brand and form */}
               <div className="space-y-3 max-w-xl">
@@ -362,7 +362,7 @@ export const HomeView: React.FC = () => {
                         }`}
                       >
                         <td className="py-2.5 font-bold text-slate-500">{teamRow.position}</td>
-                        <td className="py-2.5 font-semibold truncate max-w-[120px] text-pitch-ink">
+                        <td className="py-2.5 font-semibold truncate max-w-30 text-pitch-ink">
                           <EntityLink section="teams" id={teamRow.teamId}>{teamRow.teamName}</EntityLink>
                         </td>
                         <td className="py-2.5 text-center text-slate-500">{teamRow.played}</td>
