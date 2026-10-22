@@ -177,7 +177,7 @@ export const ProfileView: React.FC = () => {
           <img
             src={displayedAvatar}
             alt={displayedName}
-            className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover bg-slate-100 border-2 border-[#0e5632] shrink-0"
+            className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover bg-slate-100 border-2 border-pitch-primary shrink-0"
             referrerPolicy="no-referrer"
           />
           <div className="space-y-1">
@@ -190,7 +190,7 @@ export const ProfileView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate(`/profile/${encodeURIComponent(myPlayer.id)}`)}
-                  className="ml-2 inline-flex items-center gap-1 rounded-xl border border-[#dce6d8] px-3 py-2 text-xs font-bold text-[#0e5632] hover:bg-[#f2f8f0]"
+                  className="ml-2 inline-flex items-center gap-1 rounded-xl border border-[#dce6d8] px-3 py-2 text-xs font-bold text-pitch-primary hover:bg-[#f2f8f0]"
                 >
                   <ExternalLink className="h-3.5 w-3.5" /> Voir le profil public
                 </button>
@@ -198,17 +198,17 @@ export const ProfileView: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#0e5632]" />
+                <MapPin className="w-3.5 h-3.5 text-pitch-primary" />
                 {isOwner ? user!.city : publicPlayer!.city}
               </span>
               {isOwner && <><span>·</span>
               <span className="flex items-center gap-1">
-                <Mail className="w-3.5 h-3.5 text-[#0e5632]" />
+                <Mail className="w-3.5 h-3.5 text-pitch-primary" />
                 {user!.email}
               </span>
               <span>·</span>
               <span className="flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5 text-[#0e5632]" />
+                <Phone className="w-3.5 h-3.5 text-pitch-primary" />
                 {user!.phone}
               </span></>}
             </div>
@@ -233,7 +233,7 @@ export const ProfileView: React.FC = () => {
                   onClick={() => switchRole(r)}
                   className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#0e5632] text-white shadow-xs'
+                      ? 'bg-pitch-primary text-white shadow-xs'
                       : 'bg-white text-slate-600 hover:text-slate-900 border border-[#dce6d8]'
                   }`}
                 >
@@ -257,7 +257,7 @@ export const ProfileView: React.FC = () => {
             onClick={() => setActiveTab(t.tab as 'profile' | 'bookings' | 'applications')}
             className={`px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === t.tab
-                ? 'bg-[#0e5632] text-white shadow-xs'
+                ? 'bg-pitch-primary text-white shadow-xs'
                 : 'text-slate-600 hover:text-[#092c1a]'
             }`}
           >
@@ -285,7 +285,7 @@ export const ProfileView: React.FC = () => {
                   setCvCurrentTeam(user!.sportsCv.currentTeam);
                   navigate('/profile/edit-cv');
                 }}
-                className="px-4 py-2 min-h-[44px] rounded-2xl bg-[#eaf4ed] hover:bg-[#d5edd9] text-[#0e5632] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-4 py-2 min-h-11 rounded-2xl bg-pitch-light hover:bg-[#d5edd9] text-pitch-primary text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Modifier mon CV</span>
@@ -331,7 +331,7 @@ export const ProfileView: React.FC = () => {
             </div>
             <button
               onClick={resetDemo}
-              className="px-4 py-2 min-h-[44px] rounded-2xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shrink-0 shadow-2xs"
+              className="px-4 py-2 min-h-11 rounded-2xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shrink-0 shadow-2xs"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Réinitialiser les données</span>
@@ -344,10 +344,10 @@ export const ProfileView: React.FC = () => {
               {displayedPlayer.previousClubs.map((club) => {
                 const matchingTeam = teams.find((team) => team.name.toLowerCase() === club.toLowerCase())
                   ?? teams.find((team) => team.clubName?.toLowerCase() === club.toLowerCase());
-                return <li key={club} className="text-sm font-semibold text-slate-700"><button type="button" onClick={() => matchingTeam ? navigate(`/teams/${encodeURIComponent(matchingTeam.id)}`) : navigate(`/teams?query=${encodeURIComponent(club)}`)} className="cursor-pointer text-left hover:text-[#0e5632] hover:underline">{club}</button></li>;
+                return <li key={club} className="text-sm font-semibold text-slate-700"><button type="button" onClick={() => matchingTeam ? navigate(`/teams/${encodeURIComponent(matchingTeam.id)}`) : navigate(`/teams?query=${encodeURIComponent(club)}`)} className="cursor-pointer text-left hover:text-pitch-primary hover:underline">{club}</button></li>;
               })}
             </ol> : <p className="mt-3 text-sm text-slate-500">Aucun ancien club renseigné.</p>}
-            {displayedPlayer.currentTeam && <p className="mt-3 text-sm font-bold text-[#0e5632]">
+            {displayedPlayer.currentTeam && <p className="mt-3 text-sm font-bold text-pitch-primary">
               <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">(actuel)</span>
             </p>}
           </section>}
@@ -366,7 +366,7 @@ export const ProfileView: React.FC = () => {
             bookings.map((b) => (
               <div
                 key={b.id}
-                className={`p-5 rounded-3xl bg-white border border-[#dce6d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${selectedResourceId === b.id ? 'ring-2 ring-[#c6f432]' : ''}`}
+                className={`p-5 rounded-3xl bg-white border border-[#dce6d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${selectedResourceId === b.id ? 'ring-2 ring-lime-volt' : ''}`}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -380,7 +380,7 @@ export const ProfileView: React.FC = () => {
                   </div>
                   <p className="text-xs text-slate-500">
                     {b.complexName} · <strong className="text-[#092c1a]">{b.date}</strong> à{' '}
-                    <strong className="text-[#0e5632]">{b.time}</strong>
+                    <strong className="text-pitch-primary">{b.time}</strong>
                   </p>
                   <p className="text-xs text-slate-600">Montant total : {b.totalPrice} € TTC</p>
                 </div>
@@ -388,7 +388,7 @@ export const ProfileView: React.FC = () => {
                 {b.status !== 'CANCELLED' && (
                   <button
                     onClick={() => handleCancelBooking(b.id)}
-                    className="px-4 py-2 min-h-[44px] rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-4 py-2 min-h-11 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Annuler</span>
@@ -448,7 +448,7 @@ export const ProfileView: React.FC = () => {
               <select
                 value={cvPosition}
                 onChange={(e) => setCvPosition(e.target.value as any)}
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
               >
                 <option value="Gardien">Gardien</option>
                 <option value="Défenseur Central">Défenseur Central</option>
@@ -474,7 +474,7 @@ export const ProfileView: React.FC = () => {
                   value={cvHeight}
                   onChange={(e) => setCvHeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.height}
-                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
                 />
                 {cvErrors.height && <p className="mt-1 text-xs text-rose-600">{cvErrors.height}</p>}
               </div>
@@ -488,7 +488,7 @@ export const ProfileView: React.FC = () => {
                   value={cvWeight}
                   onChange={(e) => setCvWeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.weight}
-                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
                 />
                 {cvErrors.weight && <p className="mt-1 text-xs text-rose-600">{cvErrors.weight}</p>}
               </div>
@@ -497,7 +497,7 @@ export const ProfileView: React.FC = () => {
                 <select
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as any)}
-                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
                 >
                   <option value="Droitier">Droitier</option>
                   <option value="Gaucher">Gaucher</option>
@@ -515,7 +515,7 @@ export const ProfileView: React.FC = () => {
                 maxLength={80}
                 aria-invalid={!!cvErrors.currentTeam}
                 placeholder="Ex: Betsileo FC"
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
               />
               {cvErrors.currentTeam && <p className="mt-1 text-xs text-rose-600">{cvErrors.currentTeam}</p>}
             </div>
@@ -528,7 +528,7 @@ export const ProfileView: React.FC = () => {
                 onChange={(e) => setCvBio(e.target.value)}
                 maxLength={1000}
                 aria-invalid={!!cvErrors.bio}
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
               />
               {cvErrors.bio && <p className="mt-1 text-xs text-rose-600">{cvErrors.bio}</p>}
             </div>
@@ -537,14 +537,14 @@ export const ProfileView: React.FC = () => {
               <button
                 type="button"
                 onClick={closeEditCv}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={isSavingCv}
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
+                className="px-5 py-2 min-h-11 rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
               >
                 <Check className="w-4 h-4" />
                 <span>{isSavingCv ? 'Enregistrement…' : 'Enregistrer mon CV'}</span>

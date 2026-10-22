@@ -43,7 +43,13 @@ export class BookingsService {
     if (booking.status === 'CANCELLED') return true;
     await this.records.save('bookings', id, { ...booking, status: 'CANCELLED' });
     try {
-      await this.notifications.add({ title: 'Réservation annulée', message: `La réservation ${id} a été annulée.`, type: 'booking', targetSection: 'bookings', targetId: id });
+      await this.notifications.add({
+        title: 'Réservation annulée',
+        message: `La réservation pour ${booking.pitchName} du ${booking.date} à ${booking.time} a été annulée.`,
+        type: 'booking',
+        targetSection: 'bookings',
+        targetId: id,
+      });
     } catch (error) {
       this.logger.warn(`Booking ${id} was cancelled, but its notification could not be created: ${String(error)}`);
     }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Shield, Check, Plus, Building2, CheckSquare, Square, Sparkles } from 'lucide-react';
 import { pitchesService, CreatePitchInput } from '../../../services/pitchesService';
 import { bookingsService } from '../../../services/bookingsService';
@@ -41,7 +42,8 @@ const AVAILABLE_AMENITIES = [
 ];
 
 export const PitchesView: React.FC = () => {
-  const { showToast, selectedResourceId, user, navigateToResource } = useApp();
+  const { showToast, selectedResourceId, user } = useApp();
+  const navigate = useNavigate();
   const pitchModal = useRouteModal('/pitches');
   const [pitches, setPitches] = useState<Pitch[]>([]);
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceType | 'Toutes'>('Toutes');
@@ -227,7 +229,7 @@ export const PitchesView: React.FC = () => {
             <span>Ajouter un terrain</span>
           </button>
           <button
-            onClick={() => navigateToResource('profile')}
+            onClick={() => navigate('/profile/bookings')}
             className="px-4 py-2 min-h-[44px] rounded-2xl bg-white hover:bg-slate-50 text-[#092c1a] text-xs font-bold border border-[#dce6d8] shadow-2xs cursor-pointer"
           >
             Mes réservations
