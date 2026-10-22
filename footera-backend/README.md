@@ -1,36 +1,32 @@
-# Footera backend
+# Footera Backend
 
-NestJS API backed by Prisma and PostgreSQL. Each feature is a Nest module under `src/modules`; its controllers handle HTTP requests, its services hold domain behavior, and `src/database` contains the Prisma client, repository, and seed runner.
+API REST NestJS avec PostgreSQL et Prisma ORM. Le serveur écoute par défaut sur `http://localhost:3000` et expose les routes sous `/api/v1`.
 
-## Setup
+## Démarrage local
 
-```bash
-bun install
-cp .env.example .env
-docker compose up -d postgres
-bun run db:generate
-bun run db:migrate --name init
-bun run db:seed
-bun run start:dev
-```
+1. Copier `.env.example` vers `.env` et vérifier `DATABASE_URL` et `FRONTEND_URL`.
+2. Démarrer PostgreSQL : `docker compose up -d postgres`.
+3. Installer les dépendances : `npm ci`.
+4. Générer Prisma, appliquer les migrations et charger les données initiales :
 
-On Windows PowerShell, create `.env` by copying `.env.example` with `Copy-Item .env.example .env`.
+   ```sh
+   npm run db:generate
+   npm run db:deploy
+   npm run db:seed
+   ```
 
-Set `DATABASE_URL` to a PostgreSQL connection string in `.env`. The example configuration and `docker-compose.yml` use the local `footera` database exposed on port 55432 (container port 5432), avoiding collisions with a PostgreSQL service already using the standard port. Apply future committed migrations with `bun run db:deploy`.
+5. Lancer le serveur avec `npm run start:dev`.
 
-## Seeds
+## Commandes utiles
 
-`bun run db:seed` builds the backend and runs the Prisma seed. It is safe to rerun: existing rows are kept and missing demo records are inserted. The in-app `POST /api/v1/auth/reset-demo` intentionally resets the demo database and re-seeds it. For a full CLI reset, set `RESET_DATABASE=true` before running the seed command.
+| Commande | Usage |
+| --- | --- |
+| `npm run build` | Compiler NestJS |
+| `npm run lint` | Vérifier le code avec Oxlint |
+| `npm test` / `npm run test:e2e` | Tests unitaires / intégration |
+| `npm run db:generate` | Régénérer le client Prisma |
+| `npm run db:migrate` | Créer/appliquer une migration en développement |
+| `npm run db:deploy` | Appliquer les migrations versionnées |
+| `npm run db:seed` | Charger les données initiales |
 
-The seed source remains in `src/database/seeds.ts`; `src/database/seed-data.ts` maps those fixtures to Prisma models and `prisma/seed.mjs` is the CLI entry point.
-
-## Commands
-
-```bash
-bun run start:dev
-bun run build
-bun run db:generate
-bun run db:migrate --name <migration-name>
-bun run db:deploy
-bun run db:seed
-```
+Pour chaque changement de schéma, créer et valider une migration en développement, puis la committer dans `prisma/migrations`. Voir [architecture](docs/architecture.md), [base de données](docs/database.md), [déploiement](docs/deployment.md) et [changelog](CHANGELOG.md).

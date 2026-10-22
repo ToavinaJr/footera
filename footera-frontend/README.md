@@ -1,20 +1,20 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Footera Frontend
 
-# Run and deploy your AI Studio app
+Interface Footera développée avec React, TypeScript et Vite. Elle tourne par défaut sur `http://localhost:3001` et consomme l’API sous `/api/v1`.
 
-This contains everything you need to run your app locally.
+## Développement local
 
-View your app in AI Studio: https://ai.studio/apps/c23dc911-f163-4bc1-88bb-18a22492cd7b
+```sh
+npm ci
+npm run dev
+```
 
-## Run Locally
+Vite relaie `/api` vers `VITE_BACKEND_URL` (par défaut `http://localhost:3000`), évitant les requêtes cross-origin en développement. Démarrer le backend séparément. Copier `.env.example` vers `.env` pour ajuster le mode et l’URL API.
 
-**Prerequisites:**  Node.js
+## Scripts
 
+- `npm run lint` : vérification TypeScript (`tsc --noEmit`).
+- `npm run build` : build Vite dans `dist/`.
+- `npm run preview` : servir localement le build.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Voir [architecture](docs/architecture.md), [configuration](docs/configuration.md) et [changelog](CHANGELOG.md). L’image Nginx et le pipeline sont décrits dans [CI/CD](../docs/ci-cd.md).
