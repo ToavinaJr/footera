@@ -10,6 +10,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useSearchParams } from 'react-router-dom';
+import { finiteNumberOr, formatFiniteNumber } from '../../../utils/numberFormat';
 
 export const TeamsView: React.FC = () => {
   const { showToast, selectedResourceId, toggleFavoriteTeam, user, navigateToResource } = useApp();
@@ -452,7 +453,7 @@ export const TeamsView: React.FC = () => {
                       {selectedTeam.stats.goalsFor} buts
                     </strong>
                     <span className="text-[10px] text-slate-600 block mt-0.5">
-                      {(selectedTeam.stats.goalsFor / (selectedTeam.stats.matchesPlayed || 1)).toFixed(1)} / match
+                      {formatFiniteNumber(finiteNumberOr(selectedTeam.stats.goalsFor) / Math.max(1, finiteNumberOr(selectedTeam.stats.matchesPlayed)), 1)} / match
                     </span>
                   </div>
 

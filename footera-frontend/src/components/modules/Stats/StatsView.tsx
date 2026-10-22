@@ -35,6 +35,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
+import { formatFiniteNumber } from '../../../utils/numberFormat';
 
 export const StatsView: React.FC = () => {
   const { showToast, navigateToResource } = useApp();
@@ -667,7 +668,7 @@ export const StatsView: React.FC = () => {
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
-                        {teamStats[0]?.goalsFor} buts marqués ({teamStats[0]?.goalsPerMatch} / match)
+                        {formatFiniteNumber(teamStats[0]?.goalsFor)} buts marqués ({formatFiniteNumber(teamStats[0]?.goalsPerMatch, 2)} / match)
                       </span>
                     </div>
                     <Target className="w-8 h-8 text-[#0e5632] opacity-80" />
@@ -872,7 +873,7 @@ export const StatsView: React.FC = () => {
                         </div>
 
                         <div className="px-2.5 py-1 rounded-xl bg-[#f2faee] border border-[#d4e7d4] text-[#0e5632] font-black text-xs tabular-nums shadow-2xs">
-                          ★ {player.rating.toFixed(1)}
+                          ★ {formatFiniteNumber(player.rating, 1)}
                         </div>
                       </div>
 
@@ -957,7 +958,7 @@ export const StatsView: React.FC = () => {
                   {selectedTeamModal.goalsFor}
                 </strong>
                 <span className="text-[10px] text-slate-400 block mt-0.5">
-                  ({selectedTeamModal.goalsPerMatch} / match)
+                  ({formatFiniteNumber(selectedTeamModal.goalsPerMatch, 2)} / match)
                 </span>
               </div>
 
@@ -967,7 +968,7 @@ export const StatsView: React.FC = () => {
                   {selectedTeamModal.goalsAgainst}
                 </strong>
                 <span className="text-[10px] text-slate-400 block mt-0.5">
-                  ({selectedTeamModal.goalsAgainstPerMatch} / match)
+                  ({formatFiniteNumber(selectedTeamModal.goalsAgainstPerMatch, 2)} / match)
                 </span>
               </div>
 
@@ -1068,7 +1069,7 @@ export const StatsView: React.FC = () => {
                     {selectedPlayerModal.name}
                   </h3>
                   <span className="px-2.5 py-1 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-xs">
-                    ★ {selectedPlayerModal.rating.toFixed(1)} / 10
+                    ★ {formatFiniteNumber(selectedPlayerModal.rating, 1)} / 10
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">

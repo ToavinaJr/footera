@@ -95,7 +95,7 @@ export const MarketplaceView: React.FC = () => {
     }
 
     const priceNum = parseFloat(formPrice);
-    if (isNaN(priceNum) || priceNum <= 0) {
+    if (!Number.isFinite(priceNum) || priceNum <= 0) {
       showToast('Veuillez indiquer un prix valide supérieur à 0.', 'info');
       return;
     }

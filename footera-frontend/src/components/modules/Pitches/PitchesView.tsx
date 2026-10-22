@@ -10,6 +10,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
+import { formatFiniteNumber } from '../../../utils/numberFormat';
 
 const PITCH_IMAGE_PRESETS = [
   {
@@ -186,7 +187,7 @@ export const PitchesView: React.FC = () => {
     }
 
     const rate = parseFloat(formHourlyRate);
-    if (isNaN(rate) || rate <= 0) {
+    if (!Number.isFinite(rate) || rate <= 0) {
       showToast('Veuillez indiquer un tarif horaire valide.', 'info');
       return;
     }
@@ -274,8 +275,8 @@ export const PitchesView: React.FC = () => {
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-7">
             <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-[#092c1a]">{detailPitch.surface}</strong></div>
             <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-[#092c1a]">{detailPitch.dimensions}</strong></div>
-            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-[#092c1a]"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{detailPitch.rating.toFixed(1)} ({detailPitch.reviewsCount} avis)</strong></div>
-            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-[#0e5632]">À partir de {detailPitch.hourlyRate} € / séance</strong></div>
+            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-[#092c1a]"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{formatFiniteNumber(detailPitch.rating, 1)} ({formatFiniteNumber(detailPitch.reviewsCount)} avis)</strong></div>
+            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-[#0e5632]">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
           </div>
         </section>
 
@@ -414,8 +415,8 @@ export const PitchesView: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-[#092c1a]/85 backdrop-blur-xs text-[#c6f432] px-2.5 py-1 rounded-full text-xs font-extrabold shadow-xs">
                     <Star className="w-3.5 h-3.5 fill-[#c6f432]" />
-                    <span>{pitch.rating.toFixed(1)}</span>
-                    <span className="text-white/60 font-medium">({pitch.reviewsCount})</span>
+                    <span>{formatFiniteNumber(pitch.rating, 1)}</span>
+                    <span className="text-white/60 font-medium">({formatFiniteNumber(pitch.reviewsCount)})</span>
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
                     <span className="text-xs font-bold text-[#c6f432] block mb-0.5">
@@ -455,7 +456,7 @@ export const PitchesView: React.FC = () => {
                 <div>
                   <span className="text-slate-400 text-[11px] block font-medium">À partir de</span>
                   <span className="text-lg font-extrabold text-[#0e5632] tabular-nums">
-                    {pitch.hourlyRate} €
+                    {formatFiniteNumber(pitch.hourlyRate)} €
                   </span>
                   <span className="text-xs text-slate-500 font-medium"> / séance</span>
                 </div>

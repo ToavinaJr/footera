@@ -11,10 +11,16 @@ export class MarketplaceController {
     @Query('category') category?: string,
     @Query('maxPrice') maxPrice?: string,
   ) {
+    const parsedMaxPrice = maxPrice === undefined || maxPrice.trim() === ''
+      ? undefined
+      : Number(maxPrice);
+
     return this.marketplace.list({
       query,
       category,
-      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      maxPrice: parsedMaxPrice !== undefined && Number.isFinite(parsedMaxPrice)
+        ? parsedMaxPrice
+        : undefined,
     });
   }
 

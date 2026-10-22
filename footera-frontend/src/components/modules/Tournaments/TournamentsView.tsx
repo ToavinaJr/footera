@@ -120,7 +120,7 @@ export const TournamentsView: React.FC = () => {
 
     const fee = parseFloat(formEntryFee);
     const prize = parseFloat(formPrizePool);
-    if (isNaN(fee) || fee < 0 || isNaN(prize) || prize < 0) {
+    if (!Number.isFinite(fee) || fee < 0 || !Number.isFinite(prize) || prize < 0) {
       showToast('Veuillez entrer des montants valides pour les frais et dotations.', 'info');
       return;
     }
