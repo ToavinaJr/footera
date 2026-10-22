@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Compass, Trophy, Bell, User } from 'lucide-react';
-import { useApp, NavigationSection } from '../../context/AppContext';
+import { NavigationSection } from '../../context/navigation';
+import { useApp } from '../../context/useApp';
 
 export const MobileNav: React.FC = () => {
   const { activeSection, setActiveSection, unreadNotificationsCount } = useApp();

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, CheckCheck, Bell, ChevronRight } from 'lucide-react';
-import { useApp, NavigationSection } from '../../context/AppContext';
+import { NavigationSection } from '../../context/navigation';
+import { useApp } from '../../context/useApp';
 
 interface NotificationsDrawerProps {
   isOpen: boolean;

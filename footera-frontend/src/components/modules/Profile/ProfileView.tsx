@@ -13,7 +13,7 @@ import {
   XCircle,
   Trophy
 } from 'lucide-react';
-import { useApp } from '../../../context/AppContext';
+import { useApp } from '../../../context/useApp';
 import { bookingsService } from '../../../services/bookingsService';
 import { recruitmentService } from '../../../services/recruitmentService';
 import { Booking, Application, UserRole, Position, StrongFoot } from '../../../types';

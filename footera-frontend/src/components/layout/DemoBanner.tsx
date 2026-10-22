@@ -1,6 +1,6 @@
 import React from 'react';
 import { RotateCcw, Database } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/useApp';
 import { DATA_MODE } from '../../config/dataMode';
 
 export const DemoBanner: React.FC = () => {

@@ -12,7 +12,8 @@ import {
   Briefcase,
   BarChart3
 } from 'lucide-react';
-import { useApp, NavigationSection } from '../../context/AppContext';
+import { NavigationSection } from '../../context/navigation';
+import { useApp } from '../../context/useApp';
 
 interface SidebarDrawerProps {
   isOpen: boolean;

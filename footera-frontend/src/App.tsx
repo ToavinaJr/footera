@@ -1,5 +1,6 @@
 import React from 'react';
-import { AppProvider, useApp } from './context/AppContext';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
 import { Header } from './components/layout/Header';
 import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
@@ -16,35 +17,6 @@ import { ProfileView } from './components/modules/Profile/ProfileView';
 import { StatsView } from './components/modules/Stats/StatsView';
 
 const AppContent: React.FC = () => {
-  const { activeSection, setActiveSection } = useApp();
-
-  const renderActiveView = () => {
-    switch (activeSection) {
-      case 'home':
-        return <HomeView />;
-      case 'players':
-        return <PlayersView />;
-      case 'teams':
-        return <TeamsView />;
-      case 'matches':
-        return <MatchesView />;
-      case 'tournaments':
-        return <TournamentsView />;
-      case 'pitches':
-        return <PitchesView />;
-      case 'recruitment':
-        return <RecruitmentView />;
-      case 'marketplace':
-        return <MarketplaceView />;
-      case 'profile':
-        return <ProfileView />;
-      case 'stats':
-        return <StatsView />;
-      default:
-        return <HomeView />;
-    }
-  };
-
   return (
     <div className="min-h-full flex flex-col bg-[#f5f8f4] text-[#12281e] font-sans selection:bg-[#c6f432] selection:text-[#092c1a]">
       {/* Discreet Demo / Data Mode Banner */}
@@ -55,7 +27,21 @@ const AppContent: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
-        {renderActiveView()}
+        <Routes>
+          <Route path="/" element={<HomeView />} />
+          <Route path="/players" element={<PlayersView />} />
+          <Route path="/teams" element={<TeamsView />} />
+          <Route path="/teams/:teamId" element={<TeamsView />} />
+          <Route path="/matches" element={<MatchesView />} />
+          <Route path="/tournaments" element={<TournamentsView />} />
+          <Route path="/pitches" element={<PitchesView />} />
+          <Route path="/pitches/:pitchId" element={<PitchesView />} />
+          <Route path="/recruitment" element={<RecruitmentView />} />
+          <Route path="/marketplace" element={<MarketplaceView />} />
+          <Route path="/profile" element={<ProfileView />} />
+          <Route path="/stats" element={<StatsView />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Mobile Ergonomic Bottom Tab Navigation */}
@@ -102,8 +88,10 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <BrowserRouter>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </BrowserRouter>
   );
 }

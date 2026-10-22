@@ -33,7 +33,7 @@ import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
-import { useApp } from '../../../context/AppContext';
+import { useApp } from '../../../context/useApp';
 
 export const StatsView: React.FC = () => {
   const { showToast, navigateToResource } = useApp();

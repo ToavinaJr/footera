@@ -6,7 +6,7 @@ import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
-import { useApp } from '../../../context/AppContext';
+import { useApp } from '../../../context/useApp';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {

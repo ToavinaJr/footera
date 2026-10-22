@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, Search, Bell, User, X, BarChart3 } from 'lucide-react';
-import { useApp, NavigationSection } from '../../context/AppContext';
+import { NavigationSection } from '../../context/navigation';
+import { useApp } from '../../context/useApp';
 import { NotificationsDrawer } from './NotificationsDrawer';
 import { SidebarDrawer } from './SidebarDrawer';
 

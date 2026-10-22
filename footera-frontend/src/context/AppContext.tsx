@@ -1,57 +1,29 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { UserProfile, UserRole, NotificationItem } from '../types';
+import React, { useEffect, useState, useCallback } from 'react';
+import type { UserProfile, UserRole } from '../types';
 import { authService } from '../services/authService';
 import { notificationsService } from '../services/notificationsService';
 import { mockStorage } from '../mocks/mockStorage';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AppContext } from './app-context';
+import type { AppContextType, ToastMessage } from './app-context';
+import type { NavigationSection } from './navigation';
 
-export type NavigationSection =
-  | 'home'
-  | 'players'
-  | 'teams'
-  | 'matches'
-  | 'tournaments'
-  | 'pitches'
-  | 'recruitment'
-  | 'marketplace'
-  | 'profile'
-  | 'stats';
-
-interface ToastMessage {
-  id: string;
-  type: 'success' | 'info' | 'error';
-  message: string;
-}
-
-interface AppContextType {
-  activeSection: NavigationSection;
-  setActiveSection: (section: NavigationSection) => void;
-  selectedResourceId?: string;
-  navigateToResource: (section: NavigationSection, resourceId?: string) => void;
-  
-  user: UserProfile | null;
-  isLoadingUser: boolean;
-  switchRole: (role: UserRole) => Promise<void>;
-  updateProfile: (partial: Partial<UserProfile>) => Promise<void>;
-  updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<void>;
-  toggleFavoriteTeam: (teamId: string) => Promise<boolean>;
-
-  notifications: NotificationItem[];
-  unreadNotificationsCount: number;
-  markNotificationRead: (id: string) => Promise<void>;
-  markAllNotificationsRead: () => Promise<void>;
-
-  toasts: ToastMessage[];
-  showToast: (message: string, type?: 'success' | 'info' | 'error') => void;
-  removeToast: (id: string) => void;
-
-  resetDemo: () => Promise<void>;
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const routeForSection = (section: NavigationSection) => section === 'home' ? '/' : `/${section}`;
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeSection, setActiveSection] = useState<NavigationSection>('home');
-  const [selectedResourceId, setSelectedResourceId] = useState<string | undefined>(undefined);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const sectionFromPath = location.pathname.split('/').filter(Boolean)[0] as NavigationSection | undefined;
+  const validSections: NavigationSection[] = [
+    'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'profile', 'stats',
+  ];
+  const activeSection: NavigationSection = sectionFromPath && validSections.includes(sectionFromPath)
+    ? sectionFromPath
+    : 'home';
+  const routeResourceId = location.pathname.match(/^\/(?:teams|pitches)\/([^/]+)\/?$/)?.[1];
+  const selectedResourceId = routeResourceId
+    ? decodeURIComponent(routeResourceId)
+    : (location.state as { resourceId?: string } | null)?.resourceId;
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -104,11 +76,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const navigateToResource = useCallback((section: NavigationSection, resourceId?: string) => {
-    setActiveSection(section);
-    setSelectedResourceId(resourceId);
+  const setActiveSection = useCallback((section: NavigationSection) => {
+    navigate(routeForSection(section));
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [navigate]);
+
+  const navigateToResource = useCallback((section: NavigationSection, resourceId?: string) => {
+    const supportsDetailRoute = section === 'teams' || section === 'pitches';
+    let path = routeForSection(section);
+    if (resourceId && supportsDetailRoute) {
+      path = `${path}/${encodeURIComponent(resourceId)}`;
+    }
+    const navigationState = resourceId && !supportsDetailRoute ? { state: { resourceId } } : undefined;
+    navigate(path, navigationState);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [navigate]);
 
   const switchRole = async (role: UserRole) => {
     try {
@@ -202,12 +184,4 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {children}
     </AppContext.Provider>
   );
-};
-
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
 };

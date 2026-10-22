@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { useApp } from '../../../context/AppContext';
+import { useApp } from '../../../context/useApp';
 import { matchesService } from '../../../services/matchesService';
 import { recruitmentService } from '../../../services/recruitmentService';
 import { pitchesService } from '../../../services/pitchesService';
