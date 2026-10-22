@@ -15,6 +15,7 @@ export const statsService = {
       if (filters?.limit) params.set('limit', String(filters.limit));
       return apiClient<TopScorerItem[]>(`stats/top-scorers?${params.toString()}`);
     }
+    if (filters?.tournamentId && filters.tournamentId !== 'all') return mockDelay([], 200);
     const players = mockStorage.getPlayers();
     const teams = mockStorage.getTeams();
     const tournaments = mockStorage.getTournaments();
@@ -93,6 +94,7 @@ export const statsService = {
       if (filters?.limit) params.set('limit', String(filters.limit));
       return apiClient<TopAssisterItem[]>(`stats/top-assisters?${params.toString()}`);
     }
+    if (filters?.tournamentId && filters.tournamentId !== 'all') return mockDelay([], 200);
     const players = mockStorage.getPlayers();
     const teams = mockStorage.getTeams();
     const tournaments = mockStorage.getTournaments();

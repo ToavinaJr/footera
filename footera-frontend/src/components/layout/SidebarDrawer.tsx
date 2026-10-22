@@ -3,6 +3,7 @@ import {
   Home, 
   Compass, 
   Trophy, 
+  Medal,
   MapPin, 
   ShoppingBag, 
   Bell, 
@@ -29,6 +30,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
     { label: 'Accueil', section: 'home', icon: Home },
     { label: 'Explorer', section: 'players', icon: Compass },
     { label: 'Matchs et compétitions', section: 'matches', icon: Trophy },
+    { label: 'Tournois', section: 'tournaments', icon: Medal },
     { label: 'Statistiques & Buteurs', section: 'stats', icon: BarChart3 },
     { label: 'Terrains', section: 'pitches', icon: MapPin },
     { label: 'Marketplace', section: 'marketplace', icon: ShoppingBag },
@@ -86,7 +88,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
                     setActiveSection(item.section);
                     onClose();
                   }}
-                  className={`w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl flex items-center gap-3.5 text-sm font-semibold transition-all cursor-pointer ${
+                  className={`w-full min-h-11.5 px-3.5 py-2.5 rounded-2xl flex items-center gap-3.5 text-sm font-semibold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-lime-volt text-pitch-ink shadow-md shadow-lime-volt/10 font-bold'
                       : 'text-slate-200 hover:bg-[#0f4427] hover:text-white'

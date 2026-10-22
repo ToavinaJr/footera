@@ -34,14 +34,14 @@ export const tournamentsService = {
     return apiClient<Tournament>(`tournaments/${id}`);
   },
 
-  async registerTeam(tournamentId: string, teamName: string): Promise<boolean> {
+  async registerTeam(tournamentId: string, teamId: string): Promise<boolean> {
     if (IS_MOCK_MODE) {
-      const ok = mockStorage.registerTeamForTournament(tournamentId, teamName);
+      const ok = mockStorage.registerTeamForTournament(tournamentId, teamId);
       return mockDelay(ok, 300);
     }
     return apiClient<boolean>(`tournaments/${tournamentId}/register`, {
       method: 'POST',
-      body: JSON.stringify({ teamName }),
+      body: JSON.stringify({ teamId }),
     });
   },
 

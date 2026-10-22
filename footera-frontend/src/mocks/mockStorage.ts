@@ -247,15 +247,19 @@ class MockStorageRepository {
     return this.tournaments.find((t) => t.id === id);
   }
 
-  registerTeamForTournament(tournamentId: string, teamName: string): boolean {
+  registerTeamForTournament(tournamentId: string, teamId: string): boolean {
     const tourn = this.tournaments.find((t) => t.id === tournamentId);
-    if (!tourn) return false;
-    tourn.registeredTeams += 1;
+    const team = this.teams.find((item) => item.id === teamId);
+    if (!tourn || !team || tourn.registeredTeams >= tourn.maxTeams) return false;
+    tourn.participantTeamIds ??= tourn.standings.map((standing) => standing.teamId);
+    if (tourn.participantTeamIds.includes(teamId)) return false;
+    tourn.participantTeamIds.push(teamId);
+    tourn.registeredTeams = tourn.participantTeamIds.length;
     saveToStorage(STORAGE_KEYS.TOURNAMENTS, this.tournaments);
 
     this.addNotification({
       title: 'Inscription au tournoi',
-      message: `L'équipe ${teamName} est pré-inscrite pour ${tourn.title}.`,
+      message: `L'équipe ${team.name} est pré-inscrite pour ${tourn.title}.`,
       type: 'system',
       targetSection: 'tournaments',
       targetId: tourn.id,
@@ -281,7 +285,8 @@ class MockStorageRepository {
     const newTourn: Tournament = {
       ...input,
       id: `tourn_${Date.now()}`,
-      registeredTeams: 1,
+      registeredTeams: 0,
+      participantTeamIds: [],
       status: 'INSCRIPTIONS_OUVERTES',
       standings: [],
       fixtures: [],

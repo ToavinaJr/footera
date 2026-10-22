@@ -2,41 +2,116 @@ import { Injectable } from '@nestjs/common';
 import { PlayersService } from '../players/players.service.js';
 import { TeamsService } from '../teams/teams.service.js';
 import { TournamentsService } from '../tournaments/tournaments.service.js';
+import { RecordRepository } from '../../database/record.repository.js';
 
 const FALLBACK_LOGO = 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80';
 
 @Injectable()
 export class StatsService {
-  constructor(private readonly playersService: PlayersService, private readonly teamsService: TeamsService, private readonly tournamentsService: TournamentsService) {}
+  constructor(private readonly playersService: PlayersService, private readonly teamsService: TeamsService, private readonly tournamentsService: TournamentsService, private readonly records: RecordRepository) {}
 
   async topScorers(filters: { tournamentId?: string; teamId?: string; limit?: number } = {}) {
-    const [players, teams, tournaments]: any[] = await Promise.all([this.playersService.list(), this.teamsService.list(), this.tournamentsService.list()]);
-    const tournament = tournaments.find((item: any) => item.id === filters.tournamentId);
-    let rows = players.map((player: any) => {
-      const team = teams.find((item: any) => item.id === player.currentTeamId) || { id: player.currentTeamId || 'team_unknown', name: player.currentTeam || 'Club Libre', logoUrl: FALLBACK_LOGO };
-      const standing = tournament?.standings?.find((item: any) => item.teamId === team.id);
-      const matchesPlayed = tournament ? Math.max(1, standing?.played || 3) : player.appearances;
-      const goals = tournament ? Math.max(1, Math.round(player.goals / (player.appearances || 1) * matchesPlayed)) : player.goals;
-      return { playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl, teamId: team.id, teamName: team.name, teamLogo: team.logoUrl, tournamentId: tournament?.id, tournamentTitle: tournament?.title, position: player.primaryPosition, matchesPlayed, goals, penalties: Math.max(0, Math.floor(goals * .2)), ratio: matchesPlayed ? Number((goals / matchesPlayed).toFixed(2)) : 0, minutesPerGoal: goals ? Math.round(matchesPlayed * 85 / goals) : 0 };
-    });
+    const [players, teams, matches, tournament]: any[] = await Promise.all([
+      this.playersService.list(), this.teamsService.list(), this.records.list('matches'),
+      filters.tournamentId ? this.tournamentsService.getById(filters.tournamentId) : Promise.resolve(null),
+    ]);
+    let rows = filters.tournamentId
+      ? this.aggregateTournamentPlayers(players, teams, matches, tournament)
+      : players.map((player: any) => {
+        const team = teams.find((item: any) => item.id === player.currentTeamId)
+          || { id: player.currentTeamId || 'team_unknown', name: player.currentTeam || 'Club Libre', logoUrl: FALLBACK_LOGO };
+        const matchesPlayed = Number(player.appearances) || 0;
+        const goals = Number(player.goals) || 0;
+        return {
+          playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl,
+          teamId: team.id, teamName: team.name, teamLogo: team.logoUrl,
+          position: player.primaryPosition, matchesPlayed, goals, assists: Number(player.assists) || 0,
+          penalties: Math.max(0, Math.floor(goals * .2)),
+          ratio: matchesPlayed ? Number((goals / matchesPlayed).toFixed(2)) : 0,
+          minutesPerGoal: goals ? Math.round(matchesPlayed * 85 / goals) : 0,
+        };
+      }).map((row: any) => ({ ...row, penalties: row.penalties ?? 0 }));
+    rows = rows.map((row: any) => ({ ...row, ratio: row.matchesPlayed ? Number((row.goals / row.matchesPlayed).toFixed(2)) : 0, penalties: row.penalties ?? 0, minutesPerGoal: row.goals ? Math.round(row.matchesPlayed * 85 / row.goals) : 0 }));
     if (filters.teamId && filters.teamId !== 'all') rows = rows.filter((row: any) => row.teamId === filters.teamId);
     const ranked = rows.sort((a: any, b: any) => b.goals - a.goals || b.ratio - a.ratio).map((row: any, index: number) => ({ ...row, rank: index + 1 }));
     return filters.limit ? ranked.slice(0, filters.limit) : ranked;
   }
 
   async topAssisters(filters: { tournamentId?: string; teamId?: string; limit?: number } = {}) {
-    const [players, teams, tournaments]: any[] = await Promise.all([this.playersService.list(), this.teamsService.list(), this.tournamentsService.list()]);
-    const tournament = tournaments.find((item: any) => item.id === filters.tournamentId);
-    let rows = players.map((player: any) => {
-      const team = teams.find((item: any) => item.id === player.currentTeamId) || { id: player.currentTeamId || 'team_unknown', name: player.currentTeam || 'Club Libre', logoUrl: FALLBACK_LOGO };
-      const standing = tournament?.standings?.find((item: any) => item.teamId === team.id);
-      const matchesPlayed = tournament ? Math.max(1, standing?.played || 3) : player.appearances;
-      const assists = tournament ? Math.max(1, Math.round(player.assists / (player.appearances || 1) * matchesPlayed)) : player.assists;
-      return { playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl, teamId: team.id, teamName: team.name, teamLogo: team.logoUrl, tournamentId: tournament?.id, tournamentTitle: tournament?.title, position: player.primaryPosition, matchesPlayed, assists, keyPasses: Math.round(assists * 2.8 + matchesPlayed), ratio: matchesPlayed ? Number((assists / matchesPlayed).toFixed(2)) : 0 };
-    });
+    const [players, teams, matches, tournament]: any[] = await Promise.all([
+      this.playersService.list(), this.teamsService.list(), this.records.list('matches'),
+      filters.tournamentId ? this.tournamentsService.getById(filters.tournamentId) : Promise.resolve(null),
+    ]);
+    let rows = filters.tournamentId
+      ? this.aggregateTournamentPlayers(players, teams, matches, tournament)
+      : players.map((player: any) => {
+        const team = teams.find((item: any) => item.id === player.currentTeamId)
+          || { id: player.currentTeamId || 'team_unknown', name: player.currentTeam || 'Club Libre', logoUrl: FALLBACK_LOGO };
+        const matchesPlayed = Number(player.appearances) || 0;
+        const assists = Number(player.assists) || 0;
+        return {
+          playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl,
+          teamId: team.id, teamName: team.name, teamLogo: team.logoUrl,
+          position: player.primaryPosition, matchesPlayed, goals: Number(player.goals) || 0, assists,
+          ratio: matchesPlayed ? Number((assists / matchesPlayed).toFixed(2)) : 0,
+        };
+      }).map((row: any) => ({ ...row, keyPasses: row.assists }));
+    rows = rows.map((row: any) => ({ ...row, ratio: row.matchesPlayed ? Number((row.assists / row.matchesPlayed).toFixed(2)) : 0, keyPasses: row.assists }));
     if (filters.teamId && filters.teamId !== 'all') rows = rows.filter((row: any) => row.teamId === filters.teamId);
     const ranked = rows.sort((a: any, b: any) => b.assists - a.assists || b.ratio - a.ratio).map((row: any, index: number) => ({ ...row, rank: index + 1 }));
     return filters.limit ? ranked.slice(0, filters.limit) : ranked;
+  }
+
+  private aggregateTournamentPlayers(players: any[], teams: any[], matches: any[], tournament: any) {
+    if (!tournament) return [];
+    const participantIds = new Set<string>(tournament.participantTeamIds ?? []);
+    if (!participantIds.size) return [];
+    const tournamentMatches = matches.filter((match: any) => match.tournamentId === tournament.id
+      && match.status === 'FINISHED'
+      && participantIds.has(match.homeTeam?.id)
+      && participantIds.has(match.awayTeam?.id));
+    const totals = new Map<string, any>();
+    for (const match of tournamentMatches) {
+      const events = Array.isArray(match.events) ? match.events : [];
+      for (const event of events) {
+        if (event.type !== 'goal' || !participantIds.has(event.teamId)) continue;
+        const player = players.find((item: any) => item.id === event.playerId
+          || (item.name === event.player && (item.currentTeamId === event.teamId || item.currentTeam === teams.find((team: any) => team.id === event.teamId)?.name)));
+        const team = teams.find((item: any) => item.id === event.teamId);
+        if (!player || !team) continue;
+        const row = totals.get(player.id) ?? {
+          playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl,
+          teamId: team.id, teamName: team.name, teamLogo: team.logoUrl,
+          tournamentId: tournament.id, tournamentTitle: tournament.title,
+          position: player.primaryPosition, matchesPlayed: 0, goals: 0, assists: 0,
+          matchIds: new Set<string>(),
+        };
+        row.goals += 1;
+        row.matchIds.add(match.id);
+        totals.set(player.id, row);
+        if (event.assist) {
+          const assister = players.find((item: any) => item.id === event.assistPlayerId
+            || (item.name === event.assist && (item.currentTeamId === event.teamId || item.currentTeam === team.name)));
+          if (assister) {
+            const assistRow = totals.get(assister.id) ?? {
+              playerId: assister.id, playerName: assister.name, avatarUrl: assister.avatarUrl,
+              teamId: team.id, teamName: team.name, teamLogo: team.logoUrl,
+              tournamentId: tournament.id, tournamentTitle: tournament.title,
+              position: assister.primaryPosition, matchesPlayed: 0, goals: 0, assists: 0,
+              matchIds: new Set<string>(),
+            };
+            assistRow.assists += 1;
+            assistRow.matchIds.add(match.id);
+            totals.set(assister.id, assistRow);
+          }
+        }
+      }
+    }
+    return [...totals.values()].map(({ matchIds, ...row }) => ({
+      ...row,
+      matchesPlayed: matchIds.size,
+      ratio: matchIds.size ? Number((Math.max(row.goals, row.assists) / matchIds.size).toFixed(2)) : 0,
+    }));
   }
 
   async teamStats(filters: { tournamentId?: string } = {}) {

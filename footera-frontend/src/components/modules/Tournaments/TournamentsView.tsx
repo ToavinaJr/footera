@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Calendar, MapPin, Users, Award, Shield, CheckCircle2, Plus, Sparkles, Building2, Layers, Target } from 'lucide-react';
 import { tournamentsService, CreateTournamentInput } from '../../../services/tournamentsService';
 import { statsService } from '../../../services/statsService';
-import { Tournament, TopScorerItem, TopAssisterItem } from '../../../types';
+import { Tournament, TopScorerItem, TopAssisterItem, Team } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -10,6 +10,7 @@ import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
+import { teamsService } from '../../../services/teamsService';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -44,7 +45,8 @@ export const TournamentsView: React.FC = () => {
 
   // Register Modal
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [registerTeamName, setRegisterTeamName] = useState('');
+  const [registerTeamId, setRegisterTeamId] = useState('');
+  const [teams, setTeams] = useState<Team[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Create Tournament Modal
@@ -83,6 +85,12 @@ export const TournamentsView: React.FC = () => {
   }, [selectedResourceId, showToast, tournamentModal.resourceId]);
 
   useEffect(() => {
+    teamsService.list().then(setTeams).catch((err) => {
+      showToast(err.message || 'Erreur lors du chargement des équipes', 'error');
+    });
+  }, [showToast]);
+
+  useEffect(() => {
     if (selectedTournament) {
       setTournModalTab('overview');
       statsService.getTopScorers({ tournamentId: selectedTournament.id }).then(setTournScorers);
@@ -91,14 +99,16 @@ export const TournamentsView: React.FC = () => {
   }, [selectedTournament?.id]);
 
   const handleRegister = async () => {
-    if (!selectedTournament || !registerTeamName.trim()) return;
+    if (!selectedTournament || !registerTeamId) return;
+    const team = teams.find((item) => item.id === registerTeamId);
+    if (!team) return;
     setIsSubmitting(true);
     try {
-      const ok = await tournamentsService.registerTeam(selectedTournament.id, registerTeamName);
+      const ok = await tournamentsService.registerTeam(selectedTournament.id, registerTeamId);
       if (ok) {
-        showToast(`Inscription validée pour ${registerTeamName} !`, 'success');
+        showToast(`Inscription validée pour ${team.name} !`, 'success');
         setIsRegisterOpen(false);
-        setRegisterTeamName('');
+        setRegisterTeamId('');
         const updated = await tournamentsService.getById(selectedTournament.id);
         setSelectedTournament(updated);
         const allUpdated = await tournamentsService.list();
@@ -373,7 +383,9 @@ export const TournamentsView: React.FC = () => {
                 {selectedTournament.registeredTeams < selectedTournament.maxTeams ? (
                   <button
                     onClick={() => {
-                      setRegisterTeamName(user?.sportsCv.currentTeam || '');
+                      const enrolled = new Set(selectedTournament.participantTeamIds ?? []);
+                      const availableTeams = teams.filter((team) => !enrolled.has(team.id));
+                      setRegisterTeamId(availableTeams.find((team) => team.name === user?.sportsCv.currentTeam)?.id ?? availableTeams[0]?.id ?? '');
                       setIsRegisterOpen(true);
                     }}
                     className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
@@ -508,15 +520,18 @@ export const TournamentsView: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Nom officiel de l&apos;équipe participante *
+                Équipe participante *
               </label>
-              <input
-                type="text"
-                value={registerTeamName}
-                onChange={(e) => setRegisterTeamName(e.target.value)}
-                placeholder="Ex: Betsileo FC"
+              <select
+                value={registerTeamId}
+                onChange={(e) => setRegisterTeamId(e.target.value)}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-              />
+              >
+                <option value="">Sélectionner une équipe existante</option>
+                {teams.filter((team) => !(selectedTournament.participantTeamIds ?? []).includes(team.id)).map((team) => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
@@ -527,7 +542,7 @@ export const TournamentsView: React.FC = () => {
               </button>
               <button
                 onClick={handleRegister}
-                disabled={!registerTeamName.trim() || isSubmitting}
+                disabled={!registerTeamId || isSubmitting}
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Validation...' : 'Confirmer l’inscription'}

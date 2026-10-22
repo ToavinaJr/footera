@@ -128,7 +128,9 @@ export interface MatchEvent {
   minute: number;
   type: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'penalty';
   teamId: string;
+  playerId?: string;
   player: string;
+  assistPlayerId?: string;
   assist?: string;
   description?: string;
 }
@@ -143,6 +145,7 @@ export interface MatchStats {
 
 export interface Match {
   id: string;
+  tournamentId?: string;
   homeTeam: {
     id: string;
     name: string;
@@ -231,6 +234,7 @@ export interface Tournament {
   endDate: string;
   maxTeams: number;
   registeredTeams: number;
+  participantTeamIds?: string[];
   remainingTeams?: number;
   entryFee: number; // in EUR
   prizePool: number; // in EUR

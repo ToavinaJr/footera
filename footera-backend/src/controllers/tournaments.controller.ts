@@ -23,7 +23,7 @@ export class TournamentsController {
   }
 
   @Post(':id/register')
-  registerTeam(@Param('id') id: string, @Body('teamName') teamName: string) {
-    return this.tournaments.register(id, teamName);
+  registerTeam(@Param('id') id: string, @Body('teamId') teamId: string) {
+    return this.tournaments.register(id, teamId);
   }
 }
