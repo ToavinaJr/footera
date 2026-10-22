@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
@@ -6,16 +6,17 @@ import { Header } from './components/layout/Header';
 import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
 import { ToastContainer } from './components/common/Toast';
-import { HomeView } from './components/modules/Home/HomeView';
-import { PlayersView } from './components/modules/Players/PlayersView';
-import { TeamsView } from './components/modules/Teams/TeamsView';
-import { MatchesView } from './components/modules/Matches/MatchesView';
-import { TournamentsView } from './components/modules/Tournaments/TournamentsView';
-import { PitchesView } from './components/modules/Pitches/PitchesView';
-import { RecruitmentView } from './components/modules/Recruitment/RecruitmentView';
-import { MarketplaceView } from './components/modules/Marketplace/MarketplaceView';
-import { ProfileView } from './components/modules/Profile/ProfileView';
-import { StatsView } from './components/modules/Stats/StatsView';
+
+const HomeView = lazy(() => import('./components/modules/Home/HomeView').then((module) => ({ default: module.HomeView })));
+const PlayersView = lazy(() => import('./components/modules/Players/PlayersView').then((module) => ({ default: module.PlayersView })));
+const TeamsView = lazy(() => import('./components/modules/Teams/TeamsView').then((module) => ({ default: module.TeamsView })));
+const MatchesView = lazy(() => import('./components/modules/Matches/MatchesView').then((module) => ({ default: module.MatchesView })));
+const TournamentsView = lazy(() => import('./components/modules/Tournaments/TournamentsView').then((module) => ({ default: module.TournamentsView })));
+const PitchesView = lazy(() => import('./components/modules/Pitches/PitchesView').then((module) => ({ default: module.PitchesView })));
+const RecruitmentView = lazy(() => import('./components/modules/Recruitment/RecruitmentView').then((module) => ({ default: module.RecruitmentView })));
+const MarketplaceView = lazy(() => import('./components/modules/Marketplace/MarketplaceView').then((module) => ({ default: module.MarketplaceView })));
+const ProfileView = lazy(() => import('./components/modules/Profile/ProfileView').then((module) => ({ default: module.ProfileView })));
+const StatsView = lazy(() => import('./components/modules/Stats/StatsView').then((module) => ({ default: module.StatsView })));
 
 const LegacyPlayerRedirect: React.FC = () => {
   const { playerId = '' } = useParams();
@@ -37,6 +38,7 @@ const AppContent: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
+        <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Chargement de la page…</div>}>
         <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<HomeView />} />
           <Route path="/players" element={<PlayersView />} />
@@ -66,6 +68,7 @@ const AppContent: React.FC = () => {
           <Route path="/stats" element={<StatsView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       {/* Mobile Ergonomic Bottom Tab Navigation */}

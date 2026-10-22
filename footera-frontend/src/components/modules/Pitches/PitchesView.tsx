@@ -269,11 +269,11 @@ export const PitchesView: React.FC = () => {
 
     return (
       <div className="space-y-6 pb-16">
-        <button type="button" onClick={() => navigate('/pitches')} className="text-sm font-bold text-[#0e5632] hover:underline">← Retour aux terrains</button>
-        <section className="overflow-hidden rounded-3xl border border-[#dce6d8] bg-white shadow-xs">
-          <div className="relative h-64 sm:h-80 lg:h-[420px]">
+        <button type="button" onClick={() => navigate('/pitches')} className="text-sm font-bold text-pitch-primary hover:underline">← Retour aux terrains</button>
+        <section className="overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
+          <div className="relative h-64 sm:h-80 lg:h-105">
             <img src={detailPitch.imageUrl} alt={detailPitch.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
               <p className="text-sm font-bold text-lime-300">{detailPitch.complexName}</p>
               <h1 className="mt-1 text-2xl font-extrabold md:text-4xl">{detailPitch.name}</h1>
@@ -281,41 +281,41 @@ export const PitchesView: React.FC = () => {
             </div>
           </div>
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-7">
-            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-[#092c1a]">{detailPitch.surface}</strong></div>
-            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-[#092c1a]">{detailPitch.dimensions}</strong></div>
-            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-[#092c1a]"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{formatFiniteNumber(detailPitch.rating, 1)} ({formatFiniteNumber(detailPitch.reviewsCount)} avis)</strong></div>
-            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-[#0e5632]">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.surface}</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.dimensions}</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-pitch-ink"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{formatFiniteNumber(detailPitch.rating, 1)} ({formatFiniteNumber(detailPitch.reviewsCount)} avis)</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-pitch-primary">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-          <div className="rounded-3xl border border-[#dce6d8] bg-white p-5 shadow-xs md:p-6">
-            <h2 className="text-lg font-extrabold text-[#092c1a]">Équipements et services</h2>
+          <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
+            <h2 className="text-lg font-extrabold text-pitch-ink">Équipements et services</h2>
             {detailPitch.amenities.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              {detailPitch.amenities.map((amenity) => <li key={amenity} className="flex items-center gap-2 text-sm text-slate-700"><Check className="h-4 w-4 shrink-0 text-[#0e5632]" />{amenity}</li>)}
+              {detailPitch.amenities.map((amenity) => <li key={amenity} className="flex items-center gap-2 text-sm text-slate-700"><Check className="h-4 w-4 shrink-0 text-pitch-primary" />{amenity}</li>)}
             </ul> : <p className="mt-3 text-sm text-slate-500">Aucun équipement renseigné.</p>}
           </div>
-          <div className="rounded-3xl border border-[#dce6d8] bg-white p-5 shadow-xs md:p-6">
+          <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
             <div className="flex items-center justify-between gap-3">
-              <div><h2 className="text-lg font-extrabold text-[#092c1a]">Créneaux disponibles</h2><p className="mt-1 text-xs text-slate-500">Sélectionnez un ou plusieurs créneaux à réserver.</p></div>
-              <Calendar className="h-5 w-5 text-[#0e5632]" />
+              <div><h2 className="text-lg font-extrabold text-pitch-ink">Créneaux disponibles</h2><p className="mt-1 text-xs text-slate-500">Sélectionnez un ou plusieurs créneaux à réserver.</p></div>
+              <Calendar className="h-5 w-5 text-pitch-primary" />
             </div>
             <div className="mt-4 flex flex-wrap gap-2" aria-label="Date des créneaux">
-              {dateOptions.map((date) => <button key={date} type="button" onClick={() => handleBookingDateChange(date)} aria-pressed={bookingDate === date} className={`rounded-xl border px-3 py-2 text-xs font-bold ${bookingDate === date ? 'border-[#0e5632] bg-[#0e5632] text-white' : 'border-[#dce6d8] bg-white text-[#0e5632]'}`}>{date}</button>)}
+              {dateOptions.map((date) => <button key={date} type="button" onClick={() => handleBookingDateChange(date)} aria-pressed={bookingDate === date} className={`rounded-xl border px-3 py-2 text-xs font-bold ${bookingDate === date ? 'border-pitch-primary bg-pitch-primary text-white' : 'border-pitch-line bg-white text-pitch-primary'}`}>{date}</button>)}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {detailPitch.availableSlots.map((slot) => {
                 const isSelected = selectedSlots.some((selected) => selected.date === bookingDate && selected.slot.id === slot.id);
-                return <div key={slot.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-3">
-                  <div><strong className="block text-sm text-[#092c1a]">{slot.time}</strong><span className="mt-1 block text-xs text-slate-500">{slot.price} € · 1h30</span></div>
-                  <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-[#0e4d2e] text-white' : 'border border-[#dce6d8] bg-white text-[#0e5632] hover:bg-[#f2f8f0]'}`}>{!slot.isAvailable ? 'Indisponible' : isSelected ? 'Sélectionné' : 'Sélectionner'}</button>
+                return <div key={slot.id} className="flex items-center justify-between gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                  <div><strong className="block text-sm text-pitch-ink">{slot.time}</strong><span className="mt-1 block text-xs text-slate-500">{slot.price} € · 1h30</span></div>
+                  <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-pitch-action text-white' : 'border border-pitch-line bg-white text-pitch-primary hover:bg-pitch-panel-hover'}`}>{!slot.isAvailable ? 'Indisponible' : isSelected ? 'Sélectionné' : 'Sélectionner'}</button>
                 </div>;
               })}
               {!detailPitch.availableSlots.some((slot) => slot.isAvailable) && <p className="text-sm text-slate-500">Aucun créneau disponible pour cette date.</p>}
             </div>
-            {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-[#edf3ea] pt-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-slate-600"><strong className="text-[#092c1a]">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-[#0e5632]">{selectedSlotsTotal} €</strong> au total</p>
-              <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-[#0e4d2e] px-4 py-3 text-sm font-bold text-white hover:bg-[#0a3a23]">Réserver les créneaux sélectionnés</button>
+            {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-pitch-separator pt-4 sm:flex-row sm:items-center">
+              <p className="text-sm text-slate-600"><strong className="text-pitch-ink">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-pitch-primary">{selectedSlotsTotal} €</strong> au total</p>
+              <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover">Réserver les créneaux sélectionnés</button>
             </div>}
           </div>
         </section>
@@ -327,7 +327,7 @@ export const PitchesView: React.FC = () => {
     <div className="space-y-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
             Terrains & Complexes
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -338,14 +338,14 @@ export const PitchesView: React.FC = () => {
         <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
           <button
             onClick={pitchModal.openCreate}
-            className="px-4 py-2 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+            className="px-4 py-2 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Ajouter un terrain</span>
           </button>
           <button
             onClick={() => navigate('/profile/bookings')}
-            className="px-4 py-2 min-h-[44px] rounded-2xl bg-white hover:bg-slate-50 text-[#092c1a] text-xs font-bold border border-[#dce6d8] shadow-2xs cursor-pointer"
+            className="px-4 py-2 min-h-11 rounded-2xl bg-white hover:bg-slate-50 text-pitch-ink text-xs font-bold border border-pitch-line shadow-2xs cursor-pointer"
           >
             Mes réservations
           </button>
@@ -353,13 +353,13 @@ export const PitchesView: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
+      <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface</label>
           <select
             value={surfaceFilter}
             onChange={(e) => setSurfaceFilter(e.target.value as any)}
-            className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+            className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
           >
             {surfaces.map((s) => (
               <option key={s} value={s}>
@@ -374,7 +374,7 @@ export const PitchesView: React.FC = () => {
           <select
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
-            className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+            className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
           >
             <option value="Toutes">Toutes les villes</option>
             <option value="Fianarantsoa">Fianarantsoa</option>
@@ -413,7 +413,7 @@ export const PitchesView: React.FC = () => {
               role="link"
               tabIndex={0}
               aria-label={`Voir le terrain ${pitch.name} et réserver`}
-              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-[#0e5632]"
+              className="rounded-3xl bg-white border border-pitch-line hover:border-pitch-primary/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-pitch-primary"
             >
               <div>
                 <div className="relative h-48 bg-slate-100 overflow-hidden">
@@ -423,14 +423,14 @@ export const PitchesView: React.FC = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-[#092c1a]/85 backdrop-blur-xs text-[#c6f432] px-2.5 py-1 rounded-full text-xs font-extrabold shadow-xs">
-                    <Star className="w-3.5 h-3.5 fill-[#c6f432]" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-pitch-ink/85 backdrop-blur-xs text-lime-volt px-2.5 py-1 rounded-full text-xs font-extrabold shadow-xs">
+                    <Star className="w-3.5 h-3.5 fill-lime-volt" />
                     <span>{formatFiniteNumber(pitch.rating, 1)}</span>
                     <span className="text-white/60 font-medium">({formatFiniteNumber(pitch.reviewsCount)})</span>
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xs font-bold text-[#c6f432] block mb-0.5">
+                    <span className="text-xs font-bold text-lime-volt block mb-0.5">
                       {pitch.surface} · {pitch.dimensions}
                     </span>
                     <h3 className="text-lg font-extrabold text-white truncate">
@@ -441,7 +441,7 @@ export const PitchesView: React.FC = () => {
 
                 <div className="p-5 space-y-3">
                   <div className="flex items-center text-xs text-slate-600 gap-1.5">
-                    <MapPin className="w-4 h-4 text-[#0e5632] shrink-0" />
+                    <MapPin className="w-4 h-4 text-pitch-primary shrink-0" />
                     <span className="truncate">{pitch.address}, {pitch.city}</span>
                   </div>
 
@@ -449,13 +449,13 @@ export const PitchesView: React.FC = () => {
                     {pitch.amenities.slice(0, 3).map((a) => (
                       <span
                         key={a}
-                        className="px-2.5 py-1 bg-[#f8faf7] border border-[#e2ebe0] text-[#092c1a] rounded-lg text-[11px] font-medium"
+                        className="px-2.5 py-1 bg-pitch-panel border border-border-subtle text-pitch-ink rounded-lg text-caption font-medium"
                       >
                         {a}
                       </span>
                     ))}
                     {pitch.amenities.length > 3 && (
-                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-caption font-bold">
                         +{pitch.amenities.length - 3}
                       </span>
                     )}
@@ -463,10 +463,10 @@ export const PitchesView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-[#f8faf7] border-t border-[#edf3ea] flex items-center justify-between">
+              <div className="p-4 bg-pitch-panel border-t border-pitch-separator flex items-center justify-between">
                 <div>
-                  <span className="text-slate-400 text-[11px] block font-medium">À partir de</span>
-                  <span className="text-lg font-extrabold text-[#0e5632] tabular-nums">
+                  <span className="text-slate-400 text-caption block font-medium">À partir de</span>
+                  <span className="text-lg font-extrabold text-pitch-primary tabular-nums">
                     {formatFiniteNumber(pitch.hourlyRate)} €
                   </span>
                   <span className="text-xs text-slate-500 font-medium"> / séance</span>
@@ -477,7 +477,7 @@ export const PitchesView: React.FC = () => {
                     event.stopPropagation();
                     handleOpenBooking(pitch);
                   }}
-                  className="px-4 py-2 bg-[#0e4d2e] group-hover:bg-[#0a3a23] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-pitch-action group-hover:bg-pitch-action-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
                   Réserver créneau
                 </button>
@@ -512,11 +512,11 @@ export const PitchesView: React.FC = () => {
                     onClick={() => handleBookingDateChange(date)}
                     className={`p-3 rounded-2xl border text-xs font-bold text-left transition-all cursor-pointer ${
                       bookingDate === date
-                        ? 'border-[#0e5632] bg-[#f2f7f0] text-[#0e5632] ring-1 ring-[#0e5632]'
-                        : 'border-[#dce6d8] bg-white text-slate-700 hover:border-[#0e5632]'
+                        ? 'border-pitch-primary bg-pitch-selected text-pitch-primary ring-1 ring-pitch-primary'
+                        : 'border-pitch-line bg-white text-slate-700 hover:border-pitch-primary'
                     }`}
                   >
-                    <Calendar className="w-4 h-4 mb-1 text-[#0e5632]" />
+                    <Calendar className="w-4 h-4 mb-1 text-pitch-primary" />
                     <span className="block">{date}</span>
                   </button>
                 ))}
@@ -540,8 +540,8 @@ export const PitchesView: React.FC = () => {
                         !slot.isAvailable
                           ? 'opacity-40 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
                           : isSelected
-                          ? 'bg-[#0e5632] border-[#0e5632] text-white shadow-xs'
-                          : 'bg-white border-[#dce6d8] text-[#092c1a] hover:border-[#0e5632]'
+                          ? 'bg-pitch-primary border-pitch-primary text-white shadow-xs'
+                          : 'bg-white border-pitch-line text-pitch-ink hover:border-pitch-primary'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
@@ -556,24 +556,24 @@ export const PitchesView: React.FC = () => {
             </div>
 
             {selectedSlotsForCurrentDate.length > 0 && (
-              <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] flex items-center justify-between text-xs">
+              <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line flex items-center justify-between text-xs">
                 <div>
                   <span className="text-slate-500 block font-medium">{selectedSlotsForCurrentDate.length} créneau(x) · total</span>
-                  <span className="text-xl font-extrabold text-[#0e5632] tabular-nums">
+                  <span className="text-xl font-extrabold text-pitch-primary tabular-nums">
                     {currentDateTotal} € TTC
                   </span>
                 </div>
                 <div className="text-right text-slate-500">
                   <span>{bookingDate}</span>
-                  <span className="block font-bold text-[#092c1a]">{selectedSlotsForCurrentDate.map((selection) => selection.slot.time).join(' · ')}</span>
+                  <span className="block font-bold text-pitch-ink">{selectedSlotsForCurrentDate.map((selection) => selection.slot.time).join(' · ')}</span>
                 </div>
               </div>
             )}
 
-            {selectedSlots.length > 0 && <aside className="rounded-2xl border border-[#dce6d8] bg-white p-4" aria-label="Récapitulatif des créneaux sélectionnés">
+            {selectedSlots.length > 0 && <aside className="rounded-2xl border border-pitch-line bg-white p-4" aria-label="Récapitulatif des créneaux sélectionnés">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-extrabold text-[#092c1a]">Rappel de votre sélection</p>
-                <p className="text-xs font-bold text-[#0e5632]">{selectedSlots.length} créneau(x) · {selectedSlotsTotal} €</p>
+                <p className="text-xs font-extrabold text-pitch-ink">Rappel de votre sélection</p>
+                <p className="text-xs font-bold text-pitch-primary">{selectedSlots.length} créneau(x) · {selectedSlotsTotal} €</p>
               </div>
               <ul className="mt-2 space-y-1.5">
                 {Object.entries(selectedSlotsByDate).map(([date, slots]) => <li key={date} className="flex flex-wrap justify-between gap-x-3 text-xs text-slate-600">
@@ -586,7 +586,7 @@ export const PitchesView: React.FC = () => {
               <button
                 onClick={handleConfirmBooking}
                 disabled={!selectedSlots.length || isSubmitting}
-                className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Validation...' : `Valider ${selectedSlots.length} créneau(x)`}
               </button>
@@ -616,7 +616,7 @@ export const PitchesView: React.FC = () => {
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Terrain Synthétique Élite Matsiatra"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
@@ -630,7 +630,7 @@ export const PitchesView: React.FC = () => {
                   value={formComplexName}
                   onChange={(e) => setFormComplexName(e.target.value)}
                   placeholder="Ex: Complexe Omnisports Municipal"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -644,7 +644,7 @@ export const PitchesView: React.FC = () => {
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
                   placeholder="Ex: Fianarantsoa"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
@@ -656,7 +656,7 @@ export const PitchesView: React.FC = () => {
                   value={formAddress}
                   onChange={(e) => setFormAddress(e.target.value)}
                   placeholder="Ex: Boulevard de la Liberté, Ampasambazaha"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -667,7 +667,7 @@ export const PitchesView: React.FC = () => {
                 <select
                   value={formSurface}
                   onChange={(e) => setFormSurface(e.target.value as SurfaceType)}
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value="Synthétique dernière génération">Synthétique dernière génération</option>
                   <option value="Gazon naturel">Gazon naturel</option>
@@ -684,7 +684,7 @@ export const PitchesView: React.FC = () => {
                   value={formDimensions}
                   onChange={(e) => setFormDimensions(e.target.value)}
                   placeholder="105m x 68m (11v11)"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
@@ -698,7 +698,7 @@ export const PitchesView: React.FC = () => {
                   value={formHourlyRate}
                   onChange={(e) => setFormHourlyRate(e.target.value)}
                   placeholder="50"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -718,12 +718,12 @@ export const PitchesView: React.FC = () => {
                       onClick={() => toggleAmenity(item)}
                       className={`p-2.5 rounded-xl border text-left text-xs flex items-center gap-2 transition-all cursor-pointer ${
                         isChecked
-                          ? 'border-[#0e5632] bg-[#f2f7f0] text-[#0e5632] font-bold'
-                          : 'border-[#dce6d8] bg-white text-slate-600 hover:border-slate-300'
+                          ? 'border-pitch-primary bg-pitch-selected text-pitch-primary font-bold'
+                          : 'border-pitch-line bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
                       {isChecked ? (
-                        <CheckSquare className="w-4 h-4 text-[#0e5632] shrink-0" />
+                        <CheckSquare className="w-4 h-4 text-pitch-primary shrink-0" />
                       ) : (
                         <Square className="w-4 h-4 text-slate-300 shrink-0" />
                       )}
@@ -748,17 +748,17 @@ export const PitchesView: React.FC = () => {
                       key={preset.url}
                       onClick={() => setFormImageUrl(preset.url)}
                       className={`relative h-20 rounded-2xl overflow-hidden border-2 text-left transition-all cursor-pointer ${
-                        isSelected ? 'border-[#0e5632] ring-2 ring-[#c6f432]' : 'border-transparent hover:opacity-90'
+                        isSelected ? 'border-pitch-primary ring-2 ring-lime-volt' : 'border-transparent hover:opacity-90'
                       }`}
                     >
                       <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 flex items-end p-2">
-                        <span className="text-[11px] font-bold text-white leading-tight">
+                        <span className="text-caption font-bold text-white leading-tight">
                           {preset.name}
                         </span>
                       </div>
                       {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#c6f432] text-[#092c1a] flex items-center justify-center font-bold text-[10px]">
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-lime-volt text-pitch-ink flex items-center justify-center font-bold text-micro">
                           ✓
                         </div>
                       )}
@@ -768,18 +768,18 @@ export const PitchesView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-pitch-separator">
               <button
                 type="button"
                 onClick={pitchModal.close}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={isCreating}
-                className="px-6 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isCreating ? 'Ajout en cours...' : 'Enregistrer le terrain'}
               </button>
