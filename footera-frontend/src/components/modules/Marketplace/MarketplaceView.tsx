@@ -138,7 +138,7 @@ export const MarketplaceView: React.FC = () => {
     <div className="space-y-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
             Marketplace Football
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -148,7 +148,7 @@ export const MarketplaceView: React.FC = () => {
 
         <button
           onClick={itemModal.openCreate}
-          className="px-5 py-2.5 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
+          className="px-5 py-2.5 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Vendre un équipement</span>
@@ -156,7 +156,7 @@ export const MarketplaceView: React.FC = () => {
       </div>
 
       {/* Filter and Search */}
-      <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
+      <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
           <input
@@ -164,7 +164,7 @@ export const MarketplaceView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher par modèle, marque, ville..."
-            className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-[#092c1a] placeholder-slate-400 focus:border-[#0e5632] focus:bg-white outline-hidden"
+            className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-pitch-ink placeholder-slate-400 focus:border-pitch-primary focus:bg-white outline-hidden"
           />
         </div>
 
@@ -173,7 +173,7 @@ export const MarketplaceView: React.FC = () => {
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             aria-label="Filtrer par catégorie d'équipement"
-            className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+            className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
           >
             {categories.map((c) => (
               <option key={c} value={c}>
@@ -213,7 +213,7 @@ export const MarketplaceView: React.FC = () => {
               role="link"
               tabIndex={0}
               aria-label={`Voir l'annonce ${item.title}`}
-              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-[#0e5632]"
+              className="rounded-3xl bg-white border border-pitch-line hover:border-pitch-primary/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-pitch-primary"
             >
               <div>
                 <div className="relative h-44 bg-slate-100 overflow-hidden">
@@ -224,12 +224,12 @@ export const MarketplaceView: React.FC = () => {
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-xs text-[#092c1a] font-bold text-[11px] shadow-xs">
+                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-xs text-pitch-ink font-bold text-caption shadow-xs">
                       {item.category}
                     </span>
                   </div>
                   <div className="absolute top-3 right-3">
-                    <span className="px-2.5 py-1 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-[11px] shadow-xs">
+                    <span className="px-2.5 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-caption shadow-xs">
                       {item.condition}
                     </span>
                   </div>
@@ -239,12 +239,12 @@ export const MarketplaceView: React.FC = () => {
                   <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
                     <span>{item.brand}</span>
                     <span className="flex items-center gap-1 text-slate-500">
-                      <MapPin className="w-3 h-3 text-[#0e5632]" />
+                      <MapPin className="w-3 h-3 text-pitch-primary" />
                       {item.city}
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-extrabold text-[#092c1a] group-hover:text-[#0e5632] transition-colors line-clamp-1">
+                  <h3 className="text-sm font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors line-clamp-1">
                     {item.title}
                   </h3>
 
@@ -254,11 +254,11 @@ export const MarketplaceView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-[#f8faf7] border-t border-[#edf3ea] flex items-center justify-between">
-                <span className="text-base font-extrabold text-[#0e5632] tabular-nums">
+              <div className="p-4 bg-pitch-panel border-t border-pitch-separator flex items-center justify-between">
+                <span className="text-base font-extrabold text-pitch-primary tabular-nums">
                   {item.price} €
                 </span>
-                <span className="text-xs font-bold text-slate-600 group-hover:text-[#0e5632] transition-colors">
+                <span className="text-xs font-bold text-slate-600 group-hover:text-pitch-primary transition-colors">
                   Voir l&apos;offre →
                 </span>
               </div>
@@ -277,7 +277,7 @@ export const MarketplaceView: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-5">
-            <div className="h-60 rounded-3xl overflow-hidden bg-slate-100 border border-[#dce6d8]">
+            <div className="h-60 rounded-3xl overflow-hidden bg-slate-100 border border-pitch-line">
               <img
                 src={selectedItem.imageUrl}
                 alt={selectedItem.title}
@@ -288,20 +288,20 @@ export const MarketplaceView: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-2xl font-extrabold text-[#0e5632] tabular-nums">
+                <span className="text-2xl font-extrabold text-pitch-primary tabular-nums">
                   {selectedItem.price} €
                 </span>
                 <span className="text-xs text-slate-500 block mt-0.5">
-                  État : <strong className="text-[#092c1a]">{selectedItem.condition}</strong>
+                  État : <strong className="text-pitch-ink">{selectedItem.condition}</strong>
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-xs text-slate-400 block font-medium">Vendeur vérifié</span>
-                <strong className="text-sm text-[#092c1a]">{selectedItem.sellerName}</strong>
+                <strong className="text-sm text-pitch-ink">{selectedItem.sellerName}</strong>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 bg-[#f8faf7] p-3.5 rounded-2xl border border-[#e2ebe0] leading-relaxed">
+            <p className="text-xs text-slate-600 bg-pitch-panel p-3.5 rounded-2xl border border-border-subtle leading-relaxed">
               {selectedItem.description}
             </p>
 
@@ -310,7 +310,7 @@ export const MarketplaceView: React.FC = () => {
                 showToast(`Message transmis à ${selectedItem.sellerName} !`, 'success');
                 itemModal.close();
               }}
-              className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center cursor-pointer shadow-xs transition-colors"
+              className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center cursor-pointer shadow-xs transition-colors"
             >
               <span>Contacter le vendeur pour convenir d&apos;une remise</span>
             </button>
@@ -338,7 +338,7 @@ export const MarketplaceView: React.FC = () => {
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 placeholder="Ex: Crampons Nike Phantom GX Elite Taille 43"
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
@@ -348,7 +348,7 @@ export const MarketplaceView: React.FC = () => {
                 <select
                   value={formCategory}
                   onChange={(e) => handleCategoryChange(e.target.value as MarketplaceListing['category'])}
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value="Crampons">Crampons</option>
                   <option value="Maillots">Maillots</option>
@@ -368,7 +368,7 @@ export const MarketplaceView: React.FC = () => {
                   value={formPrice}
                   onChange={(e) => setFormPrice(e.target.value)}
                   placeholder="65"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -379,7 +379,7 @@ export const MarketplaceView: React.FC = () => {
                 <select
                   value={formCondition}
                   onChange={(e) => setFormCondition(e.target.value as MarketplaceListing['condition'])}
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value="Neuf avec étiquette">Neuf avec étiquette</option>
                   <option value="Comme neuf">Comme neuf (porté 1-2 fois)</option>
@@ -396,7 +396,7 @@ export const MarketplaceView: React.FC = () => {
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
                   placeholder="Ex: Fianarantsoa ou Antananarivo"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -411,8 +411,8 @@ export const MarketplaceView: React.FC = () => {
                     onClick={() => setFormBrand(brand)}
                     className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       formBrand === brand
-                        ? 'bg-[#0e5632] text-white shadow-2xs'
-                        : 'bg-white border border-[#dce6d8] text-slate-700 hover:border-[#0e5632]'
+                        ? 'bg-pitch-primary text-white shadow-2xs'
+                        : 'bg-white border border-pitch-line text-slate-700 hover:border-pitch-primary'
                     }`}
                   >
                     {brand}
@@ -424,7 +424,7 @@ export const MarketplaceView: React.FC = () => {
                 value={formBrand}
                 onChange={(e) => setFormBrand(e.target.value)}
                 placeholder="Ou saisissez une marque..."
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
@@ -437,7 +437,7 @@ export const MarketplaceView: React.FC = () => {
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 placeholder="Précisez la pointure/taille, la couleur, les crampons (SG/FG/AG) et l'historique d'utilisation..."
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
@@ -456,17 +456,17 @@ export const MarketplaceView: React.FC = () => {
                       key={preset.url}
                       onClick={() => setFormImageUrl(preset.url)}
                       className={`relative h-20 rounded-2xl overflow-hidden border-2 text-left transition-all cursor-pointer ${
-                        isSelected ? 'border-[#0e5632] ring-2 ring-[#c6f432]' : 'border-transparent hover:opacity-90'
+                        isSelected ? 'border-pitch-primary ring-2 ring-lime-volt' : 'border-transparent hover:opacity-90'
                       }`}
                     >
                       <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/45 flex items-end p-1.5">
-                        <span className="text-[10px] font-bold text-white leading-tight">
+                        <span className="text-micro font-bold text-white leading-tight">
                           {preset.name}
                         </span>
                       </div>
                       {isSelected && (
-                        <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#c6f432] text-[#092c1a] flex items-center justify-center font-bold text-[9px]">
+                        <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-lime-volt text-pitch-ink flex items-center justify-center font-bold text-tiny">
                           ✓
                         </div>
                       )}
@@ -476,18 +476,18 @@ export const MarketplaceView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-pitch-separator">
               <button
                 type="button"
                 onClick={itemModal.close}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Publication...' : 'Publier mon annonce'}
               </button>

@@ -153,8 +153,8 @@ export const ProfileView: React.FC = () => {
     }
   };
 
-  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-[#dce6d8] bg-white p-8 text-sm text-slate-500">Chargement du profil joueur…</div>;
-  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-[#dce6d8] bg-white p-8 text-sm text-slate-600">Ce profil joueur est introuvable ou indisponible.</div>;
+  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-500">Chargement du profil joueur…</div>;
+  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-600">Ce profil joueur est introuvable ou indisponible.</div>;
   if (isOwner && !user) return null;
 
   const displayedPlayer = isOwner ? myPlayer : publicPlayer;
@@ -173,7 +173,7 @@ export const ProfileView: React.FC = () => {
   return (
     <div className="space-y-8 pb-16">
       {/* Profile Header */}
-      <div className="p-6 md:p-8 rounded-3xl bg-white border border-[#dce6d8] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="p-6 md:p-8 rounded-3xl bg-white border border-pitch-line shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="shrink-0 space-y-2">
             <img
@@ -190,7 +190,7 @@ export const ProfileView: React.FC = () => {
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl md:text-2xl font-extrabold text-[#092c1a] tracking-tight">
+              <h1 className="text-xl md:text-2xl font-extrabold text-pitch-ink tracking-tight">
                 {displayedName}
               </h1>
               <Badge variant="emerald" size="sm">{isOwner ? user!.activeRole : 'Joueur'}</Badge>
@@ -198,7 +198,7 @@ export const ProfileView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate(`/profile/${encodeURIComponent(myPlayer.id)}`)}
-                  className="ml-2 inline-flex items-center gap-1 rounded-xl border border-[#dce6d8] px-3 py-2 text-xs font-bold text-pitch-primary hover:bg-[#f2f8f0]"
+                  className="ml-2 inline-flex items-center gap-1 rounded-xl border border-pitch-line px-3 py-2 text-xs font-bold text-pitch-primary hover:bg-pitch-panel-hover"
                 >
                   <ExternalLink className="h-3.5 w-3.5" /> Voir le profil public
                 </button>
@@ -222,14 +222,14 @@ export const ProfileView: React.FC = () => {
             </div>
             <p className="text-xs text-slate-600 pt-1">
               {displayedPlayer?.primaryPosition} · {displayedPlayer?.age} ans · {displayedPlayer?.level}<br />
-              Équipe officielle : <strong className="text-[#092c1a]">{displayedTeam || 'Sans équipe actuellement'}</strong>
+              Équipe officielle : <strong className="text-pitch-ink">{displayedTeam || 'Sans équipe actuellement'}</strong>
             </p>
           </div>
         </div>
 
         {/* Role Switcher */}
-        {isOwner && <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] space-y-2 w-full md:w-auto">
-          <span className="text-[11px] font-bold text-slate-500 block uppercase">
+        {isOwner && <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line space-y-2 w-full md:w-auto">
+          <span className="text-caption font-bold text-slate-500 block uppercase">
             Rôle actif actuel :
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -242,7 +242,7 @@ export const ProfileView: React.FC = () => {
                   className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-pitch-primary text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:text-slate-900 border border-[#dce6d8]'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-pitch-line'
                   }`}
                 >
                   {r}
@@ -254,7 +254,7 @@ export const ProfileView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      {isOwner && <div className="flex items-center gap-2 border-b border-[#dce6d8] pb-2">
+      {isOwner && <div className="flex items-center gap-2 border-b border-pitch-line pb-2">
         {[
           { label: 'CV Sportif & Infos', tab: 'profile' },
           { label: `Mes Réservations (${bookings.length})`, tab: 'bookings' },
@@ -266,7 +266,7 @@ export const ProfileView: React.FC = () => {
             className={`px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === t.tab
                 ? 'bg-pitch-primary text-white shadow-xs'
-                : 'text-slate-600 hover:text-[#092c1a]'
+                : 'text-slate-600 hover:text-pitch-ink'
             }`}
           >
             {t.label}
@@ -277,10 +277,10 @@ export const ProfileView: React.FC = () => {
       {/* Tab 1: CV Sportif */}
       {(activeTab === 'profile' || !isOwner) && (
         <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-white border border-[#dce6d8] space-y-5 shadow-xs">
+          <div className="p-6 rounded-3xl bg-white border border-pitch-line space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-extrabold text-[#092c1a]">CV Sportif Vérifié</h2>
+                <h2 className="text-base font-extrabold text-pitch-ink">CV Sportif Vérifié</h2>
                 <p className="text-xs text-slate-500">{isOwner ? 'Transmis lors de vos candidatures d’équipe' : 'Profil sportif public'}</p>
               </div>
               {isOwner && <button
@@ -301,30 +301,30 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-slate-400 block text-[11px] font-semibold">Poste principal</span>
-                <strong className="text-[#092c1a] text-sm block mt-0.5">{isOwner ? user!.sportsCv.primaryPosition : publicPlayer!.primaryPosition}</strong>
+              <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-slate-400 block text-caption font-semibold">Poste principal</span>
+                <strong className="text-pitch-ink text-sm block mt-0.5">{isOwner ? user!.sportsCv.primaryPosition : publicPlayer!.primaryPosition}</strong>
               </div>
-              <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-slate-400 block text-[11px] font-semibold">Pied fort</span>
-                <strong className="text-[#092c1a] text-sm block mt-0.5">{isOwner ? user!.sportsCv.strongFoot : publicPlayer!.strongFoot}</strong>
+              <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-slate-400 block text-caption font-semibold">Pied fort</span>
+                <strong className="text-pitch-ink text-sm block mt-0.5">{isOwner ? user!.sportsCv.strongFoot : publicPlayer!.strongFoot}</strong>
               </div>
-              <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-slate-400 block text-[11px] font-semibold">Mensurations</span>
-                <strong className="text-[#092c1a] text-sm tabular-nums block mt-0.5">
+              <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-slate-400 block text-caption font-semibold">Mensurations</span>
+                <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner ? user!.sportsCv.height : publicPlayer!.height} cm · {isOwner ? user!.sportsCv.weight : publicPlayer!.weight} kg
                 </strong>
               </div>
-              <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-slate-400 block text-[11px] font-semibold">Expérience</span>
-                <strong className="text-[#092c1a] text-sm tabular-nums block mt-0.5">
+              <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-slate-400 block text-caption font-semibold">Expérience</span>
+                <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner ? user!.sportsCv.experienceYears : publicPlayer!.age} ans
                 </strong>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] text-xs text-slate-700 leading-relaxed">
-              <h3 className="font-bold text-[#092c1a] mb-1">Présentation sportive :</h3>
+            <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line text-xs text-slate-700 leading-relaxed">
+              <h3 className="font-bold text-pitch-ink mb-1">Présentation sportive :</h3>
               {isOwner ? user!.sportsCv.bio : publicPlayer!.bio}
             </div>
           </div>
@@ -346,9 +346,9 @@ export const ProfileView: React.FC = () => {
             </button>
           </div>}
           {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
-          {displayedPlayer && <section className="rounded-3xl border border-[#dce6d8] bg-white p-5 shadow-xs md:p-6">
-            <h2 className="text-lg font-extrabold text-[#092c1a]">Parcours en club</h2>
-            {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-[#dce6d8] pl-4">
+          {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
+            <h2 className="text-lg font-extrabold text-pitch-ink">Parcours en club</h2>
+            {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">
               {displayedPlayer.previousClubs.map((club) => {
                 const matchingTeam = teams.find((team) => team.name.toLowerCase() === club.toLowerCase())
                   ?? teams.find((team) => team.clubName?.toLowerCase() === club.toLowerCase());
@@ -367,18 +367,18 @@ export const ProfileView: React.FC = () => {
       {activeTab === 'bookings' && (
         <div className="space-y-4">
           {bookings.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-[#dce6d8]">
+            <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-pitch-line">
               Aucune réservation active.
             </div>
           ) : (
             bookings.map((b) => (
               <div
                 key={b.id}
-                className={`p-5 rounded-3xl bg-white border border-[#dce6d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${selectedResourceId === b.id ? 'ring-2 ring-lime-volt' : ''}`}
+                className={`p-5 rounded-3xl bg-white border border-pitch-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${selectedResourceId === b.id ? 'ring-2 ring-lime-volt' : ''}`}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-extrabold text-[#092c1a]"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
+                    <h2 className="text-base font-extrabold text-pitch-ink"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
                     <Badge
                       variant={b.status === 'CONFIRMED' ? 'emerald' : b.status === 'PENDING' ? 'amber' : 'rose'}
                       size="sm"
@@ -387,7 +387,7 @@ export const ProfileView: React.FC = () => {
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
-                    {b.complexName} · <strong className="text-[#092c1a]">{b.date}</strong> à{' '}
+                    {b.complexName} · <strong className="text-pitch-ink">{b.date}</strong> à{' '}
                     <strong className="text-pitch-primary">{b.time}</strong>
                   </p>
                   <p className="text-xs text-slate-600">Montant total : {b.totalPrice} € TTC</p>
@@ -412,18 +412,18 @@ export const ProfileView: React.FC = () => {
       {activeTab === 'applications' && (
         <div className="space-y-4">
           {applications.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-[#dce6d8]">
+            <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-pitch-line">
               Aucune candidature transmise.
             </div>
           ) : (
             applications.map((app) => (
               <div
                 key={app.id}
-                className="p-5 rounded-3xl bg-white border border-[#dce6d8] flex items-start justify-between shadow-xs"
+                className="p-5 rounded-3xl bg-white border border-pitch-line flex items-start justify-between shadow-xs"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-extrabold text-[#092c1a]">{app.adTitle}</h2>
+                    <h2 className="text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
                     <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : 'amber'} size="sm">
                       {app.status === 'EN_REVUE' ? 'En cours d’examen' : 'Acceptée'}
                     </Badge>
@@ -456,7 +456,7 @@ export const ProfileView: React.FC = () => {
               <select
                 value={cvPosition}
                 onChange={(e) => setCvPosition(e.target.value as any)}
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
+                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               >
                 <option value="Gardien">Gardien</option>
                 <option value="Défenseur Central">Défenseur Central</option>
@@ -482,7 +482,7 @@ export const ProfileView: React.FC = () => {
                   value={cvHeight}
                   onChange={(e) => setCvHeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.height}
-                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
+                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
                 />
                 {cvErrors.height && <p className="mt-1 text-xs text-rose-600">{cvErrors.height}</p>}
               </div>
@@ -496,7 +496,7 @@ export const ProfileView: React.FC = () => {
                   value={cvWeight}
                   onChange={(e) => setCvWeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.weight}
-                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
+                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
                 />
                 {cvErrors.weight && <p className="mt-1 text-xs text-rose-600">{cvErrors.weight}</p>}
               </div>
@@ -505,7 +505,7 @@ export const ProfileView: React.FC = () => {
                 <select
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as any)}
-                  className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
+                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
                 >
                   <option value="Droitier">Droitier</option>
                   <option value="Gaucher">Gaucher</option>
@@ -523,7 +523,7 @@ export const ProfileView: React.FC = () => {
                 maxLength={80}
                 aria-invalid={!!cvErrors.currentTeam}
                 placeholder="Ex: Betsileo FC"
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
+                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               />
               {cvErrors.currentTeam && <p className="mt-1 text-xs text-rose-600">{cvErrors.currentTeam}</p>}
             </div>
@@ -536,7 +536,7 @@ export const ProfileView: React.FC = () => {
                 onChange={(e) => setCvBio(e.target.value)}
                 maxLength={1000}
                 aria-invalid={!!cvErrors.bio}
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-pitch-primary"
+                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               />
               {cvErrors.bio && <p className="mt-1 text-xs text-rose-600">{cvErrors.bio}</p>}
             </div>
@@ -552,7 +552,7 @@ export const ProfileView: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSavingCv}
-                className="px-5 py-2 min-h-11 rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
+                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
               >
                 <Check className="w-4 h-4" />
                 <span>{isSavingCv ? 'Enregistrement…' : 'Enregistrer mon CV'}</span>

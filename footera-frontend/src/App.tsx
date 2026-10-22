@@ -29,7 +29,7 @@ const AppContent: React.FC = () => {
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
   return (
-    <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-[#092c1a]">
+    <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-pitch-ink">
       {/* Discreet Demo / Data Mode Banner */}
       <DemoBanner />
 
@@ -84,7 +84,7 @@ const AppContent: React.FC = () => {
             <div className="w-6 h-6 rounded-lg bg-pitch-primary flex items-center justify-center font-bold text-lime-volt text-xs">
               F
             </div>
-            <span className="font-extrabold text-[#092c1a]">FOOTERA</span>
+            <span className="font-extrabold text-pitch-ink">FOOTERA</span>
             <span>— Plateforme unifiée de l&apos;écosystème footballistique</span>
           </div>
           <div className="flex items-center gap-5 text-slate-500 font-medium">

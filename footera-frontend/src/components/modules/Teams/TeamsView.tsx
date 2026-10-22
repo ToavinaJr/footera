@@ -104,7 +104,7 @@ export const TeamsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
             Équipes & Clubs
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -113,12 +113,12 @@ export const TeamsView: React.FC = () => {
         </div>
 
         {/* Tab switcher: Équipes vs Clubs */}
-        <div className="flex items-center gap-1 p-1 bg-white border border-[#dce6d8] rounded-2xl self-start md:self-auto shadow-2xs">
+        <div className="flex items-center gap-1 p-1 bg-white border border-pitch-line rounded-2xl self-start md:self-auto shadow-2xs">
           <button
             onClick={() => setActiveTab('teams')}
-            className={`px-4 py-2 min-h-[44px] text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            className={`px-4 py-2 min-h-11 text-xs font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === 'teams'
-                ? 'bg-[#0e5632] text-white shadow-xs'
+                ? 'bg-pitch-primary text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -126,9 +126,9 @@ export const TeamsView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('clubs')}
-            className={`px-4 py-2 min-h-[44px] text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            className={`px-4 py-2 min-h-11 text-xs font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === 'clubs'
-                ? 'bg-[#0e5632] text-white shadow-xs'
+                ? 'bg-pitch-primary text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -139,7 +139,7 @@ export const TeamsView: React.FC = () => {
 
       {/* Search and Filters */}
       {activeTab === 'teams' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
             <input
@@ -147,7 +147,7 @@ export const TeamsView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher une équipe, un club, une ville..."
-              className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-[#092c1a] placeholder-slate-400 focus:border-[#0e5632] focus:bg-white transition-all outline-hidden"
+              className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-pitch-ink placeholder-slate-400 focus:border-pitch-primary focus:bg-white transition-all outline-hidden"
             />
           </div>
           <div>
@@ -155,7 +155,7 @@ export const TeamsView: React.FC = () => {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filtrer par catégorie d'équipe"
-              className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] transition-colors outline-hidden"
+              className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary transition-colors outline-hidden"
             >
               <option value="Toutes">Toutes les catégories</option>
               <option value="Senior">Senior Masculin</option>
@@ -198,7 +198,7 @@ export const TeamsView: React.FC = () => {
                   role="link"
                   tabIndex={0}
                   aria-label={`Voir l'équipe ${team.name}`}
-                  className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs hover:border-[#0e5632]/50 transition-all flex flex-col justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0e5632]"
+                  className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs hover:border-pitch-primary/50 transition-all flex flex-col justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-pitch-primary"
                 >
                   <div>
                     {/* Header Image matching Screenshot 3 */}
@@ -212,7 +212,7 @@ export const TeamsView: React.FC = () => {
                       {/* Recrute Badge */}
                       {team.isRecruiting && (
                         <div className="absolute bottom-3 left-3">
-                          <span className="px-3 py-1 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-xs shadow-xs">
+                          <span className="px-3 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-xs shadow-xs">
                             Recrute
                           </span>
                         </div>
@@ -233,7 +233,7 @@ export const TeamsView: React.FC = () => {
                     <div className="p-5 space-y-4">
                       {/* Team Name and City */}
                       <div>
-                        <h2 className="text-xl font-extrabold text-[#092c1a] tracking-tight">{team.name}</h2>
+                        <h2 className="text-xl font-extrabold text-pitch-ink tracking-tight">{team.name}</h2>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {team.clubName || team.name} · {team.city}
                         </p>
@@ -241,7 +241,7 @@ export const TeamsView: React.FC = () => {
 
                       {/* Badges: Division + Membres count */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#eaf4ed] text-[#0e5632] border border-[#d4e7d4]">
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-pitch-light text-pitch-primary border border-[#d4e7d4]">
                           {team.division}
                         </span>
                         <span className="text-xs font-semibold px-2.5 py-1 text-slate-600 flex items-center gap-1">
@@ -251,7 +251,7 @@ export const TeamsView: React.FC = () => {
                       </div>
 
                       {/* 5 derniers matchs: D D N V D as in screenshot 3 */}
-                      <div className="pt-2 border-t border-[#edf3ea] flex items-center justify-between text-xs">
+                      <div className="pt-2 border-t border-pitch-separator flex items-center justify-between text-xs">
                         <span className="text-slate-500 font-medium">5 derniers matchs</span>
                         <div className="flex items-center gap-1.5">
                           {team.recentForm.map((result, idx) => (
@@ -268,7 +268,7 @@ export const TeamsView: React.FC = () => {
                             setRosterTab('members');
                             navigateToResource('teams', team.id);
                           }}
-                          className="py-2 px-2 text-center text-xs font-bold text-[#0e5632] bg-[#f8faf7] hover:bg-[#eaf4ed] border border-[#dce6d8] rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
+                          className="py-2 px-2 text-center text-xs font-bold text-pitch-primary bg-pitch-panel hover:bg-pitch-light border border-pitch-line rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
                         >
                           <Users className="w-3.5 h-3.5" />
                           <span>Membres ({team.members.length})</span>
@@ -280,9 +280,9 @@ export const TeamsView: React.FC = () => {
                             setRosterTab('stats');
                             navigateToResource('teams', team.id);
                           }}
-                          className="py-2 px-2 text-center text-xs font-bold text-[#092c1a] bg-[#f8faf7] hover:bg-[#eaf4ed] border border-[#dce6d8] rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
+                          className="py-2 px-2 text-center text-xs font-bold text-pitch-ink bg-pitch-panel hover:bg-pitch-light border border-pitch-line rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
                         >
-                          <BarChart3 className="w-3.5 h-3.5 text-[#0e5632]" />
+                          <BarChart3 className="w-3.5 h-3.5 text-pitch-primary" />
                           <span>Stats & Buteurs</span>
                         </button>
                       </div>
@@ -297,7 +297,7 @@ export const TeamsView: React.FC = () => {
                         setSelectedTeam(team);
                         setIsJoinModalOpen(true);
                       }}
-                      className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
+                      className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>Demander à rejoindre</span>
@@ -314,18 +314,18 @@ export const TeamsView: React.FC = () => {
           {clubs.map((club) => (
             <div
               key={club.id}
-              className="p-6 rounded-3xl bg-white border border-[#dce6d8] space-y-4 shadow-xs"
+              className="p-6 rounded-3xl bg-white border border-pitch-line space-y-4 shadow-xs"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3.5">
                   <img
                     src={club.logoUrl}
                     alt={club.name}
-                    className="w-14 h-14 rounded-2xl object-cover bg-slate-100 border border-[#dce6d8]"
+                    className="w-14 h-14 rounded-2xl object-cover bg-slate-100 border border-pitch-line"
                     referrerPolicy="no-referrer"
                   />
                   <div>
-                    <h2 className="text-lg font-extrabold text-[#092c1a]">{club.name}</h2>
+                    <h2 className="text-lg font-extrabold text-pitch-ink">{club.name}</h2>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Fondé en {club.foundedYear} · {club.city}
                     </p>
@@ -355,11 +355,11 @@ export const TeamsView: React.FC = () => {
               />}
 
               <div className="text-xs text-slate-600 space-y-1">
-                <div>Stade officiel : <strong className="text-[#092c1a]">{club.stadiumName}</strong></div>
-                <div>Président : <strong className="text-[#092c1a]">{club.presidentName}</strong> · {club.membersTotal} licenciés</div>
+                <div>Stade officiel : <strong className="text-pitch-ink">{club.stadiumName}</strong></div>
+                <div>Président : <strong className="text-pitch-ink">{club.presidentName}</strong> · {club.membersTotal} licenciés</div>
               </div>
 
-              <div className="pt-3 border-t border-[#edf3ea]">
+              <div className="pt-3 border-t border-pitch-separator">
                 <h3 className="text-xs font-bold text-slate-400 mb-2">Sections & Équipes engagées :</h3>
                 <div className="flex flex-wrap gap-2">
                   {club.teams.map((t) => (
@@ -392,14 +392,14 @@ export const TeamsView: React.FC = () => {
         >
           <div className="space-y-4">
             {/* Modal Sub-Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl">
+            <div className="flex items-center gap-1.5 p-1 bg-pitch-panel border border-pitch-line rounded-2xl">
               <button
                 type="button"
                 onClick={() => setRosterTab('members')}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   rosterTab === 'members'
-                    ? 'bg-[#0e5632] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#092c1a]'
+                    ? 'bg-pitch-primary text-white shadow-xs'
+                    : 'text-slate-600 hover:text-pitch-ink'
                 }`}
               >
                 <Users className="w-3.5 h-3.5" />
@@ -410,8 +410,8 @@ export const TeamsView: React.FC = () => {
                 onClick={() => setRosterTab('stats')}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   rosterTab === 'stats'
-                    ? 'bg-[#0e5632] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#092c1a]'
+                    ? 'bg-pitch-primary text-white shadow-xs'
+                    : 'text-slate-600 hover:text-pitch-ink'
                 }`}
               >
                 <BarChart3 className="w-3.5 h-3.5" />
@@ -420,14 +420,14 @@ export const TeamsView: React.FC = () => {
             </div>
 
             {rosterTab === 'members' && (
-              <div className="divide-y divide-[#edf3ea] max-h-[50vh] overflow-y-auto pr-1">
+              <div className="divide-y divide-pitch-separator max-h-[50vh] overflow-y-auto pr-1">
                 {selectedTeam.members.map((member) => (
                   <div
                     key={member.playerId}
                     className="py-3 flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-7 text-center font-extrabold text-sm text-[#0e5632] tabular-nums">
+                      <span className="w-7 text-center font-extrabold text-sm text-pitch-primary tabular-nums">
                         #{member.jerseyNumber}
                       </span>
                       <img
@@ -437,8 +437,8 @@ export const TeamsView: React.FC = () => {
                         referrerPolicy="no-referrer"
                       />
                       <div>
-                        <h4 className="text-xs font-bold text-[#092c1a]"><EntityLink section="players" id={member.playerId}>{member.name}</EntityLink></h4>
-                        <p className="text-[11px] text-slate-500">
+                        <h4 className="text-xs font-bold text-pitch-ink"><EntityLink section="players" id={member.playerId}>{member.name}</EntityLink></h4>
+                        <p className="text-caption text-slate-500">
                           {member.position} {member.age && `· ${member.age} ans`}
                         </p>
                       </div>
@@ -449,7 +449,7 @@ export const TeamsView: React.FC = () => {
                         {member.role}
                       </Badge>
                       {member.goals !== undefined && member.goals > 0 && (
-                        <span className="text-xs font-bold text-[#0e5632] px-2 py-0.5 rounded-full bg-[#e8f5e6]">
+                        <span className="text-xs font-bold text-pitch-primary px-2 py-0.5 rounded-full bg-[#e8f5e6]">
                           🎯 {member.goals} buts
                         </span>
                       )}
@@ -463,42 +463,42 @@ export const TeamsView: React.FC = () => {
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {/* Team metrics row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
-                  <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                    <span className="text-[10px] text-slate-400 block font-medium">Bilan</span>
-                    <strong className="text-sm font-black text-[#092c1a]">
+                  <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                    <span className="text-micro text-slate-400 block font-medium">Bilan</span>
+                    <strong className="text-sm font-black text-pitch-ink">
                       {selectedTeam.stats.wins}V · {selectedTeam.stats.draws}N · {selectedTeam.stats.losses}D
                     </strong>
-                    <span className="text-[10px] text-[#0e5632] block font-semibold mt-0.5">
+                    <span className="text-micro text-pitch-primary block font-semibold mt-0.5">
                       {selectedTeam.stats.points} Points
                     </span>
                   </div>
 
                   <div className="p-3 rounded-2xl bg-[#e8f5e6] border border-[#d4e7d4]">
-                    <span className="text-[10px] text-[#0e5632] block font-semibold">Attaque</span>
-                    <strong className="text-base font-black text-[#0e5632] tabular-nums">
+                    <span className="text-micro text-pitch-primary block font-semibold">Attaque</span>
+                    <strong className="text-base font-black text-pitch-primary tabular-nums">
                       {selectedTeam.stats.goalsFor} buts
                     </strong>
-                    <span className="text-[10px] text-slate-600 block mt-0.5">
+                    <span className="text-micro text-slate-600 block mt-0.5">
                       {formatFiniteNumber(finiteNumberOr(selectedTeam.stats.goalsFor) / Math.max(1, finiteNumberOr(selectedTeam.stats.matchesPlayed)), 1)} / match
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                    <span className="text-[10px] text-slate-400 block font-medium">Défense</span>
+                  <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                    <span className="text-micro text-slate-400 block font-medium">Défense</span>
                     <strong className="text-base font-black text-rose-600 tabular-nums">
                       {selectedTeam.stats.goalsAgainst} concédés
                     </strong>
-                    <span className="text-[10px] text-slate-500 block mt-0.5">
+                    <span className="text-micro text-slate-500 block mt-0.5">
                       Diff : {selectedTeam.stats.goalsFor - selectedTeam.stats.goalsAgainst > 0 ? `+${selectedTeam.stats.goalsFor - selectedTeam.stats.goalsAgainst}` : selectedTeam.stats.goalsFor - selectedTeam.stats.goalsAgainst}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                    <span className="text-[10px] text-slate-400 block font-medium">Rang</span>
-                    <strong className="text-base font-black text-[#092c1a] tabular-nums">
+                  <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                    <span className="text-micro text-slate-400 block font-medium">Rang</span>
+                    <strong className="text-base font-black text-pitch-ink tabular-nums">
                       #{selectedTeam.stats.position}
                     </strong>
-                    <span className="text-[10px] text-slate-500 block mt-0.5">
+                    <span className="text-micro text-slate-500 block mt-0.5">
                       {selectedTeam.division}
                     </span>
                   </div>
@@ -506,31 +506,31 @@ export const TeamsView: React.FC = () => {
 
                 {/* Top scorers of the team */}
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-[#092c1a] flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5 text-[#0e5632]" />
+                  <h4 className="text-xs font-bold text-pitch-ink flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-pitch-primary" />
                     <span>Meilleurs buteurs de l&apos;équipe</span>
                   </h4>
-                  <div className="rounded-2xl border border-[#dce6d8] overflow-hidden text-xs">
+                  <div className="rounded-2xl border border-pitch-line overflow-hidden text-xs">
                     <table className="w-full text-left">
-                      <thead className="bg-[#f8faf7] text-slate-500 font-bold border-b border-[#edf3ea]">
+                      <thead className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-separator">
                         <tr>
                           <th className="py-2 px-3">Joueur</th>
                           <th className="py-2 px-3 text-center">Poste</th>
-                          <th className="py-2 px-3 text-center text-[#0e5632] font-black">Buts</th>
+                          <th className="py-2 px-3 text-center text-pitch-primary font-black">Buts</th>
                           <th className="py-2 px-3 text-center">Ratio</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#edf3ea]">
+                      <tbody className="divide-y divide-pitch-separator">
                         {teamScorers.slice(0, 5).map((s) => (
                           <tr key={s.playerId} className="hover:bg-[#f6f9f5]">
-                            <td className="py-2 px-3 font-extrabold text-[#092c1a]">
+                            <td className="py-2 px-3 font-extrabold text-pitch-ink">
                               <div className="flex items-center gap-2">
                                 <img src={s.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
                                 <EntityLink section="players" id={s.playerId}>{s.playerName}</EntityLink>
                               </div>
                             </td>
                             <td className="py-2 px-3 text-center text-slate-500">{s.position}</td>
-                            <td className="py-2 px-3 text-center font-black text-[#0e5632] tabular-nums">
+                            <td className="py-2 px-3 text-center font-black text-pitch-primary tabular-nums">
                               {s.goals}
                             </td>
                             <td className="py-2 px-3 text-center font-bold text-slate-700 tabular-nums">
@@ -545,31 +545,31 @@ export const TeamsView: React.FC = () => {
 
                 {/* Top assisters of the team */}
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-[#092c1a] flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#0e5632]" />
+                  <h4 className="text-xs font-bold text-pitch-ink flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-pitch-primary" />
                     <span>Meilleurs passeurs de l&apos;équipe</span>
                   </h4>
-                  <div className="rounded-2xl border border-[#dce6d8] overflow-hidden text-xs">
+                  <div className="rounded-2xl border border-pitch-line overflow-hidden text-xs">
                     <table className="w-full text-left">
-                      <thead className="bg-[#f8faf7] text-slate-500 font-bold border-b border-[#edf3ea]">
+                      <thead className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-separator">
                         <tr>
                           <th className="py-2 px-3">Passeur</th>
                           <th className="py-2 px-3 text-center">Poste</th>
-                          <th className="py-2 px-3 text-center text-[#0e5632] font-black">Passes</th>
+                          <th className="py-2 px-3 text-center text-pitch-primary font-black">Passes</th>
                           <th className="py-2 px-3 text-center">Clés</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#edf3ea]">
+                      <tbody className="divide-y divide-pitch-separator">
                         {teamAssisters.slice(0, 5).map((a) => (
                           <tr key={a.playerId} className="hover:bg-[#f6f9f5]">
-                            <td className="py-2 px-3 font-extrabold text-[#092c1a]">
+                            <td className="py-2 px-3 font-extrabold text-pitch-ink">
                               <div className="flex items-center gap-2">
                                 <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
                                 <EntityLink section="players" id={a.playerId}>{a.playerName}</EntityLink>
                               </div>
                             </td>
                             <td className="py-2 px-3 text-center text-slate-500">{a.position}</td>
-                            <td className="py-2 px-3 text-center font-black text-[#0e5632] tabular-nums">
+                            <td className="py-2 px-3 text-center font-black text-pitch-primary tabular-nums">
                               {a.assists}
                             </td>
                             <td className="py-2 px-3 text-center font-bold text-slate-700 tabular-nums">
@@ -584,13 +584,13 @@ export const TeamsView: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-3 border-t border-[#edf3ea]">
+            <div className="pt-3 border-t border-pitch-separator">
               <button
                 onClick={() => {
                   setIsRosterModalOpen(false);
                   setIsJoinModalOpen(true);
                 }}
-                className="w-full py-3 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="w-full py-3 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Rejoindre cet effectif</span>
@@ -622,20 +622,20 @@ export const TeamsView: React.FC = () => {
                 value={joinMessage}
                 onChange={(e) => setJoinMessage(e.target.value)}
                 placeholder="Ex: Bonjour coach, je suis disponible pour les entraînements et souhaite intégrer l'équipe..."
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] transition-colors"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors"
               />
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
                 onClick={() => setIsJoinModalOpen(false)}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
                 Annuler
               </button>
               <button
                 onClick={handleJoinTeam}
                 disabled={!joinMessage.trim() || isSubmittingJoin}
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmittingJoin ? 'Envoi...' : 'Envoyer ma demande'}
               </button>

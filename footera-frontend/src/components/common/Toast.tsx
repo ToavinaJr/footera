@@ -15,9 +15,9 @@ export const ToastContainer: React.FC = () => {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="pointer-events-auto flex items-start gap-3 p-3.5 bg-[#092c1a] border border-[#165a37] rounded-2xl shadow-xl text-sm text-white animate-in slide-in-from-bottom-2 fade-in duration-200"
+          className="pointer-events-auto flex items-start gap-3 p-3.5 bg-pitch-ink border border-[#165a37] rounded-2xl shadow-xl text-sm text-white animate-in slide-in-from-bottom-2 fade-in duration-200"
         >
-          {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-[#c6f432] shrink-0 mt-0.5" />}
+          {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-lime-volt shrink-0 mt-0.5" />}
           {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />}
           {toast.type === 'info' && <Info className="w-5 h-5 text-sky-300 shrink-0 mt-0.5" />}
           <div className="flex-1 text-xs md:text-sm font-medium">{toast.message}</div>

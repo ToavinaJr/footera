@@ -131,9 +131,9 @@ export const StatsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight flex items-center gap-2.5">
             <span>Statistiques & Classements</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#c6f432] text-[#092c1a] text-xs font-black tracking-normal">
+            <span className="px-2.5 py-0.5 rounded-full bg-lime-volt text-pitch-ink text-xs font-black tracking-normal">
               PRO
             </span>
           </h1>
@@ -143,23 +143,23 @@ export const StatsView: React.FC = () => {
         </div>
 
         {/* Global Context Indicators */}
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-[#dce6d8] px-3.5 py-2 rounded-2xl shadow-2xs self-start md:self-auto">
-          <Activity className="w-4 h-4 text-[#0e5632]" />
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-pitch-line px-3.5 py-2 rounded-2xl shadow-2xs self-start md:self-auto">
+          <Activity className="w-4 h-4 text-pitch-primary" />
           <span>Saison 2026 en cours</span>
         </div>
       </div>
 
       {/* Global Filter Bar: Tournoi & Équipe */}
-      <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-            <Trophy className="w-3.5 h-3.5 text-[#0e5632]" />
+            <Trophy className="w-3.5 h-3.5 text-pitch-primary" />
             <span>Filtrer par Tournoi ou Compétition</span>
           </label>
           <select
             value={selectedTournamentId}
             onChange={(e) => setSelectedTournamentId(e.target.value)}
-            className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-[#092c1a] font-semibold focus:border-[#0e5632] outline-hidden"
+            className="w-full bg-pitch-input border border-pitch-line rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
           >
             <option value="all">🏆 Toutes les compétitions & championnats</option>
             {tournaments.map((t) => (
@@ -172,13 +172,13 @@ export const StatsView: React.FC = () => {
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#0e5632]" />
+            <Shield className="w-3.5 h-3.5 text-pitch-primary" />
             <span>Filtrer par Équipe</span>
           </label>
           <select
             value={selectedTeamId}
             onChange={(e) => setSelectedTeamId(e.target.value)}
-            className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-[#092c1a] font-semibold focus:border-[#0e5632] outline-hidden"
+            className="w-full bg-pitch-input border border-pitch-line rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
           >
             <option value="all">🛡️ Toutes les équipes</option>
             {teams.map((t) => (
@@ -194,60 +194,60 @@ export const StatsView: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         <button
           onClick={() => setActiveTab('scorers')}
-          className={`px-4 py-2.5 min-h-[44px] rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+          className={`px-4 py-2.5 min-h-11 rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'scorers'
-              ? 'bg-[#0e5632] text-white shadow-xs'
-              : 'bg-white border border-[#dce6d8] text-slate-600 hover:text-[#092c1a]'
+              ? 'bg-pitch-primary text-white shadow-xs'
+              : 'bg-white border border-pitch-line text-slate-600 hover:text-pitch-ink'
           }`}
         >
           <Target className="w-4 h-4" />
           <span>Meilleurs Buteurs</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[11px]">
+          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {scorers.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('assists')}
-          className={`px-4 py-2.5 min-h-[44px] rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+          className={`px-4 py-2.5 min-h-11 rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'assists'
-              ? 'bg-[#0e5632] text-white shadow-xs'
-              : 'bg-white border border-[#dce6d8] text-slate-600 hover:text-[#092c1a]'
+              ? 'bg-pitch-primary text-white shadow-xs'
+              : 'bg-white border border-pitch-line text-slate-600 hover:text-pitch-ink'
           }`}
         >
           <Sparkles className="w-4 h-4" />
           <span>Meilleurs Passeurs</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[11px]">
+          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {assisters.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('teams')}
-          className={`px-4 py-2.5 min-h-[44px] rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+          className={`px-4 py-2.5 min-h-11 rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'teams'
-              ? 'bg-[#0e5632] text-white shadow-xs'
-              : 'bg-white border border-[#dce6d8] text-slate-600 hover:text-[#092c1a]'
+              ? 'bg-pitch-primary text-white shadow-xs'
+              : 'bg-white border border-pitch-line text-slate-600 hover:text-pitch-ink'
           }`}
         >
           <BarChart3 className="w-4 h-4" />
           <span>Stats des Équipes</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[11px]">
+          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {teamStats.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('players')}
-          className={`px-4 py-2.5 min-h-[44px] rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+          className={`px-4 py-2.5 min-h-11 rounded-2xl text-xs md:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'players'
-              ? 'bg-[#0e5632] text-white shadow-xs'
-              : 'bg-white border border-[#dce6d8] text-slate-600 hover:text-[#092c1a]'
+              ? 'bg-pitch-primary text-white shadow-xs'
+              : 'bg-white border border-pitch-line text-slate-600 hover:text-pitch-ink'
           }`}
         >
           <Users className="w-4 h-4" />
           <span>Stats des Joueurs</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[11px]">
+          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {playerStats.length}
           </span>
         </button>
@@ -268,7 +268,7 @@ export const StatsView: React.FC = () => {
               {scorers.length >= 3 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Rank 2 (Silver) */}
-                  <div className="order-2 sm:order-1 p-5 rounded-3xl bg-white border border-[#dce6d8] relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="order-2 sm:order-1 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center">
                       2
                     </div>
@@ -280,7 +280,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
+                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={scorers[1].playerId}>{scorers[1].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -288,8 +288,8 @@ export const StatsView: React.FC = () => {
                         <EntityLink section="teams" id={scorers[1].teamId} className="truncate">{scorers[1].teamName}</EntityLink>
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea]">
-                      <span className="text-2xl font-black text-[#0e5632] tabular-nums">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator">
+                      <span className="text-2xl font-black text-pitch-primary tabular-nums">
                         {scorers[1].goals}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
@@ -299,39 +299,39 @@ export const StatsView: React.FC = () => {
                   </div>
 
                   {/* Rank 1 (Gold) */}
-                  <div className="order-1 sm:order-2 p-6 rounded-3xl bg-gradient-to-b from-[#f2faee] to-white border-2 border-[#0e5632] relative shadow-sm flex flex-col justify-between text-center scale-102">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-[11px] shadow-xs flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 fill-[#092c1a]" />
+                  <div className="order-1 sm:order-2 p-6 rounded-3xl bg-gradient-to-b from-[#f2faee] to-white border-2 border-pitch-primary relative shadow-sm flex flex-col justify-between text-center scale-102">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-caption shadow-xs flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 fill-pitch-ink" />
                       <span>MEILLEUR BUTEUR</span>
                     </div>
                     <div>
-                      <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-slate-100 border-3 border-[#0e5632] shadow-md mb-3 mt-2">
+                      <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-slate-100 border-3 border-pitch-primary shadow-md mb-3 mt-2">
                         <img
                           src={scorers[0].avatarUrl}
                           alt={scorers[0].playerName}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-black text-[#092c1a] text-base truncate">
+                      <h3 className="font-black text-pitch-ink text-base truncate">
                         <EntityLink section="players" id={scorers[0].playerId}>{scorers[0].playerName}</EntityLink>
                       </h3>
-                      <p className="text-xs font-bold text-[#0e5632] flex items-center justify-center gap-1 mt-0.5">
+                      <p className="text-xs font-bold text-pitch-primary flex items-center justify-center gap-1 mt-0.5">
                         <img src={scorers[0].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
                         <EntityLink section="teams" id={scorers[0].teamId} className="truncate">{scorers[0].teamName}</EntityLink>
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea]">
-                      <span className="text-3xl font-black text-[#0e5632] tabular-nums">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator">
+                      <span className="text-3xl font-black text-pitch-primary tabular-nums">
                         {scorers[0].goals}
                       </span>
-                      <span className="text-xs font-bold text-[#092c1a] block">
+                      <span className="text-xs font-bold text-pitch-ink block">
                         buts en {scorers[0].matchesPlayed} matchs ({scorers[0].ratio} b/m)
                       </span>
                     </div>
                   </div>
 
                   {/* Rank 3 (Bronze) */}
-                  <div className="order-3 p-5 rounded-3xl bg-white border border-[#dce6d8] relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="order-3 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-extrabold text-xs flex items-center justify-center">
                       3
                     </div>
@@ -343,7 +343,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
+                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={scorers[2].playerId}>{scorers[2].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -351,8 +351,8 @@ export const StatsView: React.FC = () => {
                         <EntityLink section="teams" id={scorers[2].teamId} className="truncate">{scorers[2].teamName}</EntityLink>
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea]">
-                      <span className="text-2xl font-black text-[#0e5632] tabular-nums">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator">
+                      <span className="text-2xl font-black text-pitch-primary tabular-nums">
                         {scorers[2].goals}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
@@ -364,17 +364,17 @@ export const StatsView: React.FC = () => {
               )}
 
               {/* Table of all Scorers */}
-              <div className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs">
-                <div className="p-4 bg-[#f8faf7] border-b border-[#edf3ea] flex items-center justify-between">
+              <div className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs">
+                <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-extrabold text-[#092c1a]">
+                    <h2 className="text-sm font-extrabold text-pitch-ink">
                       Classement Officiel des Buteurs
                     </h2>
                     <p className="text-xs text-slate-500">
                       {selectedTournamentName} · {selectedTeamName}
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-[#0e5632]">
+                  <span className="text-xs font-bold text-pitch-primary">
                     {scorers.length} buteurs répertoriés
                   </span>
                 </div>
@@ -382,19 +382,19 @@ export const StatsView: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#f8faf7]/60 text-slate-500 border-b border-[#edf3ea] font-bold">
+                      <tr className="bg-pitch-panel/60 text-slate-500 border-b border-pitch-separator font-bold">
                         <th className="py-3 px-4 w-12 text-center">#</th>
                         <th className="py-3 px-4">Joueur</th>
                         <th className="py-3 px-4">Équipe</th>
                         <th className="py-3 px-3 text-center">Poste</th>
                         <th className="py-3 px-3 text-center">MJ</th>
-                        <th className="py-3 px-3 text-center font-extrabold text-[#0e5632]">Buts</th>
+                        <th className="py-3 px-3 text-center font-extrabold text-pitch-primary">Buts</th>
                         <th className="py-3 px-3 text-center">Pén.</th>
                         <th className="py-3 px-3 text-center">Ratio</th>
                         <th className="py-3 px-4 text-center">Min / But</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#edf3ea]">
+                    <tbody className="divide-y divide-pitch-separator">
                       {scorers.map((item) => (
                         <tr
                           key={item.playerId}
@@ -404,7 +404,7 @@ export const StatsView: React.FC = () => {
                             <span
                               className={`w-6 h-6 inline-flex items-center justify-center rounded-full text-xs font-extrabold ${
                                 item.rank === 1
-                                  ? 'bg-[#c6f432] text-[#092c1a]'
+                                  ? 'bg-lime-volt text-pitch-ink'
                                   : item.rank === 2
                                   ? 'bg-slate-200 text-slate-800'
                                   : item.rank === 3
@@ -422,7 +422,7 @@ export const StatsView: React.FC = () => {
                                 alt={item.playerName}
                                 className="w-8 h-8 rounded-full object-cover bg-slate-100"
                               />
-                              <EntityLink section="players" id={item.playerId} className="font-extrabold text-[#092c1a] transition-colors">{item.playerName}</EntityLink>
+                              <EntityLink section="players" id={item.playerId} className="font-extrabold text-pitch-ink transition-colors">{item.playerName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-3 px-4">
@@ -438,7 +438,7 @@ export const StatsView: React.FC = () => {
                             {item.matchesPlayed}
                           </td>
                           <td className="py-3 px-3 text-center tabular-nums">
-                            <span className="px-2.5 py-1 rounded-full bg-[#e8f5e6] text-[#0e5632] font-black text-xs">
+                            <span className="px-2.5 py-1 rounded-full bg-[#e8f5e6] text-pitch-primary font-black text-xs">
                               {item.goals}
                             </span>
                           </td>
@@ -467,7 +467,7 @@ export const StatsView: React.FC = () => {
               {assisters.length >= 3 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Rank 2 */}
-                  <div className="order-2 sm:order-1 p-5 rounded-3xl bg-white border border-[#dce6d8] relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="order-2 sm:order-1 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center">
                       2
                     </div>
@@ -479,7 +479,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
+                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={assisters[1].playerId}>{assisters[1].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -487,8 +487,8 @@ export const StatsView: React.FC = () => {
                         <EntityLink section="teams" id={assisters[1].teamId} className="truncate">{assisters[1].teamName}</EntityLink>
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea]">
-                      <span className="text-2xl font-black text-[#0e5632] tabular-nums">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator">
+                      <span className="text-2xl font-black text-pitch-primary tabular-nums">
                         {assisters[1].assists}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
@@ -498,39 +498,39 @@ export const StatsView: React.FC = () => {
                   </div>
 
                   {/* Rank 1 */}
-                  <div className="order-1 sm:order-2 p-6 rounded-3xl bg-gradient-to-b from-[#f2faee] to-white border-2 border-[#0e5632] relative shadow-sm flex flex-col justify-between text-center scale-102">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-[11px] shadow-xs flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5 fill-[#092c1a]" />
+                  <div className="order-1 sm:order-2 p-6 rounded-3xl bg-gradient-to-b from-[#f2faee] to-white border-2 border-pitch-primary relative shadow-sm flex flex-col justify-between text-center scale-102">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-caption shadow-xs flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 fill-pitch-ink" />
                       <span>MEILLEUR PASSEUR</span>
                     </div>
                     <div>
-                      <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-slate-100 border-3 border-[#0e5632] shadow-md mb-3 mt-2">
+                      <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-slate-100 border-3 border-pitch-primary shadow-md mb-3 mt-2">
                         <img
                           src={assisters[0].avatarUrl}
                           alt={assisters[0].playerName}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-black text-[#092c1a] text-base truncate">
+                      <h3 className="font-black text-pitch-ink text-base truncate">
                         <EntityLink section="players" id={assisters[0].playerId}>{assisters[0].playerName}</EntityLink>
                       </h3>
-                      <p className="text-xs font-bold text-[#0e5632] flex items-center justify-center gap-1 mt-0.5">
+                      <p className="text-xs font-bold text-pitch-primary flex items-center justify-center gap-1 mt-0.5">
                         <img src={assisters[0].teamLogo} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
                         <EntityLink section="teams" id={assisters[0].teamId} className="truncate">{assisters[0].teamName}</EntityLink>
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea]">
-                      <span className="text-3xl font-black text-[#0e5632] tabular-nums">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator">
+                      <span className="text-3xl font-black text-pitch-primary tabular-nums">
                         {assisters[0].assists}
                       </span>
-                      <span className="text-xs font-bold text-[#092c1a] block">
+                      <span className="text-xs font-bold text-pitch-ink block">
                         passes décs ({assisters[0].ratio} p/m) · {assisters[0].keyPasses} passes clés
                       </span>
                     </div>
                   </div>
 
                   {/* Rank 3 */}
-                  <div className="order-3 p-5 rounded-3xl bg-white border border-[#dce6d8] relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="order-3 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-extrabold text-xs flex items-center justify-center">
                       3
                     </div>
@@ -542,7 +542,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-[#092c1a] text-sm truncate">
+                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={assisters[2].playerId}>{assisters[2].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -550,8 +550,8 @@ export const StatsView: React.FC = () => {
                         <EntityLink section="teams" id={assisters[2].teamId} className="truncate">{assisters[2].teamName}</EntityLink>
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea]">
-                      <span className="text-2xl font-black text-[#0e5632] tabular-nums">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator">
+                      <span className="text-2xl font-black text-pitch-primary tabular-nums">
                         {assisters[2].assists}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
@@ -563,17 +563,17 @@ export const StatsView: React.FC = () => {
               )}
 
               {/* Table of all Assisters */}
-              <div className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs">
-                <div className="p-4 bg-[#f8faf7] border-b border-[#edf3ea] flex items-center justify-between">
+              <div className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs">
+                <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-extrabold text-[#092c1a]">
+                    <h2 className="text-sm font-extrabold text-pitch-ink">
                       Classement Officiel des Passeurs
                     </h2>
                     <p className="text-xs text-slate-500">
                       {selectedTournamentName} · {selectedTeamName}
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-[#0e5632]">
+                  <span className="text-xs font-bold text-pitch-primary">
                     {assisters.length} passeurs répertoriés
                   </span>
                 </div>
@@ -581,18 +581,18 @@ export const StatsView: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#f8faf7]/60 text-slate-500 border-b border-[#edf3ea] font-bold">
+                      <tr className="bg-pitch-panel/60 text-slate-500 border-b border-pitch-separator font-bold">
                         <th className="py-3 px-4 w-12 text-center">#</th>
                         <th className="py-3 px-4">Passeur</th>
                         <th className="py-3 px-4">Équipe</th>
                         <th className="py-3 px-3 text-center">Poste</th>
                         <th className="py-3 px-3 text-center">MJ</th>
-                        <th className="py-3 px-3 text-center font-extrabold text-[#0e5632]">Passes Décs</th>
+                        <th className="py-3 px-3 text-center font-extrabold text-pitch-primary">Passes Décs</th>
                         <th className="py-3 px-3 text-center">Passes Clés</th>
                         <th className="py-3 px-3 text-center">Ratio</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#edf3ea]">
+                    <tbody className="divide-y divide-pitch-separator">
                       {assisters.map((item) => (
                         <tr
                           key={item.playerId}
@@ -602,7 +602,7 @@ export const StatsView: React.FC = () => {
                             <span
                               className={`w-6 h-6 inline-flex items-center justify-center rounded-full text-xs font-extrabold ${
                                 item.rank === 1
-                                  ? 'bg-[#c6f432] text-[#092c1a]'
+                                  ? 'bg-lime-volt text-pitch-ink'
                                   : item.rank === 2
                                   ? 'bg-slate-200 text-slate-800'
                                   : item.rank === 3
@@ -620,7 +620,7 @@ export const StatsView: React.FC = () => {
                                 alt={item.playerName}
                                 className="w-8 h-8 rounded-full object-cover bg-slate-100"
                               />
-                              <EntityLink section="players" id={item.playerId} className="font-extrabold text-[#092c1a]">{item.playerName}</EntityLink>
+                              <EntityLink section="players" id={item.playerId} className="font-extrabold text-pitch-ink">{item.playerName}</EntityLink>
                             </div>
                           </td>
                           <td className="py-3 px-4">
@@ -636,7 +636,7 @@ export const StatsView: React.FC = () => {
                             {item.matchesPlayed}
                           </td>
                           <td className="py-3 px-3 text-center tabular-nums">
-                            <span className="px-2.5 py-1 rounded-full bg-[#f2f9ec] text-[#0e5632] font-black text-xs">
+                            <span className="px-2.5 py-1 rounded-full bg-[#f2f9ec] text-pitch-primary font-black text-xs">
                               {item.assists}
                             </span>
                           </td>
@@ -660,57 +660,57 @@ export const StatsView: React.FC = () => {
             <div className="space-y-6">
               {/* Highlight summary cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs">
+                <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
                   <span className="text-slate-400 text-xs font-semibold block">Meilleure Attaque</span>
                   <div className="flex items-center justify-between mt-2">
                     <div>
-                      <strong className="text-sm font-extrabold text-[#092c1a] block">
+                      <strong className="text-sm font-extrabold text-pitch-ink block">
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
                         {formatFiniteNumber(teamStats[0]?.goalsFor)} buts marqués ({formatFiniteNumber(teamStats[0]?.goalsPerMatch, 2)} / match)
                       </span>
                     </div>
-                    <Target className="w-8 h-8 text-[#0e5632] opacity-80" />
+                    <Target className="w-8 h-8 text-pitch-primary opacity-80" />
                   </div>
                 </div>
 
-                <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs">
+                <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
                   <span className="text-slate-400 text-xs font-semibold block">Meilleure Défense</span>
                   <div className="flex items-center justify-between mt-2">
                     <div>
-                      <strong className="text-sm font-extrabold text-[#092c1a] block">
+                      <strong className="text-sm font-extrabold text-pitch-ink block">
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
                         {teamStats[0]?.goalsAgainst} buts concédés · {teamStats[0]?.cleanSheets} clean sheets
                       </span>
                     </div>
-                    <Shield className="w-8 h-8 text-[#0e5632] opacity-80" />
+                    <Shield className="w-8 h-8 text-pitch-primary opacity-80" />
                   </div>
                 </div>
 
-                <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs">
+                <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
                   <span className="text-slate-400 text-xs font-semibold block">Leader Actuel</span>
                   <div className="flex items-center justify-between mt-2">
                     <div>
-                      <strong className="text-sm font-extrabold text-[#092c1a] block">
+                      <strong className="text-sm font-extrabold text-pitch-ink block">
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
-                      <span className="text-xs font-bold text-[#0e5632]">
+                      <span className="text-xs font-bold text-pitch-primary">
                         {teamStats[0]?.points} pts · {teamStats[0]?.winRate}% victoires
                       </span>
                     </div>
-                    <Trophy className="w-8 h-8 text-[#c6f432] fill-[#0e5632] stroke-[#0e5632]" />
+                    <Trophy className="w-8 h-8 text-lime-volt fill-pitch-primary stroke-pitch-primary" />
                   </div>
                 </div>
               </div>
 
               {/* Comprehensive Teams Comparison Table */}
-              <div className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs">
-                <div className="p-4 bg-[#f8faf7] border-b border-[#edf3ea] flex items-center justify-between">
+              <div className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs">
+                <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-extrabold text-[#092c1a]">
+                    <h2 className="text-sm font-extrabold text-pitch-ink">
                       Statistiques Comparatives Complètes des Clubs
                     </h2>
                     <p className="text-xs text-slate-500">
@@ -725,13 +725,13 @@ export const StatsView: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#f8faf7]/60 text-slate-500 border-b border-[#edf3ea] font-bold">
+                      <tr className="bg-pitch-panel/60 text-slate-500 border-b border-pitch-separator font-bold">
                         <th className="py-3 px-4">Équipe</th>
                         <th className="py-3 px-3 text-center">MJ</th>
                         <th className="py-3 px-3 text-center">V</th>
                         <th className="py-3 px-3 text-center">N</th>
                         <th className="py-3 px-3 text-center">D</th>
-                        <th className="py-3 px-3 text-center font-bold text-[#0e5632]">Pts</th>
+                        <th className="py-3 px-3 text-center font-bold text-pitch-primary">Pts</th>
                         <th className="py-3 px-3 text-center">BP</th>
                         <th className="py-3 px-3 text-center">BC</th>
                         <th className="py-3 px-3 text-center">Diff</th>
@@ -741,7 +741,7 @@ export const StatsView: React.FC = () => {
                         <th className="py-3 px-4 text-center">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#edf3ea]">
+                    <tbody className="divide-y divide-pitch-separator">
                       {teamStats.map((team) => (
                         <tr
                           key={team.teamId}
@@ -753,29 +753,29 @@ export const StatsView: React.FC = () => {
                               <img
                                 src={team.logoUrl}
                                 alt={team.teamName}
-                                className="w-7 h-7 rounded-xl object-cover bg-slate-100 border border-[#dce6d8]"
+                                className="w-7 h-7 rounded-xl object-cover bg-slate-100 border border-pitch-line"
                               />
                               <div>
-                                <strong className="font-extrabold text-[#092c1a] block">
+                                <strong className="font-extrabold text-pitch-ink block">
                                   <EntityLink section="teams" id={team.teamId}>{team.teamName}</EntityLink>
                                 </strong>
-                                <span className="text-[11px] text-slate-400 font-normal">
+                                <span className="text-caption text-slate-400 font-normal">
                                   {team.city}
                                 </span>
                               </div>
                             </div>
                           </td>
                           <td className="py-3 px-3 text-center tabular-nums font-semibold">{team.matchesPlayed}</td>
-                          <td className="py-3 px-3 text-center tabular-nums text-[#0e5632] font-bold">{team.wins}</td>
+                          <td className="py-3 px-3 text-center tabular-nums text-pitch-primary font-bold">{team.wins}</td>
                           <td className="py-3 px-3 text-center tabular-nums text-slate-500">{team.draws}</td>
                           <td className="py-3 px-3 text-center tabular-nums text-rose-600">{team.losses}</td>
-                          <td className="py-3 px-3 text-center tabular-nums font-black text-sm text-[#0e5632]">
+                          <td className="py-3 px-3 text-center tabular-nums font-black text-sm text-pitch-primary">
                             {team.points}
                           </td>
-                          <td className="py-3 px-3 text-center tabular-nums font-bold text-[#092c1a]">{team.goalsFor}</td>
+                          <td className="py-3 px-3 text-center tabular-nums font-bold text-pitch-ink">{team.goalsFor}</td>
                           <td className="py-3 px-3 text-center tabular-nums text-slate-500">{team.goalsAgainst}</td>
                           <td className="py-3 px-3 text-center tabular-nums font-bold">
-                            <span className={team.goalDifference > 0 ? 'text-[#0e5632]' : 'text-slate-600'}>
+                            <span className={team.goalDifference > 0 ? 'text-pitch-primary' : 'text-slate-600'}>
                               {team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}
                             </span>
                           </td>
@@ -783,21 +783,21 @@ export const StatsView: React.FC = () => {
                             {team.possessionAvg}%
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <span className="font-bold text-[#0e5632] block truncate max-w-[130px]">
+                            <span className="font-bold text-pitch-primary block truncate max-w-[130px]">
                               <EntityLink section="players" id={team.topScorer.playerId}>{team.topScorer.name}</EntityLink>
                             </span>
-                            <span className="text-[10px] text-slate-400">({team.topScorer.goals} buts)</span>
+                            <span className="text-micro text-slate-400">({team.topScorer.goals} buts)</span>
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <span className="font-bold text-[#092c1a] block truncate max-w-[130px]">
+                            <span className="font-bold text-pitch-ink block truncate max-w-[130px]">
                               <EntityLink section="players" id={team.topAssister.playerId}>{team.topAssister.name}</EntityLink>
                             </span>
-                            <span className="text-[10px] text-slate-400">({team.topAssister.assists} passes)</span>
+                            <span className="text-micro text-slate-400">({team.topAssister.assists} passes)</span>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <button
                               type="button"
-                              className="px-3 py-1 bg-white hover:bg-[#eaf4ed] text-[#0e5632] border border-[#dce6d8] rounded-xl font-bold text-xs shadow-2xs transition-colors"
+                              className="px-3 py-1 bg-white hover:bg-pitch-light text-pitch-primary border border-pitch-line rounded-xl font-bold text-xs shadow-2xs transition-colors"
                             >
                               Fiche stats →
                             </button>
@@ -815,7 +815,7 @@ export const StatsView: React.FC = () => {
           {activeTab === 'players' && (
             <div className="space-y-6">
               {/* Secondary filters for player tab */}
-              <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs flex flex-col sm:flex-row items-center gap-3">
+              <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs flex flex-col sm:flex-row items-center gap-3">
                 <div className="relative flex-1 w-full">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
@@ -823,7 +823,7 @@ export const StatsView: React.FC = () => {
                     value={playerSearchQuery}
                     onChange={(e) => setPlayerSearchQuery(e.target.value)}
                     placeholder="Rechercher un joueur ou club..."
-                    className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full pl-10 pr-4 py-2.5 text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                    className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                   />
                 </div>
 
@@ -831,7 +831,7 @@ export const StatsView: React.FC = () => {
                   <select
                     value={playerPositionFilter}
                     onChange={(e) => setPlayerPositionFilter(e.target.value)}
-                    className="w-full sm:w-48 bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs text-[#092c1a] font-semibold focus:border-[#0e5632] outline-hidden"
+                    className="w-full sm:w-48 bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
                   >
                     <option value="Tous">Tous les postes</option>
                     <option value="Avant-centre">Avant-centre</option>
@@ -851,7 +851,7 @@ export const StatsView: React.FC = () => {
                   <div
                     key={player.playerId}
                     onClick={() => setSelectedPlayerModal(player)}
-                    className="p-5 rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632] transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
+                    className="p-5 rounded-3xl bg-white border border-pitch-line hover:border-pitch-primary transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3">
@@ -859,10 +859,10 @@ export const StatsView: React.FC = () => {
                           <img
                             src={player.avatarUrl}
                             alt={player.name}
-                            className="w-12 h-12 rounded-2xl object-cover bg-slate-100 border border-[#dce6d8]"
+                            className="w-12 h-12 rounded-2xl object-cover bg-slate-100 border border-pitch-line"
                           />
                           <div>
-                            <h3 className="font-black text-[#092c1a] text-sm group-hover:text-[#0e5632] transition-colors">
+                            <h3 className="font-black text-pitch-ink text-sm group-hover:text-pitch-primary transition-colors">
                               <EntityLink section="players" id={player.playerId}>{player.name}</EntityLink>
                             </h3>
                             <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
@@ -872,36 +872,36 @@ export const StatsView: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="px-2.5 py-1 rounded-xl bg-[#f2faee] border border-[#d4e7d4] text-[#0e5632] font-black text-xs tabular-nums shadow-2xs">
+                        <div className="px-2.5 py-1 rounded-xl bg-[#f2faee] border border-[#d4e7d4] text-pitch-primary font-black text-xs tabular-nums shadow-2xs">
                           ★ {formatFiniteNumber(player.rating, 1)}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#edf3ea] text-center text-xs">
-                        <div className="p-2 rounded-xl bg-[#f8faf7]">
-                          <span className="text-[10px] text-slate-400 block font-medium">Matchs</span>
-                          <strong className="text-xs font-black text-[#092c1a] tabular-nums">
+                      <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-pitch-separator text-center text-xs">
+                        <div className="p-2 rounded-xl bg-pitch-panel">
+                          <span className="text-micro text-slate-400 block font-medium">Matchs</span>
+                          <strong className="text-xs font-black text-pitch-ink tabular-nums">
                             {player.appearances}
                           </strong>
                         </div>
                         <div className="p-2 rounded-xl bg-[#e8f5e6]">
-                          <span className="text-[10px] text-[#0e5632] block font-semibold">Buts</span>
-                          <strong className="text-xs font-black text-[#0e5632] tabular-nums">
+                          <span className="text-micro text-pitch-primary block font-semibold">Buts</span>
+                          <strong className="text-xs font-black text-pitch-primary tabular-nums">
                             {player.goals}
                           </strong>
                         </div>
-                        <div className="p-2 rounded-xl bg-[#f8faf7]">
-                          <span className="text-[10px] text-slate-400 block font-medium">Passes</span>
-                          <strong className="text-xs font-black text-[#092c1a] tabular-nums">
+                        <div className="p-2 rounded-xl bg-pitch-panel">
+                          <span className="text-micro text-slate-400 block font-medium">Passes</span>
+                          <strong className="text-xs font-black text-pitch-ink tabular-nums">
                             {player.assists}
                           </strong>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-[#edf3ea] flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-4 pt-3 border-t border-pitch-separator flex items-center justify-between text-xs text-slate-500">
                       <span>{player.position} · {player.strongFoot}</span>
-                      <span className="font-bold text-[#0e5632] group-hover:translate-x-0.5 transition-transform">
+                      <span className="font-bold text-pitch-primary group-hover:translate-x-0.5 transition-transform">
                         Détails →
                       </span>
                     </div>
@@ -923,18 +923,18 @@ export const StatsView: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-6">
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
               <img
                 src={selectedTeamModal.logoUrl}
                 alt={selectedTeamModal.teamName}
-                className="w-16 h-16 rounded-2xl object-cover bg-white border border-[#dce6d8]"
+                className="w-16 h-16 rounded-2xl object-cover bg-white border border-pitch-line"
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-black text-[#092c1a]">
+                  <h3 className="text-lg font-black text-pitch-ink">
                     <EntityLink section="teams" id={selectedTeamModal.teamId}>{selectedTeamModal.teamName}</EntityLink>
                   </h3>
-                  <span className="text-sm font-black text-[#0e5632]">
+                  <span className="text-sm font-black text-pitch-primary">
                     {selectedTeamModal.points} Points
                   </span>
                 </div>
@@ -942,7 +942,7 @@ export const StatsView: React.FC = () => {
                   {selectedTeamModal.matchesPlayed} matchs joués : {selectedTeamModal.wins} Victoires · {selectedTeamModal.draws} Nuls · {selectedTeamModal.losses} Défaites ({selectedTeamModal.winRate}% de succès)
                 </p>
                 <div className="flex items-center gap-1.5 mt-2">
-                  <span className="text-[11px] text-slate-400 font-semibold mr-1">Forme :</span>
+                  <span className="text-caption text-slate-400 font-semibold mr-1">Forme :</span>
                   {selectedTeamModal.recentForm.map((res, i) => (
                     <FormIndicator key={i} result={res} size="sm" />
                   ))}
@@ -952,58 +952,58 @@ export const StatsView: React.FC = () => {
 
             {/* Metrics Breakdown Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[11px] text-slate-500 block font-medium">Buts Marqués</span>
-                <strong className="text-base font-black text-[#0e5632] tabular-nums">
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-caption text-slate-500 block font-medium">Buts Marqués</span>
+                <strong className="text-base font-black text-pitch-primary tabular-nums">
                   {selectedTeamModal.goalsFor}
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+                <span className="text-micro text-slate-400 block mt-0.5">
                   ({formatFiniteNumber(selectedTeamModal.goalsPerMatch, 2)} / match)
                 </span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[11px] text-slate-500 block font-medium">Buts Encaissés</span>
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-caption text-slate-500 block font-medium">Buts Encaissés</span>
                 <strong className="text-base font-black text-rose-600 tabular-nums">
                   {selectedTeamModal.goalsAgainst}
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+                <span className="text-micro text-slate-400 block mt-0.5">
                   ({formatFiniteNumber(selectedTeamModal.goalsAgainstPerMatch, 2)} / match)
                 </span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[11px] text-slate-500 block font-medium">Clean Sheets</span>
-                <strong className="text-base font-black text-[#092c1a] tabular-nums">
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-caption text-slate-500 block font-medium">Clean Sheets</span>
+                <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedTeamModal.cleanSheets}
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">matchs invaincus</span>
+                <span className="text-micro text-slate-400 block mt-0.5">matchs invaincus</span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[11px] text-slate-500 block font-medium">Possession Moy.</span>
-                <strong className="text-base font-black text-[#092c1a] tabular-nums">
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-caption text-slate-500 block font-medium">Possession Moy.</span>
+                <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedTeamModal.possessionAvg}%
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+                <span className="text-micro text-slate-400 block mt-0.5">
                   Précision : {selectedTeamModal.passAccuracy}%
                 </span>
               </div>
             </div>
 
             {/* Key Players in Team */}
-            <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#e2ebe0] space-y-3">
+            <div className="p-4 rounded-2xl bg-pitch-panel border border-border-subtle space-y-3">
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Leaders de l&apos;effectif
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[#dce6d8]">
-                  <div className="w-8 h-8 rounded-full bg-[#e8f5e6] text-[#0e5632] flex items-center justify-center font-bold">
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-pitch-line">
+                  <div className="w-8 h-8 rounded-full bg-[#e8f5e6] text-pitch-primary flex items-center justify-center font-bold">
                     🎯
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Meilleur Buteur</span>
-                    <strong className="font-extrabold text-[#092c1a]">
+                    <span className="text-micro text-slate-400 block">Meilleur Buteur</span>
+                    <strong className="font-extrabold text-pitch-ink">
                       <EntityLink section="players" id={selectedTeamModal.topScorer.playerId}>{selectedTeamModal.topScorer.name}</EntityLink>
                     </strong>
                     <span className="text-slate-500 block">
@@ -1012,13 +1012,13 @@ export const StatsView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[#dce6d8]">
-                  <div className="w-8 h-8 rounded-full bg-[#f2f7f0] text-[#0e5632] flex items-center justify-center font-bold">
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-pitch-line">
+                  <div className="w-8 h-8 rounded-full bg-pitch-selected text-pitch-primary flex items-center justify-center font-bold">
                     👟
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Meilleur Passeur</span>
-                    <strong className="font-extrabold text-[#092c1a]">
+                    <span className="text-micro text-slate-400 block">Meilleur Passeur</span>
+                    <strong className="font-extrabold text-pitch-ink">
                       <EntityLink section="players" id={selectedTeamModal.topAssister.playerId}>{selectedTeamModal.topAssister.name}</EntityLink>
                     </strong>
                     <span className="text-slate-500 block">
@@ -1038,7 +1038,7 @@ export const StatsView: React.FC = () => {
                   setSelectedTeamModal(null);
                   navigateToResource('teams', selectedTeamModal.teamId);
                 }}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs cursor-pointer shadow-xs"
+                className="px-4 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs cursor-pointer shadow-xs"
               >
                 Voir la page du club
               </button>
@@ -1057,18 +1057,18 @@ export const StatsView: React.FC = () => {
           maxWidth="md"
         >
           <div className="space-y-5">
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
               <img
                 src={selectedPlayerModal.avatarUrl}
                 alt={selectedPlayerModal.name}
-                className="w-16 h-16 rounded-full object-cover bg-white border border-[#dce6d8]"
+                className="w-16 h-16 rounded-full object-cover bg-white border border-pitch-line"
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-black text-[#092c1a]">
+                  <h3 className="text-base font-black text-pitch-ink">
                     {selectedPlayerModal.name}
                   </h3>
-                  <span className="px-2.5 py-1 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-xs">
+                  <span className="px-2.5 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-xs">
                     ★ {formatFiniteNumber(selectedPlayerModal.rating, 1)} / 10
                   </span>
                 </div>
@@ -1079,42 +1079,42 @@ export const StatsView: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[10px] text-slate-500 block">Matchs</span>
-                <strong className="text-base font-black text-[#092c1a] tabular-nums">
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-micro text-slate-500 block">Matchs</span>
+                <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedPlayerModal.appearances}
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+                <span className="text-micro text-slate-400 block mt-0.5">
                   {selectedPlayerModal.minutesPlayed} min
                 </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-[#e8f5e6] border border-[#d4e7d4]">
-                <span className="text-[10px] text-[#0e5632] block font-semibold">Buts</span>
-                <strong className="text-base font-black text-[#0e5632] tabular-nums">
+                <span className="text-micro text-pitch-primary block font-semibold">Buts</span>
+                <strong className="text-base font-black text-pitch-primary tabular-nums">
                   {selectedPlayerModal.goals}
                 </strong>
-                <span className="text-[10px] text-slate-500 block mt-0.5">
+                <span className="text-micro text-slate-500 block mt-0.5">
                   {selectedPlayerModal.shotsOnTarget} tirs cadrés
                 </span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[10px] text-slate-500 block">Passes Décs</span>
-                <strong className="text-base font-black text-[#092c1a] tabular-nums">
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-micro text-slate-500 block">Passes Décs</span>
+                <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedPlayerModal.assists}
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+                <span className="text-micro text-slate-400 block mt-0.5">
                   {selectedPlayerModal.passAccuracy}% préc.
                 </span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                <span className="text-[10px] text-slate-500 block">Cartons</span>
+              <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
+                <span className="text-micro text-slate-500 block">Cartons</span>
                 <strong className="text-base font-black text-amber-700 tabular-nums">
                   {selectedPlayerModal.yellowCards} J
                 </strong>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+                <span className="text-micro text-slate-400 block mt-0.5">
                   {selectedPlayerModal.redCards} R
                 </span>
               </div>
@@ -1125,7 +1125,7 @@ export const StatsView: React.FC = () => {
                 setSelectedPlayerModal(null);
                 navigateToResource('players', selectedPlayerModal.playerId);
               }}
-              className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
+              className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
             >
               <span>Consulter le profil sportif complet</span>
             </button>

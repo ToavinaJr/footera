@@ -33,7 +33,10 @@ export function ImageUploadField({ purpose, label, onUploaded, disabled = false,
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[#dce6d8] bg-white px-3 py-2 text-xs font-bold text-pitch-primary hover:bg-[#f8faf7] has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+      <label
+        htmlFor={inputId}
+        className={`inline-flex min-h-10 items-center gap-2 rounded-xl border border-pitch-line bg-white px-3 py-2 text-xs font-bold text-pitch-primary ${disabled || isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-pitch-panel'}`}
+      >
         <ImagePlus className="h-4 w-4" />
         {isUploading ? 'Envoi en cours…' : label}
         <input

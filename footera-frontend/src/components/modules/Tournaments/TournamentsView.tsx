@@ -164,7 +164,7 @@ export const TournamentsView: React.FC = () => {
       {/* Header with CTA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
             Tournois & Compétitions
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -174,7 +174,7 @@ export const TournamentsView: React.FC = () => {
 
         <button
           onClick={tournamentModal.openCreate}
-          className="px-5 py-2.5 min-h-[44px] rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
+          className="px-5 py-2.5 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Organiser un tournoi</span>
@@ -198,7 +198,7 @@ export const TournamentsView: React.FC = () => {
             <div
               key={tourn.id}
               onClick={() => tournamentModal.openDetail(tourn.id)}
-              className="rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
+              className="rounded-3xl bg-white border border-pitch-line hover:border-pitch-primary/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between"
             >
               <div>
                 <div className="relative h-44 bg-slate-100 overflow-hidden">
@@ -210,12 +210,12 @@ export const TournamentsView: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
                   <div className="absolute top-3 right-3">
-                    <span className="px-3 py-1 rounded-full bg-[#c6f432] text-[#092c1a] font-extrabold text-xs shadow-xs">
+                    <span className="px-3 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-xs shadow-xs">
                       {tourn.status === 'INSCRIPTIONS_OUVERTES' ? 'Inscriptions ouvertes' : 'En cours'}
                     </span>
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xs font-bold text-[#c6f432] block mb-0.5">
+                    <span className="text-xs font-bold text-lime-volt block mb-0.5">
                       {tourn.format} · {tourn.organizer}
                     </span>
                     <h3 className="text-lg font-extrabold text-white truncate">
@@ -227,25 +227,25 @@ export const TournamentsView: React.FC = () => {
                 <div className="p-5 space-y-3">
                   <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#0e5632] shrink-0" />
+                      <Calendar className="w-4 h-4 text-pitch-primary shrink-0" />
                       <span>{tourn.startDate}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-[#0e5632] shrink-0" />
+                      <MapPin className="w-4 h-4 text-pitch-primary shrink-0" />
                       <span className="truncate">{tourn.city}</span>
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#e2ebe0] flex items-center justify-between text-xs">
+                  <div className="p-3.5 rounded-2xl bg-pitch-panel border border-border-subtle flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-slate-500 text-[11px] block font-medium">Dotation Vainqueur</span>
-                      <strong className="text-[#0e5632] font-extrabold text-base tabular-nums">
+                      <span className="text-slate-500 text-caption block font-medium">Dotation Vainqueur</span>
+                      <strong className="text-pitch-primary font-extrabold text-base tabular-nums">
                         {tourn.prizePool.toLocaleString()} €
                       </strong>
                     </div>
                     <div className="text-right">
-                      <span className="text-slate-500 text-[11px] block font-medium">Équipes engagées</span>
-                      <strong className="text-[#092c1a] font-extrabold text-sm tabular-nums">
+                      <span className="text-slate-500 text-caption block font-medium">Équipes engagées</span>
+                      <strong className="text-pitch-ink font-extrabold text-sm tabular-nums">
                         {tourn.registeredTeams} / {tourn.maxTeams}
                       </strong>
                     </div>
@@ -253,9 +253,9 @@ export const TournamentsView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-[#f8faf7] border-t border-[#edf3ea] flex items-center justify-between text-xs">
+              <div className="p-4 bg-pitch-panel border-t border-pitch-separator flex items-center justify-between text-xs">
                 <span className="text-slate-500 font-medium">{tourn.venue}</span>
-                <span className="font-bold text-[#0e5632] group-hover:translate-x-0.5 transition-transform">
+                <span className="font-bold text-pitch-primary group-hover:translate-x-0.5 transition-transform">
                   Consulter le tournoi →
                 </span>
               </div>
@@ -286,7 +286,7 @@ export const TournamentsView: React.FC = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 text-white">
-                <span className="text-xs font-bold text-[#c6f432] uppercase tracking-wider block">
+                <span className="text-xs font-bold text-lime-volt uppercase tracking-wider block">
                   Organisé par {selectedTournament.organizer}
                 </span>
                 <h2 className="text-xl font-extrabold text-white">{selectedTournament.title}</h2>
@@ -294,14 +294,14 @@ export const TournamentsView: React.FC = () => {
             </div>
 
             {/* Tournament Navigation Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl">
+            <div className="flex items-center gap-1.5 p-1 bg-pitch-panel border border-pitch-line rounded-2xl">
               <button
                 type="button"
                 onClick={() => setTournModalTab('overview')}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                   tournModalTab === 'overview'
-                    ? 'bg-[#0e5632] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#092c1a]'
+                    ? 'bg-pitch-primary text-white shadow-xs'
+                    : 'text-slate-600 hover:text-pitch-ink'
                 }`}
               >
                 Aperçu & Inscription
@@ -311,8 +311,8 @@ export const TournamentsView: React.FC = () => {
                 onClick={() => setTournModalTab('scorers')}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
                   tournModalTab === 'scorers'
-                    ? 'bg-[#0e5632] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#092c1a]'
+                    ? 'bg-pitch-primary text-white shadow-xs'
+                    : 'text-slate-600 hover:text-pitch-ink'
                 }`}
               >
                 <Target className="w-3.5 h-3.5" />
@@ -323,8 +323,8 @@ export const TournamentsView: React.FC = () => {
                 onClick={() => setTournModalTab('assists')}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
                   tournModalTab === 'assists'
-                    ? 'bg-[#0e5632] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#092c1a]'
+                    ? 'bg-pitch-primary text-white shadow-xs'
+                    : 'text-slate-600 hover:text-pitch-ink'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -335,38 +335,38 @@ export const TournamentsView: React.FC = () => {
             {tournModalTab === 'overview' && (
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-3 text-center text-xs">
-                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                    <span className="text-slate-500 text-[11px] block">Prize Pool</span>
-                    <strong className="text-[#0e5632] text-base font-extrabold tabular-nums">
+                  <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
+                    <span className="text-slate-500 text-caption block">Prize Pool</span>
+                    <strong className="text-pitch-primary text-base font-extrabold tabular-nums">
                       {selectedTournament.prizePool.toLocaleString()} €
                     </strong>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                    <span className="text-slate-500 text-[11px] block">Frais d&apos;inscription</span>
-                    <strong className="text-[#092c1a] text-base font-extrabold tabular-nums">
+                  <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
+                    <span className="text-slate-500 text-caption block">Frais d&apos;inscription</span>
+                    <strong className="text-pitch-ink text-base font-extrabold tabular-nums">
                       {selectedTournament.entryFee} €
                     </strong>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-[#f8faf7] border border-[#dce6d8]">
-                    <span className="text-slate-500 text-[11px] block">Places</span>
+                  <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
+                    <span className="text-slate-500 text-caption block">Places</span>
                     <strong className="text-[#059669] text-base font-extrabold tabular-nums">
                       {Math.max(0, selectedTournament.maxTeams - selectedTournament.registeredTeams)} restantes
                     </strong>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#e2ebe0] space-y-2 text-xs text-slate-700">
+                <div className="p-4 rounded-2xl bg-pitch-panel border border-border-subtle space-y-2 text-xs text-slate-700">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-500">Dates de la compétition :</span>
-                    <span className="font-bold text-[#092c1a]">{selectedTournament.startDate} au {selectedTournament.endDate}</span>
+                    <span className="font-bold text-pitch-ink">{selectedTournament.startDate} au {selectedTournament.endDate}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-500">Lieu & Infrastructure :</span>
-                    <span className="font-bold text-[#092c1a]">{selectedTournament.venue}, {selectedTournament.city}</span>
+                    <span className="font-bold text-pitch-ink">{selectedTournament.venue}, {selectedTournament.city}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-500">Format de jeu :</span>
-                    <span className="font-bold text-[#0e5632]">{selectedTournament.format}</span>
+                    <span className="font-bold text-pitch-primary">{selectedTournament.format}</span>
                   </div>
                 </div>
 
@@ -376,7 +376,7 @@ export const TournamentsView: React.FC = () => {
                       setRegisterTeamName(user?.sportsCv.currentTeam || '');
                       setIsRegisterOpen(true);
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
+                    className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
                   >
                     <Shield className="w-4 h-4" />
                     <span>Inscrire mon équipe au tournoi ({selectedTournament.entryFee} €)</span>
@@ -395,25 +395,25 @@ export const TournamentsView: React.FC = () => {
                   <span className="font-bold text-slate-700">Classement des buteurs dans ce tournoi</span>
                   <span className="text-slate-400 font-semibold">{tournScorers.length} joueurs</span>
                 </div>
-                <div className="rounded-2xl border border-[#dce6d8] overflow-hidden">
+                <div className="rounded-2xl border border-pitch-line overflow-hidden">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#f8faf7] text-slate-500 font-bold border-b border-[#dce6d8]">
+                      <tr className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-line">
                         <th className="py-2.5 px-3 text-center w-8">#</th>
                         <th className="py-2.5 px-3">Buteur</th>
                         <th className="py-2.5 px-3">Club</th>
                         <th className="py-2.5 px-3 text-center">MJ</th>
-                        <th className="py-2.5 px-3 text-center text-[#0e5632] font-black">Buts</th>
+                        <th className="py-2.5 px-3 text-center text-pitch-primary font-black">Buts</th>
                         <th className="py-2.5 px-3 text-center">Ratio</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#edf3ea]">
+                    <tbody className="divide-y divide-pitch-separator">
                       {tournScorers.map((s) => (
                         <tr key={s.playerId} className="hover:bg-[#f6f9f5]">
                           <td className="py-2.5 px-3 text-center font-bold text-slate-600">
                             {s.rank}
                           </td>
-                          <td className="py-2.5 px-3 font-extrabold text-[#092c1a]">
+                          <td className="py-2.5 px-3 font-extrabold text-pitch-ink">
                             <div className="flex items-center gap-2">
                               <img src={s.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
                               <EntityLink section="players" id={s.playerId}>{s.playerName}</EntityLink>
@@ -426,7 +426,7 @@ export const TournamentsView: React.FC = () => {
                             {s.matchesPlayed}
                           </td>
                           <td className="py-2.5 px-3 text-center tabular-nums">
-                            <span className="px-2 py-0.5 rounded-full bg-[#e8f5e6] text-[#0e5632] font-black text-xs">
+                            <span className="px-2 py-0.5 rounded-full bg-[#e8f5e6] text-pitch-primary font-black text-xs">
                               {s.goals}
                             </span>
                           </td>
@@ -447,25 +447,25 @@ export const TournamentsView: React.FC = () => {
                   <span className="font-bold text-slate-700">Classement des passeurs dans ce tournoi</span>
                   <span className="text-slate-400 font-semibold">{tournAssisters.length} joueurs</span>
                 </div>
-                <div className="rounded-2xl border border-[#dce6d8] overflow-hidden">
+                <div className="rounded-2xl border border-pitch-line overflow-hidden">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#f8faf7] text-slate-500 font-bold border-b border-[#dce6d8]">
+                      <tr className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-line">
                         <th className="py-2.5 px-3 text-center w-8">#</th>
                         <th className="py-2.5 px-3">Passeur</th>
                         <th className="py-2.5 px-3">Club</th>
                         <th className="py-2.5 px-3 text-center">MJ</th>
-                        <th className="py-2.5 px-3 text-center text-[#0e5632] font-black">Passes</th>
+                        <th className="py-2.5 px-3 text-center text-pitch-primary font-black">Passes</th>
                         <th className="py-2.5 px-3 text-center">Clés</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#edf3ea]">
+                    <tbody className="divide-y divide-pitch-separator">
                       {tournAssisters.map((a) => (
                         <tr key={a.playerId} className="hover:bg-[#f6f9f5]">
                           <td className="py-2.5 px-3 text-center font-bold text-slate-600">
                             {a.rank}
                           </td>
-                          <td className="py-2.5 px-3 font-extrabold text-[#092c1a]">
+                          <td className="py-2.5 px-3 font-extrabold text-pitch-ink">
                             <div className="flex items-center gap-2">
                               <img src={a.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
                               <EntityLink section="players" id={a.playerId}>{a.playerName}</EntityLink>
@@ -478,7 +478,7 @@ export const TournamentsView: React.FC = () => {
                             {a.matchesPlayed}
                           </td>
                           <td className="py-2.5 px-3 text-center tabular-nums">
-                            <span className="px-2 py-0.5 rounded-full bg-[#f2f9ec] text-[#0e5632] font-black text-xs">
+                            <span className="px-2 py-0.5 rounded-full bg-[#f2f9ec] text-pitch-primary font-black text-xs">
                               {a.assists}
                             </span>
                           </td>
@@ -515,20 +515,20 @@ export const TournamentsView: React.FC = () => {
                 value={registerTeamName}
                 onChange={(e) => setRegisterTeamName(e.target.value)}
                 placeholder="Ex: Betsileo FC"
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
                 onClick={() => setIsRegisterOpen(false)}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 onClick={handleRegister}
                 disabled={!registerTeamName.trim() || isSubmitting}
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Validation...' : 'Confirmer l’inscription'}
               </button>
@@ -557,7 +557,7 @@ export const TournamentsView: React.FC = () => {
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 placeholder="Ex: Tournoi National des Éperviers 2026"
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
@@ -567,7 +567,7 @@ export const TournamentsView: React.FC = () => {
                 <select
                   value={formFormat}
                   onChange={(e) => setFormFormat(e.target.value as Tournament['format'])}
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value="11v11">11 contre 11 (Grand terrain)</option>
                   <option value="7v7">Foot à 7</option>
@@ -581,7 +581,7 @@ export const TournamentsView: React.FC = () => {
                 <select
                   value={formMaxTeams}
                   onChange={(e) => setFormMaxTeams(Number(e.target.value))}
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value={8}>8 équipes (Quarts, Demis, Finale)</option>
                   <option value={12}>12 équipes (Poules + Finales)</option>
@@ -601,7 +601,7 @@ export const TournamentsView: React.FC = () => {
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
                   placeholder="Ex: Fianarantsoa"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
@@ -613,7 +613,7 @@ export const TournamentsView: React.FC = () => {
                   value={formVenue}
                   onChange={(e) => setFormVenue(e.target.value)}
                   placeholder="Ex: Stade Moderne Ampasambazaha"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -627,7 +627,7 @@ export const TournamentsView: React.FC = () => {
                   value={formStartDate}
                   onChange={(e) => setFormStartDate(e.target.value)}
                   placeholder="Ex: 15 Nov 2026"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
@@ -639,7 +639,7 @@ export const TournamentsView: React.FC = () => {
                   value={formEndDate}
                   onChange={(e) => setFormEndDate(e.target.value)}
                   placeholder="Ex: 22 Nov 2026"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -655,7 +655,7 @@ export const TournamentsView: React.FC = () => {
                   value={formPrizePool}
                   onChange={(e) => setFormPrizePool(e.target.value)}
                   placeholder="1200"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
@@ -669,7 +669,7 @@ export const TournamentsView: React.FC = () => {
                   value={formEntryFee}
                   onChange={(e) => setFormEntryFee(e.target.value)}
                   placeholder="80"
-                  className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
@@ -682,7 +682,7 @@ export const TournamentsView: React.FC = () => {
                 value={formOrganizer}
                 onChange={(e) => setFormOrganizer(e.target.value)}
                 placeholder="Ex: Ligue Régionale de Football Matsiatra"
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
@@ -700,17 +700,17 @@ export const TournamentsView: React.FC = () => {
                       key={preset.url}
                       onClick={() => setFormBannerUrl(preset.url)}
                       className={`relative h-20 rounded-2xl overflow-hidden border-2 text-left transition-all cursor-pointer ${
-                        isSelected ? 'border-[#0e5632] ring-2 ring-[#c6f432]' : 'border-transparent hover:opacity-90'
+                        isSelected ? 'border-pitch-primary ring-2 ring-lime-volt' : 'border-transparent hover:opacity-90'
                       }`}
                     >
                       <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 flex items-end p-2">
-                        <span className="text-[11px] font-bold text-white leading-tight">
+                        <span className="text-caption font-bold text-white leading-tight">
                           {preset.name}
                         </span>
                       </div>
                       {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#c6f432] text-[#092c1a] flex items-center justify-center font-bold text-[10px]">
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-lime-volt text-pitch-ink flex items-center justify-center font-bold text-micro">
                           ✓
                         </div>
                       )}
@@ -720,18 +720,18 @@ export const TournamentsView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#edf3ea]">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-pitch-separator">
               <button
                 type="button"
                 onClick={tournamentModal.close}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={isCreating}
-                className="px-6 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isCreating ? 'Création en cours...' : 'Publier et ouvrir le tournoi'}
               </button>

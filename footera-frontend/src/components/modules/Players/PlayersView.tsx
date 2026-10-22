@@ -93,7 +93,7 @@ export const PlayersView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
             Explorer les Joueurs
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -101,19 +101,19 @@ export const PlayersView: React.FC = () => {
           </p>
         </div>
 
-        <label className="flex items-center gap-2 text-xs font-bold text-[#092c1a] bg-white border border-[#dce6d8] px-3.5 py-2 rounded-2xl cursor-pointer hover:border-[#0e5632] transition-colors shadow-2xs self-start md:self-auto">
+        <label className="flex items-center gap-2 text-xs font-bold text-pitch-ink bg-white border border-pitch-line px-3.5 py-2 rounded-2xl cursor-pointer hover:border-pitch-primary transition-colors shadow-2xs self-start md:self-auto">
           <input
             type="checkbox"
             checked={onlyTransfer}
             onChange={(e) => setOnlyTransfer(e.target.checked)}
-            className="rounded text-[#0e5632] focus:ring-[#0e5632] border-[#dce6d8]"
+            className="rounded text-pitch-primary focus:ring-pitch-primary border-pitch-line"
           />
           <span>Disponible pour transfert uniquement</span>
         </label>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs space-y-3">
+      <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -122,7 +122,7 @@ export const PlayersView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher par nom, ville..."
-              className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-[#092c1a] placeholder-slate-400 focus:border-[#0e5632] focus:bg-white transition-all outline-hidden"
+              className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-pitch-ink placeholder-slate-400 focus:border-pitch-primary focus:bg-white transition-all outline-hidden"
             />
           </div>
 
@@ -131,7 +131,7 @@ export const PlayersView: React.FC = () => {
               value={selectedPosition}
               onChange={(e) => setSelectedPosition(e.target.value)}
               aria-label="Filtrer par poste"
-              className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] transition-colors outline-hidden"
+              className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary transition-colors outline-hidden"
             >
               {positionsList.map((p) => (
                 <option key={p} value={p}>
@@ -146,7 +146,7 @@ export const PlayersView: React.FC = () => {
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
               aria-label="Filtrer par niveau"
-              className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] transition-colors outline-hidden"
+              className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary transition-colors outline-hidden"
             >
               <option value="Tous">Tous les niveaux</option>
               <option value="National">National</option>
@@ -195,7 +195,7 @@ export const PlayersView: React.FC = () => {
                 role="link"
                 tabIndex={0}
                 aria-label={`Voir le profil de ${player.name}`}
-                className="rounded-3xl bg-white border border-[#dce6d8] overflow-hidden shadow-xs hover:border-[#0e5632]/50 transition-all flex flex-col justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0e5632]"
+                className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs hover:border-pitch-primary/50 transition-all flex flex-col justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-pitch-primary"
               >
                 <div>
                   {/* Photo matching Screenshot 2 */}
@@ -208,7 +208,7 @@ export const PlayersView: React.FC = () => {
                     />
                     {/* Star Rating bottom left */}
                     <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-xl text-white text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
-                      <Star className="w-3.5 h-3.5 fill-[#c6f432] text-[#c6f432]" />
+                      <Star className="w-3.5 h-3.5 fill-lime-volt text-lime-volt" />
                       <span>{player.rating || 7.8}</span>
                     </div>
 
@@ -228,7 +228,7 @@ export const PlayersView: React.FC = () => {
                   <div className="p-5 space-y-3.5">
                     {/* Player Name and Position · Age */}
                     <div>
-                      <h2 className="text-xl font-extrabold text-[#092c1a] tracking-tight">{player.name}</h2>
+                      <h2 className="text-xl font-extrabold text-pitch-ink tracking-tight">{player.name}</h2>
                       <p className="text-xs text-slate-500 mt-0.5 font-medium">
                         {player.primaryPosition} · {player.age} ans
                       </p>
@@ -251,9 +251,9 @@ export const PlayersView: React.FC = () => {
                     </div>
 
                     {/* Team info & goals count */}
-                    <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-[#edf3ea]">
+                    <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-pitch-separator">
                       <span className="truncate">{player.currentTeam || 'Sans club'} · {player.city}</span>
-                      <span className="font-extrabold text-[#0e5632] flex items-center gap-1 shrink-0">
+                      <span className="font-extrabold text-pitch-primary flex items-center gap-1 shrink-0">
                         <span>🎯</span>
                         <span>{player.goals} buts</span>
                       </span>
@@ -269,7 +269,7 @@ export const PlayersView: React.FC = () => {
                       setSelectedPlayer(player);
                       setIsInviteOpen(true);
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
+                    className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
                   >
                     <UserPlus className="w-4 h-4" />
                     <span>Inviter dans mon équipe</span>
@@ -294,7 +294,7 @@ export const PlayersView: React.FC = () => {
             <div className="flex items-center gap-4">
               <img src={profilePlayer.avatarUrl} alt={profilePlayer.name} className="h-20 w-20 rounded-2xl object-cover" />
               <div>
-                <p className="font-bold text-[#092c1a]">{profilePlayer.currentTeam || 'Sans club'}</p>
+                <p className="font-bold text-pitch-ink">{profilePlayer.currentTeam || 'Sans club'}</p>
                 <p className="text-sm text-slate-500">{profilePlayer.level} · {profilePlayer.strongFoot} · {profilePlayer.height} cm</p>
                 <p className="text-sm text-slate-500">{profilePlayer.appearances} matchs · {profilePlayer.goals} buts · {profilePlayer.assists} passes décisives</p>
               </div>
@@ -308,7 +308,7 @@ export const PlayersView: React.FC = () => {
                   setSelectedPlayer(profilePlayer);
                   setIsInviteOpen(true);
                 }}
-                className="rounded-xl bg-[#0e4d2e] px-4 py-3 text-sm font-bold text-white"
+                className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white"
               >
                 Inviter dans mon équipe
               </button>
@@ -338,20 +338,20 @@ export const PlayersView: React.FC = () => {
                 value={inviteMessage}
                 onChange={(e) => setInviteMessage(e.target.value)}
                 placeholder="Ex: Bonjour, nous serions ravis de t'accueillir pour un entraînement..."
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632] transition-colors"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors"
               />
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
                 onClick={() => setIsInviteOpen(false)}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSendInvite}
                 disabled={!inviteMessage.trim() || isSubmittingInvite}
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmittingInvite ? 'Envoi...' : 'Envoyer l’invitation'}
               </button>

@@ -79,7 +79,7 @@ export const RecruitmentView: React.FC = () => {
     <div className="space-y-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#092c1a] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
             Mercato & Recrutement
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
@@ -87,12 +87,12 @@ export const RecruitmentView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-1 p-1 bg-white border border-[#dce6d8] rounded-2xl self-start md:self-auto shadow-2xs">
+        <div className="flex items-center gap-1 p-1 bg-white border border-pitch-line rounded-2xl self-start md:self-auto shadow-2xs">
           <button
             onClick={() => setActiveTab('ads')}
-            className={`px-4 py-2 min-h-[44px] text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            className={`px-4 py-2 min-h-11 text-xs font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === 'ads'
-                ? 'bg-[#0e5632] text-white shadow-xs'
+                ? 'bg-pitch-primary text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -100,9 +100,9 @@ export const RecruitmentView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('my-applications')}
-            className={`px-4 py-2 min-h-[44px] text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            className={`px-4 py-2 min-h-11 text-xs font-bold rounded-xl transition-all cursor-pointer ${
               activeTab === 'my-applications'
-                ? 'bg-[#0e5632] text-white shadow-xs'
+                ? 'bg-pitch-primary text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -113,7 +113,7 @@ export const RecruitmentView: React.FC = () => {
 
       {activeTab === 'ads' ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-3xl bg-white border border-[#dce6d8] shadow-2xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
@@ -121,7 +121,7 @@ export const RecruitmentView: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher par poste, club, ville..."
-                className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-[#092c1a] placeholder-slate-400 focus:border-[#0e5632] focus:bg-white outline-hidden"
+                className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-pitch-ink placeholder-slate-400 focus:border-pitch-primary focus:bg-white outline-hidden"
               />
             </div>
             <div>
@@ -129,7 +129,7 @@ export const RecruitmentView: React.FC = () => {
                 value={positionFilter}
                 onChange={(e) => setPositionFilter(e.target.value)}
                 aria-label="Filtrer par poste recherché"
-                className="w-full bg-[#f6f8f5] border border-[#dce6d8] rounded-full px-4 py-2.5 text-xs md:text-sm text-[#092c1a] focus:border-[#0e5632] outline-hidden"
+                className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
               >
                 <option value="Tous">Tous les postes</option>
                 <option value="Défenseur Central">Défenseur Central</option>
@@ -157,18 +157,18 @@ export const RecruitmentView: React.FC = () => {
                 <div
                   key={ad.id}
                   onClick={() => adModal.openDetail(ad.id)}
-                  className="p-5 sm:p-6 rounded-3xl bg-white border border-[#dce6d8] hover:border-[#0e5632]/50 transition-all cursor-pointer shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                  className="p-5 sm:p-6 rounded-3xl bg-white border border-pitch-line hover:border-pitch-primary/50 transition-all cursor-pointer shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-4">
                     <img
                       src={ad.teamLogoUrl}
                       alt={ad.teamName}
-                      className="w-12 h-12 rounded-2xl object-cover bg-slate-100 border border-[#dce6d8] shrink-0"
+                      className="w-12 h-12 rounded-2xl object-cover bg-slate-100 border border-pitch-line shrink-0"
                       referrerPolicy="no-referrer"
                     />
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-base font-extrabold text-[#092c1a]">{ad.positionSought}</h2>
+                        <h2 className="text-base font-extrabold text-pitch-ink">{ad.positionSought}</h2>
                         <Badge variant="emerald" size="sm">{ad.division}</Badge>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
@@ -180,8 +180,8 @@ export const RecruitmentView: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-0 border-[#edf3ea]">
-                    <span className="text-xs font-bold text-[#0e5632]">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-0 border-pitch-separator">
+                    <span className="text-xs font-bold text-pitch-primary">
                       {ad.candidatesCount} candidatures
                     </span>
                     <button
@@ -190,7 +190,7 @@ export const RecruitmentView: React.FC = () => {
                         adModal.openDetail(ad.id);
                         setIsApplyModalOpen(true);
                       }}
-                      className="px-5 py-2.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
+                      className="px-5 py-2.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
                     >
                       Postuler
                     </button>
@@ -215,11 +215,11 @@ export const RecruitmentView: React.FC = () => {
               {myApplications.map((app) => (
                 <div
                   key={app.id}
-                  className="p-5 rounded-3xl bg-white border border-[#dce6d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+                  className="p-5 rounded-3xl bg-white border border-pitch-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-extrabold text-[#092c1a]">{app.adTitle}</h2>
+                      <h2 className="text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
                       <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : 'amber'} size="sm">
                         {app.status === 'EN_REVUE' ? 'En cours d’examen' : 'Acceptée'}
                       </Badge>
@@ -246,7 +246,7 @@ export const RecruitmentView: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-5">
-            <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] flex items-center gap-3">
+            <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line flex items-center gap-3">
               <img
                 src={activeAd.teamLogoUrl}
                 alt={activeAd.teamName}
@@ -254,18 +254,18 @@ export const RecruitmentView: React.FC = () => {
                 referrerPolicy="no-referrer"
               />
               <div>
-                <h3 className="text-sm font-bold text-[#092c1a]"><EntityLink section="teams" id={activeAd.teamId}>{activeAd.teamName}</EntityLink></h3>
+                <h3 className="text-sm font-bold text-pitch-ink"><EntityLink section="teams" id={activeAd.teamId}>{activeAd.teamName}</EntityLink></h3>
                 <span className="text-xs text-slate-500">{activeAd.city} · {activeAd.category}</span>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed bg-[#f8faf7] p-3 rounded-2xl border border-[#e2ebe0]">
+            <p className="text-xs text-slate-600 leading-relaxed bg-pitch-panel p-3 rounded-2xl border border-border-subtle">
               {activeAd.description}
             </p>
 
             <button
               onClick={() => setIsApplyModalOpen(true)}
-              className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <Send className="w-4 h-4" />
               <span>Postuler à cette opportunité</span>
@@ -292,7 +292,7 @@ export const RecruitmentView: React.FC = () => {
                 type="tel"
                 value={applicantPhone}
                 onChange={(e) => setApplicantPhone(e.target.value)}
-                className="w-full p-2.5 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               />
             </div>
             <div>
@@ -304,20 +304,20 @@ export const RecruitmentView: React.FC = () => {
                 value={applyMessage}
                 onChange={(e) => setApplyMessage(e.target.value)}
                 placeholder="Présentez brièvement vos atouts et disponibilités..."
-                className="w-full p-3 bg-[#f8faf7] border border-[#dce6d8] rounded-2xl text-xs text-[#092c1a] focus:border-[#0e5632]"
+                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               />
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
                 onClick={() => setIsApplyModalOpen(false)}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
+                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
                 Annuler
               </button>
               <button
                 onClick={handleApply}
                 disabled={!applyMessage.trim() || isSubmitting}
-                className="px-5 py-2 min-h-[44px] rounded-xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Envoi...' : 'Envoyer ma candidature'}
               </button>

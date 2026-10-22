@@ -17,7 +17,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'slate', size 
   };
 
   const sizeStyles = {
-    sm: 'text-[11px] px-2.5 py-0.5 font-semibold rounded-full',
+    sm: 'text-caption px-2.5 py-0.5 font-semibold rounded-full',
     md: 'text-xs px-3 py-1 font-bold rounded-full',
   };
 
@@ -40,7 +40,7 @@ export const FormIndicator: React.FC<{ result: 'V' | 'N' | 'D'; size?: 'sm' | 'm
     D: 'bg-[#dc2626] text-white',
   };
 
-  const dimension = size === 'sm' ? 'w-5 h-5 text-[10px]' : 'w-6 h-6 text-xs';
+  const dimension = size === 'sm' ? 'w-5 h-5 text-micro' : 'w-6 h-6 text-xs';
 
   return (
     <span

@@ -55,7 +55,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
           {/* Header with Footera Brand and Close Button */}
           <div className="flex items-center justify-between pb-6 border-b border-[#144f2f]">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#c6f432] flex items-center justify-center font-bold text-[#092c1a] shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-lime-volt flex items-center justify-center font-bold text-pitch-ink shadow-sm">
                 <span className="font-display font-extrabold text-lg">F</span>
               </div>
               <span className="font-display text-xl font-extrabold tracking-tight text-white">
@@ -65,7 +65,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
             <button
               onClick={onClose}
               aria-label="Fermer le menu"
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-[#124227] transition-colors"
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-[#124227] transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -88,11 +88,11 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
                   }}
                   className={`w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl flex items-center gap-3.5 text-sm font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#c6f432] text-[#092c1a] shadow-md shadow-[#c6f432]/10 font-bold'
+                      ? 'bg-lime-volt text-pitch-ink shadow-md shadow-lime-volt/10 font-bold'
                       : 'text-slate-200 hover:bg-[#0f4427] hover:text-white'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#092c1a]' : 'text-slate-300'}`} />
+                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-pitch-ink' : 'text-slate-300'}`} />
                   <span className="truncate">{item.label}</span>
                   {item.label === 'Notifications' && unreadNotificationsCount > 0 && (
                     <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold">
@@ -114,7 +114,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
             }}
             className="flex items-center gap-3 text-left w-full hover:bg-[#0f4427] p-2 rounded-xl transition-colors cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-900 border-2 border-[#c6f432] flex items-center justify-center text-xs font-bold text-white overflow-hidden shrink-0">
+            <div className="w-10 h-10 rounded-full bg-slate-900 border-2 border-lime-volt flex items-center justify-center text-xs font-bold text-white overflow-hidden shrink-0">
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -128,7 +128,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-xs font-bold text-white block truncate">{user?.name}</span>
-              <span className="text-[11px] text-[#c6f432] block truncate">{user?.sportsCv.currentTeam}</span>
+              <span className="text-caption text-lime-volt block truncate">{user?.sportsCv.currentTeam}</span>
             </div>
           </button>
         </div>
