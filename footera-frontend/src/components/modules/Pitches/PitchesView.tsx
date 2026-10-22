@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Shield, Check, Plus, Building2, CheckSquare, Square, Sparkles } from 'lucide-react';
 import { pitchesService, CreatePitchInput } from '../../../services/pitchesService';
 import { bookingsService } from '../../../services/bookingsService';
@@ -44,6 +44,9 @@ const AVAILABLE_AMENITIES = [
 export const PitchesView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { pitchId: routePitchId } = useParams();
+  const isBookingRoute = location.pathname.endsWith('/book');
   const pitchModal = useRouteModal('/pitches');
   const [pitches, setPitches] = useState<Pitch[]>([]);
   const [surfaceFilter, setSurfaceFilter] = useState<SurfaceType | 'Toutes'>('Toutes');
@@ -51,13 +54,16 @@ export const PitchesView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Selected Pitch for booking
-  const selectedPitch = pitchModal.resourceId
-    ? pitches.find((pitch) => pitch.id === pitchModal.resourceId) ?? null
+  const selectedPitch = isBookingRoute && routePitchId
+    ? pitches.find((pitch) => pitch.id === routePitchId) ?? null
+    : null;
+  const detailPitch = routePitchId && !isBookingRoute && pitchModal.mode !== 'create'
+    ? pitches.find((pitch) => pitch.id === routePitchId) ?? null
     : null;
 
   // Booking Flow State
   const [bookingDate, setBookingDate] = useState('Samedi 24 Octobre 2026');
-  const [selectedSlot, setSelectedSlot] = useState<PitchSlot | null>(null);
+  const [selectedSlots, setSelectedSlots] = useState<PitchSlot[]>([]);
   const [teamName, setTeamName] = useState(user?.sportsCv.currentTeam || '');
   const [phone, setPhone] = useState(user?.phone || '06 12 34 56 78');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,13 +95,6 @@ export const PitchesView: React.FC = () => {
         });
         setPitches(data);
 
-        if (selectedResourceId) {
-          const match = data.find((p) => p.id === selectedResourceId);
-          if (match) {
-            const firstAvail = match.availableSlots.find((s) => s.isAvailable);
-            if (firstAvail) setSelectedSlot(firstAvail);
-          }
-        }
       } catch (err: any) {
         showToast(err.message || 'Erreur lors du chargement des terrains', 'error');
       } finally {
@@ -105,29 +104,55 @@ export const PitchesView: React.FC = () => {
     loadPitches();
   }, [surfaceFilter, cityFilter, selectedResourceId, showToast]);
 
-  const handleOpenBooking = (pitch: Pitch) => {
-    pitchModal.openDetail(pitch.id);
+  useEffect(() => {
+    if (!selectedPitch) return;
+    const firstAvailable = selectedPitch.availableSlots.find((slot) => slot.isAvailable);
+    if (firstAvailable && !selectedSlots.length) setSelectedSlots([firstAvailable]);
+  }, [selectedPitch?.id]);
+
+  useEffect(() => {
+    if (!isBookingRoute) setSelectedSlots([]);
+  }, [routePitchId, isBookingRoute]);
+
+  const toggleSlot = (slot: PitchSlot) => {
+    if (!slot.isAvailable) return;
+    setSelectedSlots((current) => current.some((selected) => selected.id === slot.id)
+      ? current.filter((selected) => selected.id !== slot.id)
+      : [...current, slot]);
+  };
+
+  const handleOpenBooking = (pitch: Pitch, slot?: PitchSlot) => {
     const firstAvail = pitch.availableSlots.find((s) => s.isAvailable);
-    setSelectedSlot(firstAvail || null);
+    setSelectedSlots([slot ?? firstAvail].filter((value): value is PitchSlot => Boolean(value)));
     setTeamName(user?.sportsCv.currentTeam || '');
+    navigate(`/pitches/${encodeURIComponent(pitch.id)}/book`);
   };
 
   const handleConfirmBooking = async () => {
-    if (!selectedPitch || !selectedSlot) return;
+    if (!selectedPitch || !selectedSlots.length) return;
     setIsSubmitting(true);
+    let completedCount = 0;
     try {
-      await bookingsService.requestBooking({
-        pitchId: selectedPitch.id,
-        date: bookingDate,
-        time: selectedSlot.time,
-        teamName: teamName.trim() || undefined,
-        totalPrice: selectedSlot.price,
-      });
+      for (const slot of selectedSlots) {
+        await bookingsService.requestBooking({
+          pitchId: selectedPitch.id,
+          date: bookingDate,
+          time: slot.time,
+          teamName: teamName.trim() || undefined,
+          totalPrice: slot.price,
+        });
+        completedCount += 1;
+      }
 
       showToast(`Créneau confirmé à ${selectedPitch.name} le ${bookingDate} !`, 'success');
-      pitchModal.close();
-      setSelectedSlot(null);
+      navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
+      setSelectedSlots([]);
     } catch (e: any) {
+      if (completedCount) {
+        setSelectedSlots((current) => current.slice(completedCount));
+        showToast(`${completedCount} créneau(x) réservé(s), les suivants ont échoué : ${e.message || 'erreur inconnue'}`, 'error');
+        return;
+      }
       showToast(e.message || 'Erreur lors de la réservation', 'error');
     } finally {
       setIsSubmitting(false);
@@ -185,8 +210,7 @@ export const PitchesView: React.FC = () => {
       // Reload the list and open the newly created pitch through its URL.
       const updated = await pitchesService.list();
       setPitches(updated);
-      pitchModal.openDetail(created.id, true);
-      setSelectedSlot(created.availableSlots.find((slot) => slot.isAvailable) ?? null);
+      navigate(`/pitches/${encodeURIComponent(created.id)}`, { replace: true });
     } catch (err: any) {
       showToast(err.message || 'Erreur lors de l’ajout du terrain', 'error');
     } finally {
@@ -207,6 +231,65 @@ export const PitchesView: React.FC = () => {
     'Dimanche 25 Octobre 2026',
     'Mercredi 28 Octobre 2026',
   ];
+
+  if (routePitchId && !isBookingRoute && pitchModal.mode !== 'create') {
+    if (isLoading) return <CardSkeleton />;
+    if (!detailPitch) {
+      return <EmptyState icon={MapPin} title="Terrain introuvable" description="Ce terrain n’existe pas ou n’est plus disponible." />;
+    }
+
+    return (
+      <div className="space-y-6 pb-16">
+        <button type="button" onClick={() => navigate('/pitches')} className="text-sm font-bold text-[#0e5632] hover:underline">← Retour aux terrains</button>
+        <section className="overflow-hidden rounded-3xl border border-[#dce6d8] bg-white shadow-xs">
+          <div className="relative h-64 sm:h-80 lg:h-[420px]">
+            <img src={detailPitch.imageUrl} alt={detailPitch.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
+              <p className="text-sm font-bold text-lime-300">{detailPitch.complexName}</p>
+              <h1 className="mt-1 text-2xl font-extrabold md:text-4xl">{detailPitch.name}</h1>
+              <p className="mt-2 flex items-center gap-2 text-sm text-white/90"><MapPin className="h-4 w-4" />{detailPitch.address}, {detailPitch.city}</p>
+            </div>
+          </div>
+          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-7">
+            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-[#092c1a]">{detailPitch.surface}</strong></div>
+            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-[#092c1a]">{detailPitch.dimensions}</strong></div>
+            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-[#092c1a]"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{detailPitch.rating.toFixed(1)} ({detailPitch.reviewsCount} avis)</strong></div>
+            <div className="rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-[#0e5632]">À partir de {detailPitch.hourlyRate} € / séance</strong></div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+          <div className="rounded-3xl border border-[#dce6d8] bg-white p-5 shadow-xs md:p-6">
+            <h2 className="text-lg font-extrabold text-[#092c1a]">Équipements et services</h2>
+            {detailPitch.amenities.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              {detailPitch.amenities.map((amenity) => <li key={amenity} className="flex items-center gap-2 text-sm text-slate-700"><Check className="h-4 w-4 shrink-0 text-[#0e5632]" />{amenity}</li>)}
+            </ul> : <p className="mt-3 text-sm text-slate-500">Aucun équipement renseigné.</p>}
+          </div>
+          <div className="rounded-3xl border border-[#dce6d8] bg-white p-5 shadow-xs md:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div><h2 className="text-lg font-extrabold text-[#092c1a]">Créneaux disponibles</h2><p className="mt-1 text-xs text-slate-500">Sélectionnez un ou plusieurs créneaux à réserver.</p></div>
+              <Calendar className="h-5 w-5 text-[#0e5632]" />
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {detailPitch.availableSlots.map((slot) => {
+                const isSelected = selectedSlots.some((selected) => selected.id === slot.id);
+                return <div key={slot.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#dce6d8] bg-[#f8faf7] p-3">
+                  <div><strong className="block text-sm text-[#092c1a]">{slot.time}</strong><span className="mt-1 block text-xs text-slate-500">{slot.price} € · 1h30</span></div>
+                  <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-[#0e4d2e] text-white' : 'border border-[#dce6d8] bg-white text-[#0e5632] hover:bg-[#f2f8f0]'}`}>{!slot.isAvailable ? 'Indisponible' : isSelected ? 'Sélectionné' : 'Sélectionner'}</button>
+                </div>;
+              })}
+              {!detailPitch.availableSlots.length && <p className="text-sm text-slate-500">Aucun créneau renseigné pour le moment.</p>}
+            </div>
+            {selectedSlots.length > 0 && <div className="mt-5 flex flex-col justify-between gap-3 border-t border-[#edf3ea] pt-4 sm:flex-row sm:items-center">
+              <p className="text-sm text-slate-600"><strong className="text-[#092c1a]">{selectedSlots.length}</strong> créneau(x) sélectionné(s) · <strong className="text-[#0e5632]">{selectedSlots.reduce((total, slot) => total + slot.price, 0)} €</strong> au total</p>
+              <button type="button" onClick={() => { setTeamName(user?.sportsCv.currentTeam || ''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-[#0e4d2e] px-4 py-3 text-sm font-bold text-white hover:bg-[#0a3a23]">Réserver les créneaux sélectionnés</button>
+            </div>}
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-16">
@@ -288,11 +371,11 @@ export const PitchesView: React.FC = () => {
           {pitches.map((pitch) => (
             <div
               key={pitch.id}
-              onClick={() => handleOpenBooking(pitch)}
+              onClick={() => navigate(`/pitches/${encodeURIComponent(pitch.id)}`)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  handleOpenBooking(pitch);
+                  navigate(`/pitches/${encodeURIComponent(pitch.id)}`);
                 }
               }}
               role="link"
@@ -377,8 +460,8 @@ export const PitchesView: React.FC = () => {
         <Modal
           isOpen={!!selectedPitch}
           onClose={() => {
-            pitchModal.close();
-            setSelectedSlot(null);
+            navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
+            setSelectedSlots([]);
           }}
           title={`Réserver ${selectedPitch.name}`}
           subtitle={`${selectedPitch.complexName} · ${selectedPitch.address}, ${selectedPitch.city}`}
@@ -414,12 +497,13 @@ export const PitchesView: React.FC = () => {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {selectedPitch.availableSlots.map((slot) => {
-                  const isSelected = selectedSlot?.id === slot.id;
+                  const isSelected = selectedSlots.some((selected) => selected.id === slot.id);
                   return (
                     <button
                       key={slot.id}
                       disabled={!slot.isAvailable}
-                      onClick={() => setSelectedSlot(slot)}
+                      onClick={() => toggleSlot(slot)}
+                      aria-pressed={isSelected}
                       className={`p-3 rounded-2xl border text-xs flex flex-col justify-between transition-all cursor-pointer ${
                         !slot.isAvailable
                           ? 'opacity-40 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
@@ -439,17 +523,17 @@ export const PitchesView: React.FC = () => {
               </div>
             </div>
 
-            {selectedSlot && (
+            {selectedSlots.length > 0 && (
               <div className="p-4 rounded-2xl bg-[#f8faf7] border border-[#dce6d8] flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-slate-500 block font-medium">Tarif total</span>
+                  <span className="text-slate-500 block font-medium">{selectedSlots.length} créneau(x) · total</span>
                   <span className="text-xl font-extrabold text-[#0e5632] tabular-nums">
-                    {selectedSlot.price} € TTC
+                    {selectedSlots.reduce((total, slot) => total + slot.price, 0)} € TTC
                   </span>
                 </div>
                 <div className="text-right text-slate-500">
                   <span>{bookingDate}</span>
-                  <span className="block font-bold text-[#092c1a]">{selectedSlot.time}</span>
+                  <span className="block font-bold text-[#092c1a]">{selectedSlots.map((slot) => slot.time).join(' · ')}</span>
                 </div>
               </div>
             )}
@@ -457,10 +541,10 @@ export const PitchesView: React.FC = () => {
             <div className="pt-2">
               <button
                 onClick={handleConfirmBooking}
-                disabled={!selectedSlot || isSubmitting}
+                disabled={!selectedSlots.length || isSubmitting}
                 className="w-full py-3.5 rounded-2xl bg-[#0e4d2e] hover:bg-[#0a3a23] text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isSubmitting ? 'Validation...' : 'Valider la réservation du terrain'}
+                {isSubmitting ? 'Validation...' : `Valider ${selectedSlots.length} créneau(x)`}
               </button>
             </div>
           </div>

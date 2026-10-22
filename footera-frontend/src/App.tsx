@@ -50,6 +50,7 @@ const AppContent: React.FC = () => {
           <Route path="/tournaments/new" element={<TournamentsView />} />
           <Route path="/tournaments/:tournamentId" element={<TournamentsView />} />
           <Route path="/pitches" element={<PitchesView />} />
+          <Route path="/pitches/:pitchId/book" element={<PitchesView />} />
           <Route path="/pitches/:pitchId" element={<PitchesView />} />
           <Route path="/recruitment" element={<RecruitmentView />} />
           <Route path="/marketplace" element={<MarketplaceView />} />
