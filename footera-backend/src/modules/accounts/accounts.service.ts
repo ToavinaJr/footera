@@ -66,10 +66,14 @@ export class AccountsService {
       ...current,
       ...Object.fromEntries(Object.entries(partial).map(([key, value]) => [key, (value as string).trim()])),
     });
-    if (typeof partial.dateOfBirth === 'string') {
+    if (typeof partial.dateOfBirth === 'string' || typeof partial.avatarUrl === 'string') {
       const players: any[] = await this.records.list('players');
       const player = players.find((item) => item.userId === this.userId);
-      if (player) await this.records.save('players', player.id, { ...player, age: 0 });
+      if (player) await this.records.save('players', player.id, {
+        ...player,
+        ...(typeof partial.dateOfBirth === 'string' ? { age: 0 } : {}),
+        ...(typeof partial.avatarUrl === 'string' ? { avatarUrl: updated.avatarUrl } : {}),
+      });
     }
     return this.withoutPasswordHash(updated);
   }

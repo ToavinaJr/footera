@@ -847,6 +847,7 @@ export const SEED_NOTIFICATIONS = [
     type: 'match',
     targetSection: 'matches',
     targetId: 'match_01',
+    recipientId: 'usr_me',
   },
   {
     id: 'notif_02',
@@ -857,6 +858,7 @@ export const SEED_NOTIFICATIONS = [
     type: 'team',
     targetSection: 'teams',
     targetId: 'team_betsileo',
+    recipientId: 'usr_me',
   },
   {
     id: 'notif_03',
@@ -867,6 +869,7 @@ export const SEED_NOTIFICATIONS = [
     type: 'recruitment',
     targetSection: 'recruitment',
     targetId: 'rec_01',
+    recipientId: 'usr_me',
   },
 ];
 

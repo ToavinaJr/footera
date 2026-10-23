@@ -131,7 +131,7 @@ export const ProfileView: React.FC = () => {
     playersService.list({ query: user.name })
       .then((players) => setMyPlayer(players.find((player) => player.name.toLowerCase() === user.name.toLowerCase()) ?? null))
       .catch(() => setMyPlayer(null));
-  }, [isOwner, user?.name]);
+  }, [isOwner, user?.name, user?.dateOfBirth, user?.avatarUrl]);
 
   const handleSaveCv = async (e: React.FormEvent) => {
     e.preventDefault();

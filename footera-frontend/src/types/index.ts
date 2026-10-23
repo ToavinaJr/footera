@@ -225,6 +225,14 @@ export interface TournamentMatchFixture {
   isFinished: boolean;
 }
 
+export interface TournamentStadium {
+  id: string;
+  name: string;
+  pitchId?: string;
+  city?: string;
+  address?: string;
+}
+
 export interface Tournament {
   id: string;
   title: string;
@@ -236,6 +244,9 @@ export interface Tournament {
   maxTeams: number;
   registeredTeams: number;
   participantTeamIds?: string[];
+  participatingTeams?: Team[];
+  stadiums?: TournamentStadium[];
+  registrationOpen?: boolean;
   remainingTeams?: number;
   entryFee: number; // in EUR
   prizePool: number; // in EUR

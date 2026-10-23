@@ -81,6 +81,16 @@ export async function seedDatabase(prisma: PrismaService, { reset = false } = {}
     }
   }
 
+  const notificationDelegate = (prisma as any)[RECORD_MODELS.notifications];
+  const legacyNotifications = await notificationDelegate.findMany();
+  for (const record of legacyNotifications) {
+    if (record.payload?.recipientId) continue;
+    await notificationDelegate.update({
+      where: { id: record.id },
+      data: { payload: { ...record.payload, recipientId: SEED_USER.id } },
+    });
+  }
+
   const seedPassword = process.env.SEED_USER_PASSWORD;
   if (seedPassword && !await (prisma as any).authCredentialRecord.findUnique({ where: { id: SEED_USER.email.toLowerCase() } })) {
     if (seedPassword.length < 12) throw new Error('SEED_USER_PASSWORD must contain at least 12 characters.');

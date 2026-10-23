@@ -23,6 +23,7 @@ export class PlayersService {
       const age = user ? this.ageFromDateOfBirth(user.dateOfBirth) : player.age;
       return {
         ...player,
+        ...(user?.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
         ...(Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
         goals: stats?.goals ?? 0,
         assists: stats?.assists ?? 0,

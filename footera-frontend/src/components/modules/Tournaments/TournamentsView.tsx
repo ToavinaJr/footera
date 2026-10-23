@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Calendar, MapPin, Users, Award, Shield, CheckCircle2, Plus, Sparkles, Building2, Layers, Target } from 'lucide-react';
 import { tournamentsService, CreateTournamentInput } from '../../../services/tournamentsService';
 import { statsService } from '../../../services/statsService';
-import { Tournament, TopScorerItem, TopAssisterItem, Team } from '../../../types';
+import { Tournament, TopScorerItem, TopAssisterItem, Team, Pitch } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -13,6 +13,7 @@ import { useRouteModal } from '../../../hooks/useRouteModal';
 import { teamsService } from '../../../services/teamsService';
 import { DatePickerField } from '../../common/DatePickerField';
 import { formatDateForDisplay, getTodayDateInputValue } from '../../../utils/date';
+import { pitchesService } from '../../../services/pitchesService';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -41,7 +42,7 @@ export const TournamentsView: React.FC = () => {
 
   // Detail Modal
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
-  const [tournModalTab, setTournModalTab] = useState<'overview' | 'scorers' | 'assists'>('overview');
+  const [tournModalTab, setTournModalTab] = useState<'overview' | 'teams' | 'stadiums' | 'scorers' | 'assists'>('overview');
   const [tournScorers, setTournScorers] = useState<TopScorerItem[]>([]);
   const [tournAssisters, setTournAssisters] = useState<TopAssisterItem[]>([]);
 
@@ -49,6 +50,7 @@ export const TournamentsView: React.FC = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [registerTeamId, setRegisterTeamId] = useState('');
   const [teams, setTeams] = useState<Team[]>([]);
+  const [pitches, setPitches] = useState<Pitch[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Create Tournament Modal
@@ -87,7 +89,10 @@ export const TournamentsView: React.FC = () => {
   }, [selectedResourceId, showToast, tournamentModal.resourceId]);
 
   useEffect(() => {
-    teamsService.list().then(setTeams).catch((err) => {
+    Promise.all([teamsService.list(), pitchesService.list()]).then(([teamList, pitchList]) => {
+      setTeams(teamList);
+      setPitches(pitchList);
+    }).catch((err) => {
       showToast(err.message || 'Erreur lors du chargement des équipes', 'error');
     });
   }, [showToast]);
@@ -326,11 +331,11 @@ export const TournamentsView: React.FC = () => {
             </div>
 
             {/* Tournament Navigation Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-pitch-panel border border-pitch-line rounded-2xl">
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-pitch-panel border border-pitch-line rounded-2xl">
               <button
                 type="button"
                 onClick={() => setTournModalTab('overview')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                className={`flex-1 min-w-24 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                   tournModalTab === 'overview'
                     ? 'bg-pitch-primary text-white shadow-xs'
                     : 'text-slate-600 hover:text-pitch-ink'
@@ -340,8 +345,22 @@ export const TournamentsView: React.FC = () => {
               </button>
               <button
                 type="button"
+                onClick={() => setTournModalTab('teams')}
+                className={`flex-1 min-w-20 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${tournModalTab === 'teams' ? 'bg-pitch-primary text-white shadow-xs' : 'text-slate-600 hover:text-pitch-ink'}`}
+              >
+                Équipes ({selectedTournament.participatingTeams?.length ?? selectedTournament.registeredTeams})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTournModalTab('stadiums')}
+                className={`flex-1 min-w-20 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${tournModalTab === 'stadiums' ? 'bg-pitch-primary text-white shadow-xs' : 'text-slate-600 hover:text-pitch-ink'}`}
+              >
+                Stades ({selectedTournament.stadiums?.length ?? 0})
+              </button>
+              <button
+                type="button"
                 onClick={() => setTournModalTab('scorers')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  className={`flex-1 min-w-24 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
                   tournModalTab === 'scorers'
                     ? 'bg-pitch-primary text-white shadow-xs'
                     : 'text-slate-600 hover:text-pitch-ink'
@@ -353,7 +372,7 @@ export const TournamentsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setTournModalTab('assists')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  className={`flex-1 min-w-24 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
                   tournModalTab === 'assists'
                     ? 'bg-pitch-primary text-white shadow-xs'
                     : 'text-slate-600 hover:text-pitch-ink'
@@ -402,7 +421,7 @@ export const TournamentsView: React.FC = () => {
                   </div>
                 </div>
 
-                {selectedTournament.registeredTeams < selectedTournament.maxTeams ? (
+                {selectedTournament.registrationOpen !== false && selectedTournament.status === 'INSCRIPTIONS_OUVERTES' && selectedTournament.registeredTeams < selectedTournament.maxTeams ? (
                   <button
                     onClick={() => {
                       setRegisterTeamId('');
@@ -413,12 +432,55 @@ export const TournamentsView: React.FC = () => {
                     <Shield className="w-4 h-4" />
                     <span>Inscrire mon équipe au tournoi ({selectedTournament.entryFee} €)</span>
                   </button>
+                ) : selectedTournament.status !== 'INSCRIPTIONS_OUVERTES' || selectedTournament.registrationOpen === false ? (
+                  <div className="p-3.5 text-center text-xs font-bold text-slate-600 bg-slate-100 rounded-2xl border border-pitch-line">
+                    Les inscriptions sont fermées pour ce tournoi déjà commencé.
+                  </div>
                 ) : (
                   <div className="p-3.5 text-center text-xs font-bold text-amber-800 bg-amber-50 rounded-2xl border border-amber-200">
                     Ce tournoi est complet pour cette édition.
                   </div>
                 )}
               </div>
+            )}
+
+            {tournModalTab === 'teams' && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold text-pitch-ink">Équipes participantes</h3>
+                {(selectedTournament.participatingTeams ?? teams.filter((team) => (selectedTournament.participantTeamIds ?? []).includes(team.id))).length ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(selectedTournament.participatingTeams ?? teams.filter((team) => (selectedTournament.participantTeamIds ?? []).includes(team.id))).map((team) => {
+                      const standing = selectedTournament.standings.find((row) => row.teamId === team.id);
+                      return <article key={team.id} className="flex items-center gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                        <img src={team.logoUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <EntityLink section="teams" id={team.id} className="font-bold text-pitch-ink">{team.name}</EntityLink>
+                          <p className="text-xs text-slate-500">{team.city} · {standing?.played ?? 0} matchs · {standing?.points ?? 0} pts</p>
+                        </div>
+                      </article>;
+                    })}
+                  </div>
+                ) : <p className="rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">Aucune équipe inscrite pour le moment.</p>}
+              </section>
+            )}
+
+            {tournModalTab === 'stadiums' && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold text-pitch-ink">Stades et complexes d’accueil</h3>
+                {selectedTournament.stadiums?.length ? <div className="grid gap-3 sm:grid-cols-2">
+                  {selectedTournament.stadiums.map((stadium) => {
+                    const pitch = pitches.find((item) => item.id === stadium.pitchId || item.id === stadium.id);
+                    return <article key={stadium.id} className="flex items-start gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-4">
+                      <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-pitch-primary" />
+                      <div>
+                        {pitch ? <EntityLink section="pitches" id={pitch.id} className="font-bold text-pitch-ink">{stadium.name}</EntityLink>
+                          : <h4 className="font-bold text-pitch-ink">{stadium.name}</h4>}
+                        <p className="mt-1 text-xs text-slate-500">{stadium.address || stadium.city || selectedTournament.city}</p>
+                      </div>
+                    </article>;
+                  })}
+                </div> : <p className="rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">Aucun stade renseigné pour le moment.</p>}
+              </section>
             )}
 
             {tournModalTab === 'scorers' && (
