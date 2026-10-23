@@ -431,6 +431,7 @@ export interface UserProfile {
   email: string;
   phone: string;
   dateOfBirth?: string;
+  age?: number;
   city: string;
   avatarUrl: string;
   activeRole: UserRole;

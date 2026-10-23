@@ -10,6 +10,7 @@ export interface UserRecord {
   favoriteTeamIds?: string[];
   favoriteMatchIds?: string[];
   dateOfBirth?: string;
+  age?: number;
   sportsCv?: SportsCvRecord;
   [key: string]: unknown;
 }

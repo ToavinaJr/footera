@@ -1,15 +1,18 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
+import type { RecordCollection, RecordRepository } from '../../database/record.repository.js';
+import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
 import { AuthService } from './auth.service.js';
 
 function makeService() {
+  type AuthRecord = AuthCredentialRecord | AuthSessionRecord | UserRecord;
   const records = {
-    find: vi.fn(async (_collection: string, _id: string) => null as unknown as never),
-    createUserAccount: vi.fn(async () => undefined),
+    find: vi.fn(async (_collection: RecordCollection, _id: string): Promise<AuthRecord | null> => null),
+    createUserAccount: vi.fn(async (_id: string, _email: string, _user: UserRecord, _credential: AuthCredentialRecord, _player?: unknown) => undefined),
     create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     consumeAuthSession: vi.fn(async () => true),
   };
-  return { auth: new AuthService(records as unknown as never), records };
+  return { auth: new AuthService(records as unknown as RecordRepository), records };
 }
 
 describe('AuthService', () => {
@@ -19,7 +22,7 @@ describe('AuthService', () => {
     const result = await auth.register({ name: 'Test User', email: 'TEST@example.com', password: 'correct horse battery staple' });
 
     expect(records.createUserAccount).toHaveBeenCalledOnce();
-    const [id, email, user, credentials] = records.createUserAccount.mock.calls[0];
+    const [id, email, user, credentials] = records.createUserAccount.mock.calls[0]!;
     expect(email).toBe('test@example.com');
     expect(user.roles).toEqual(['Joueur']);
     expect(user.activeRole).toBe('Joueur');
@@ -31,21 +34,22 @@ describe('AuthService', () => {
   it('ignores a client-supplied role and assigns only the default role', async () => {
     const { auth, records } = makeService();
 
-    await auth.register({
+    const input = {
       name: 'Test User',
       email: 'test@example.com',
       password: 'correct horse battery staple',
       role: 'Administrateur',
-    } as unknown as never);
+    };
+    await auth.register(input);
 
-    const [, , user] = records.createUserAccount.mock.calls[0];
+    const [, , user] = records.createUserAccount.mock.calls[0]!;
     expect(user.roles).toEqual(['Joueur']);
     expect(user.activeRole).toBe('Joueur');
   });
 
   it('rejects duplicate email addresses', async () => {
     const { auth, records } = makeService();
-    records.find.mockResolvedValueOnce({ userId: 'existing', passwordHash: 'stored' } as unknown as never);
+    records.find.mockResolvedValueOnce({ userId: 'existing', passwordHash: 'stored' });
 
     await expect(auth.register({ name: 'Test User', email: 'test@example.com', password: 'correct horse battery staple' }))
       .rejects.toBeInstanceOf(ConflictException);
@@ -54,8 +58,8 @@ describe('AuthService', () => {
   it('authenticates with the stored password hash and rejects a wrong password', async () => {
     const { auth, records } = makeService();
     await auth.register({ name: 'Test User', email: 'test@example.com', password: 'correct horse battery staple' });
-    const [id, , user, credential] = records.createUserAccount.mock.calls[0];
-    records.find.mockImplementation(async (collection: string) => {
+    const [id, , user, credential] = records.createUserAccount.mock.calls[0]!;
+    records.find.mockImplementation(async (collection: RecordCollection, _id: string) => {
       if (collection === 'authCredentials') return credential;
       if (collection === 'users') return user;
       return null;
@@ -70,9 +74,9 @@ describe('AuthService', () => {
   it('rotates refresh sessions and rejects replay of a consumed token', async () => {
     const { auth, records } = makeService();
     const registration = await auth.register({ name: 'Test User', email: 'test@example.com', password: 'correct horse battery staple' });
-    const [userId, , user] = records.createUserAccount.mock.calls[0];
-    const refreshToken = ('refreshToken' in registration ? registration.refreshToken : undefined) as string;
-    records.find.mockImplementation(async (collection: string) => {
+    const [userId, , user] = records.createUserAccount.mock.calls[0]!;
+    const refreshToken = registration.refreshToken;
+    records.find.mockImplementation(async (collection: RecordCollection, _id: string) => {
       if (collection === 'authSessions') return { userId, expiresAt: new Date(Date.now() + 60_000).toISOString() };
       if (collection === 'users') return user;
       return null;

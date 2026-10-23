@@ -19,7 +19,7 @@ export class AccountsService {
     const user = await this.records.find<UserRecord>('users', this.userId);
     if (!user) return null;
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return { ...safeUser, age: this.ageFromDateOfBirth(user.dateOfBirth) };
   }
 
   async updateProfile(partial: Record<string, unknown>) {
@@ -76,7 +76,7 @@ export class AccountsService {
         ...(typeof partial.avatarUrl === 'string' ? { avatarUrl: updated.avatarUrl } : {}),
       });
     }
-    return this.withoutPasswordHash(updated);
+    return this.withoutPasswordHash({ ...updated, age: this.ageFromDateOfBirth(updated.dateOfBirth) });
   }
 
   async updateSportsCv(input: unknown) {
@@ -88,7 +88,7 @@ export class AccountsService {
     const current = await this.records.find<UserRecord>('users', this.userId);
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, { ...current, sportsCv: { ...current.sportsCv, ...partial } });
-    return this.withoutPasswordHash(updated);
+    return this.withoutPasswordHash({ ...updated, age: this.ageFromDateOfBirth(updated.dateOfBirth) });
   }
 
   async setActiveRole(role: string) {
@@ -96,7 +96,7 @@ export class AccountsService {
     if (!current?.roles?.includes(role)) throw new BadRequestException('Rôle non autorisé pour ce compte.');
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, { ...current, activeRole: role });
-    return this.withoutPasswordHash(updated);
+    return this.withoutPasswordHash({ ...updated, age: this.ageFromDateOfBirth(updated.dateOfBirth) });
   }
 
   private async toggleFavorite(field: 'favoriteTeamIds' | 'favoriteMatchIds', id: string) {
@@ -115,5 +115,16 @@ export class AccountsService {
   private withoutPasswordHash<T extends Record<string, unknown>>(user: T): Omit<T, 'passwordHash'> {
     const { passwordHash: _passwordHash, ...safeUser } = user;
     return safeUser;
+  }
+
+  private ageFromDateOfBirth(value?: string): number | undefined {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+    const [year, month, day] = value.split('-').map(Number);
+    const birthDate = new Date(Date.UTC(year, month - 1, day));
+    if (birthDate.toISOString().slice(0, 10) !== value) return undefined;
+    const now = new Date();
+    let age = now.getUTCFullYear() - year;
+    if (now.getUTCMonth() + 1 < month || (now.getUTCMonth() + 1 === month && now.getUTCDate() < day)) age -= 1;
+    return age >= 0 ? age : undefined;
   }
 }
