@@ -20,6 +20,7 @@ export const Header: React.FC = () => {
     try {
       await logout();
       setIsLogoutConfirmOpen(false);
+      navigate('/', { replace: true });
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : 'La déconnexion a échoué.', 'error');
     }
@@ -36,7 +37,7 @@ export const Header: React.FC = () => {
       (location.state as { backgroundLocation?: unknown } | null)?.backgroundLocation,
     );
     if (hasBackgroundRoute) navigate(-1);
-    else navigate('/', { replace: true });
+    else navigate('/home', { replace: true });
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {

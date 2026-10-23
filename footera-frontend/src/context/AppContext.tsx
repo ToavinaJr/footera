@@ -10,7 +10,7 @@ import type { NavigationSection } from './navigation';
 import { AppApiError } from '../lib/api/errors';
 
 const routeForSection = (section: NavigationSection) => {
-  if (section === 'home') return '/';
+  if (section === 'home') return '/home';
   if (section === 'bookings') return '/profile/bookings';
   return `/${section}`;
 };
@@ -21,7 +21,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const routeSection = location.pathname.split('/').filter(Boolean)[0];
   const sectionFromPath = (routeSection === 'player' ? 'players' : routeSection) as NavigationSection | undefined;
   const validSections: NavigationSection[] = [
-    'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
+    'home', 'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
   ];
   const activeSection: NavigationSection = sectionFromPath && validSections.includes(sectionFromPath)
     ? sectionFromPath

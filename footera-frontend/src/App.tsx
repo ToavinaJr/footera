@@ -19,6 +19,7 @@ const RecruitmentView = lazy(() => import('./components/modules/Recruitment/Recr
 const MarketplaceView = lazy(() => import('./components/modules/Marketplace/MarketplaceView').then((module) => ({ default: module.MarketplaceView })));
 const ProfileView = lazy(() => import('./components/modules/Profile/ProfileView').then((module) => ({ default: module.ProfileView })));
 const StatsView = lazy(() => import('./components/modules/Stats/StatsView').then((module) => ({ default: module.StatsView })));
+const LandingView = lazy(() => import('./components/modules/Landing/LandingView').then((module) => ({ default: module.LandingView })));
 
 const LegacyPlayerRedirect: React.FC = () => {
   const { playerId = '' } = useParams();
@@ -31,7 +32,17 @@ const AppContent: React.FC = () => {
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
   if (isLoadingUser) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement de votre session…</div>;
-  if (!user) return <AuthView onLogin={login} onRegister={register} />;
+  if (!user) {
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement...</div>}>
+        <Routes>
+          <Route path="/" element={<LandingView />} />
+          <Route path="/auth" element={<AuthView onLogin={login} onRegister={register} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-pitch-ink">
@@ -45,7 +56,9 @@ const AppContent: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
         <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Chargement de la page…</div>}>
         <Routes location={backgroundLocation ?? location}>
-          <Route path="/" element={<HomeView />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/auth" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<HomeView />} />
           <Route path="/players" element={<PlayersView />} />
           <Route path="/players/:playerId" element={<PlayersView />} />
           <Route path="/profile/:profileId" element={<ProfileView />} />
@@ -73,7 +86,7 @@ const AppContent: React.FC = () => {
           <Route path="/profile/applications" element={<ProfileView />} />
           <Route path="/notifications" element={<HomeView />} />
           <Route path="/stats" element={<StatsView />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
         </Suspense>
       </main>
