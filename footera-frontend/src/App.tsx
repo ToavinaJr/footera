@@ -3,7 +3,6 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
 import { Header } from './components/layout/Header';
-import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
 import { SidebarDrawer } from './components/layout/SidebarDrawer';
 import { ToastContainer } from './components/common/Toast';
@@ -29,7 +28,7 @@ const LegacyPlayerRedirect: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { setActiveSection, user, isLoadingUser, login, register } = useApp();
+  const { user, isLoadingUser, login, register } = useApp();
   const { t } = useTranslation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -51,9 +50,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app-shell min-h-full flex flex-col bg-canvas-bg text-pitch-ink font-sans selection:bg-lime-volt selection:text-pitch-ink">
-      {/* Discreet Demo / Data Mode Banner */}
-      <DemoBanner />
-
       {/* Top Navigation Bar */}
       <Header onMenuClick={() => {
         if (window.matchMedia('(min-width: 768px)').matches) setIsSidebarCollapsed((collapsed) => !collapsed);
@@ -113,38 +109,6 @@ const AppContent: React.FC = () => {
       {/* Global Notifications and Mutation Feedback Toasts */}
       <ToastContainer />
 
-      {/* Footer */}
-      <footer className="border-t border-border-subtle bg-white py-8 px-4 text-center text-xs text-slate-500 hidden md:block">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-pitch-primary flex items-center justify-center font-bold text-lime-volt text-xs">
-              F
-            </div>
-            <span className="font-extrabold text-pitch-ink">FOOTERA</span>
-            <span>— Plateforme unifiée de l&apos;écosystème footballistique</span>
-          </div>
-          <div className="flex items-center gap-5 text-slate-500 font-medium">
-            <button onClick={() => setActiveSection('players')} className="hover:text-pitch-primary cursor-pointer">
-              Joueurs
-            </button>
-            <button onClick={() => setActiveSection('teams')} className="hover:text-pitch-primary cursor-pointer">
-              Équipes
-            </button>
-            <button onClick={() => setActiveSection('matches')} className="hover:text-pitch-primary cursor-pointer">
-              Matchs
-            </button>
-            <button onClick={() => setActiveSection('stats')} className="hover:text-pitch-primary cursor-pointer font-bold text-pitch-primary">
-              Stats & Buteurs
-            </button>
-            <button onClick={() => setActiveSection('pitches')} className="hover:text-pitch-primary cursor-pointer">
-              Terrains
-            </button>
-            <button onClick={() => setActiveSection('marketplace')} className="hover:text-pitch-primary cursor-pointer">
-              Marketplace
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
