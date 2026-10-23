@@ -1,18 +1,20 @@
-import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, NotFoundException, HttpCode, HttpStatus } from '@nestjs/common';
 import { TeamsService } from '../modules/teams/teams.service.js';
+import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('teams')
 export class TeamsController {
   constructor(private readonly teams: TeamsService) {}
 
   @Get()
+  @Public()
   list(@Query('q') query?: string, @Query('category') category?: string, @Query('city') city?: string) {
     return this.teams.list({ query, category, city });
   }
 
   @Get('my-team')
-  getMyTeam() {
-    return this.teams.myTeam();
+  async getMyTeam() {
+    return { team: await this.teams.myTeam() };
   }
 
   @Get('my-team/invitations')
@@ -21,13 +23,19 @@ export class TeamsController {
   }
 
   @Get(':id/detail')
-  async getDetail(@Param('id') id: string) {
-    const team = await this.teams.getDetail(id);
+  @Public()
+  async getDetail(
+    @Param('id') id: string,
+    @Query('competitionId') competitionId?: string,
+    @Query('sortBy') sortBy?: 'goals' | 'assists' | 'appearances' | 'yellowCards' | 'redCards',
+  ) {
+    const team = await this.teams.getDetail(id, { competitionId, sortBy });
     if (!team) throw new NotFoundException('Ã‰quipe introuvable');
     return team;
   }
 
   @Get(':id')
+  @Public()
   async getById(@Param('id') id: string) {
     const team = await this.teams.getById(id);
     if (!team) throw new NotFoundException('Équipe introuvable');
@@ -40,7 +48,9 @@ export class TeamsController {
   }
 
   @Post(':id/favorite')
-  toggleFavorite(@Param('id') id: string) {
-    return this.teams.toggleFavorite(id);
+  @HttpCode(HttpStatus.OK)
+  async toggleFavorite(@Param('id') id: string) {
+    const isFavorite = await this.teams.toggleFavorite(id);
+    return { isFavorite };
   }
 }

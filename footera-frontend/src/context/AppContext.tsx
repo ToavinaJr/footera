@@ -7,9 +7,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from './app-context';
 import type { AppContextType, ToastMessage } from './app-context';
 import type { NavigationSection } from './navigation';
+import { AppApiError } from '../lib/api/errors';
 
 const routeForSection = (section: NavigationSection) => {
-  if (section === 'home') return '/';
+  if (section === 'home') return '/home';
   if (section === 'bookings') return '/profile/bookings';
   return `/${section}`;
 };
@@ -20,7 +21,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const routeSection = location.pathname.split('/').filter(Boolean)[0];
   const sectionFromPath = (routeSection === 'player' ? 'players' : routeSection) as NavigationSection | undefined;
   const validSections: NavigationSection[] = [
-    'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
+    'home', 'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
   ];
   const activeSection: NavigationSection = sectionFromPath && validSections.includes(sectionFromPath)
     ? sectionFromPath
@@ -44,7 +45,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       setUser(null);
       // eslint-disable-next-line no-console
-      if (!(typeof e === 'object' && e !== null && 'status' in e && e.status === 401)) console.error('Failed to load user profile:', e);
+      if (!(e instanceof AppApiError && e.statusCode === 401)) console.error('Failed to load user profile:', e);
     } finally {
       setIsLoadingUser(false);
     }
@@ -56,21 +57,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setNotifications(notifs);
     } catch (e) {
       // eslint-disable-next-line no-console
-      if (!(typeof e === 'object' && e !== null && 'status' in e && e.status === 401)) console.error('Failed to load notifications:', e);
+      if (!(e instanceof AppApiError && e.statusCode === 401)) console.error('Failed to load notifications:', e);
     }
   }, []);
 
   const login = useCallback(async (credentials: { email: string; password: string }) => {
     const profile = await authService.login(credentials);
     setUser(profile);
-    await fetchNotifications();
-  }, [fetchNotifications]);
+  }, []);
 
   const register = useCallback(async (input: { name: string; email: string; password: string }) => {
     const profile = await authService.register(input);
     setUser(profile);
-    await fetchNotifications();
-  }, [fetchNotifications]);
+  }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();
@@ -80,16 +79,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     fetchUserData();
-    fetchNotifications();
 
     // Subscribe to mock storage mutations for real-time reactivity
     const unsubscribe = mockStorage.subscribe(() => {
       fetchUserData();
-      fetchNotifications();
     });
 
     return () => unsubscribe();
-  }, [fetchUserData, fetchNotifications]);
+  }, [fetchUserData]);
+
+  useEffect(() => {
+    if (user) {
+      void fetchNotifications();
+    } else {
+      setNotifications([]);
+    }
+  }, [user, fetchNotifications]);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setNotifications([]);
+      setIsLoadingUser(false);
+    };
+    window.addEventListener('footera:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('footera:session-expired', handleSessionExpired);
+  }, []);
 
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = `toast_${Date.now()}_${Math.random()}`;
@@ -133,8 +148,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = await authService.switchRole(role);
       setUser(updated);
       showToast(`Rôle actif changé : ${role}`);
-    } catch (e: any) {
-      showToast(e.message || 'Erreur lors du changement de rôle', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur lors du changement de rôle', 'error');
     }
   };
 
@@ -144,8 +159,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUser(updated);
       showToast('Profil mis à jour avec succès');
       return true;
-    } catch (e: any) {
-      showToast(e.message || 'Erreur lors de la mise à jour', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur lors de la mise à jour', 'error');
       return false;
     }
   };
@@ -155,8 +170,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = await authService.updateSportsCv(cv);
       setUser(updated);
       showToast('CV Sportif enregistré');
-    } catch (e: any) {
-      showToast(e.message || 'Erreur de sauvegarde', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur de sauvegarde', 'error');
       return false;
     }
     return true;

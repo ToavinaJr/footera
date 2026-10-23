@@ -5,6 +5,18 @@ import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
+import type { MarketplaceRecord } from '../../database/domain-records.js';
+
+export interface CreateMarketplaceInput {
+  title: string;
+  category: string;
+  condition: string;
+  brand: string;
+  price: number;
+  imageUrl: string;
+  city: string;
+  description: string;
+}
 
 @Injectable()
 export class MarketplaceService {
@@ -24,14 +36,14 @@ export class MarketplaceService {
   }
 
   async list(filters: { query?: string; category?: string; maxPrice?: number } = {}) {
-    const items = await this.records.list<any>('marketplace');
+    const items = await this.records.list<MarketplaceRecord>('marketplace');
     return items.filter((item) => item.isAvailable !== false
       && (!filters.query || `${item.title} ${item.brand} ${item.city}`.toLowerCase().includes(filters.query.toLowerCase()))
       && (!filters.category || filters.category === 'Toutes' || item.category === filters.category)
       && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice));
   }
 
-  async create(input: any) {
+  async create(input: CreateMarketplaceInput) {
     const options = await this.catalogs.options();
     if (!options.marketplaceCategories.includes(input?.category)) {
       throw new BadRequestException('Catégorie Marketplace invalide.');
@@ -44,7 +56,7 @@ export class MarketplaceService {
     }
 
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo de l’article');
-    const user: any = await this.accounts.profile();
+    const user = await this.accounts.profile();
     if (!user?.roles?.includes('Vendeur')) {
       throw new ForbiddenException('Votre compte doit disposer du rôle Vendeur pour publier un article.');
     }

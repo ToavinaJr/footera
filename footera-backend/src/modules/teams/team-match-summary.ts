@@ -1,15 +1,5 @@
 type MatchOutcome = 'V' | 'N' | 'D';
-
-interface MatchRecord {
-  id: string;
-  status: string;
-  playedAt?: string;
-  scheduledAt?: string;
-  date?: string;
-  homeTeam: { id: string; score: number };
-  awayTeam: { id: string; score: number };
-  events?: Array<{ type: string; minute: number; teamId: string; player: string; assist?: string }>;
-}
+import type { MatchRecord } from '../../database/domain-records.js';
 
 function byLatestDate(left: MatchRecord, right: MatchRecord): number {
   const leftDate = Date.parse(left.playedAt ?? left.scheduledAt ?? left.date ?? '');

@@ -4,6 +4,8 @@ import { validateSportsCvPayload } from './sports-cv.validation.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { UserContext } from '../auth/user-context.js';
+import type { PlayerRecord, UserRecord } from '../../database/domain-records.js';
+import { calculateAge } from './calculate-age.js';
 
 @Injectable()
 export class AccountsService {
@@ -14,11 +16,11 @@ export class AccountsService {
     return this.userContext.userId;
   }
 
-  async profile() {
-    const user: any = await this.records.find('users', this.userId);
+  async profile(): Promise<UserRecord | null> {
+    const user = await this.records.find<UserRecord>('users', this.userId);
     if (!user) return null;
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return { ...safeUser, age: calculateAge(user.dateOfBirth) };
   }
 
   async updateProfile(partial: Record<string, unknown>) {
@@ -52,7 +54,7 @@ export class AccountsService {
         }
         continue;
       }
-      if (!normalized || normalized.length > 160) {
+      if (!normalized || normalized.length > (field === 'name' ? 80 : 160) || (field === 'name' && normalized.length < 2)) {
         throw new BadRequestException(`${field} doit contenir entre 1 et 160 caractères.`);
       }
     }
@@ -60,18 +62,23 @@ export class AccountsService {
       throw new BadRequestException('Adresse e-mail invalide.');
     }
     if (partial.avatarUrl !== undefined) partial.avatarUrl = validateImageUrl(partial.avatarUrl, 'Photo de profil');
-    const current: any = await this.records.find('users', this.userId);
+    const current = await this.records.find<UserRecord>('users', this.userId);
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, {
       ...current,
       ...Object.fromEntries(Object.entries(partial).map(([key, value]) => [key, (value as string).trim()])),
     });
-    if (typeof partial.dateOfBirth === 'string') {
-      const players: any[] = await this.records.list('players');
+    if (typeof partial.dateOfBirth === 'string' || typeof partial.avatarUrl === 'string' || typeof partial.name === 'string') {
+      const players = await this.records.list<PlayerRecord>('players');
       const player = players.find((item) => item.userId === this.userId);
-      if (player) await this.records.save('players', player.id, { ...player, age: 0 });
+      if (player) await this.records.save('players', player.id, {
+        ...player,
+        ...(typeof partial.dateOfBirth === 'string' ? { age: calculateAge(updated.dateOfBirth) ?? 0 } : {}),
+        ...(typeof partial.avatarUrl === 'string' ? { avatarUrl: updated.avatarUrl } : {}),
+        ...(typeof partial.name === 'string' ? { name: updated.name } : {}),
+      });
     }
-    return this.withoutPasswordHash(updated);
+    return this.withoutPasswordHash({ ...updated, age: calculateAge(updated.dateOfBirth) });
   }
 
   async updateSportsCv(input: unknown) {
@@ -80,24 +87,24 @@ export class AccountsService {
       this.catalogs.values('strongFeet'),
     ]);
     const partial = validateSportsCvPayload(input, positions, strongFeet);
-    const current: any = await this.records.find('users', this.userId);
+    const current = await this.records.find<UserRecord>('users', this.userId);
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, { ...current, sportsCv: { ...current.sportsCv, ...partial } });
-    return this.withoutPasswordHash(updated);
+    return this.withoutPasswordHash({ ...updated, age: calculateAge(updated.dateOfBirth) });
   }
 
   async setActiveRole(role: string) {
-    const current: any = await this.records.find('users', this.userId);
+    const current = await this.records.find<UserRecord>('users', this.userId);
     if (!current?.roles?.includes(role)) throw new BadRequestException('Rôle non autorisé pour ce compte.');
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, { ...current, activeRole: role });
-    return this.withoutPasswordHash(updated);
+    return this.withoutPasswordHash({ ...updated, age: calculateAge(updated.dateOfBirth) });
   }
 
   private async toggleFavorite(field: 'favoriteTeamIds' | 'favoriteMatchIds', id: string) {
-    const current: any = await this.records.find('users', this.userId);
+    const current = await this.records.find<UserRecord>('users', this.userId);
     if (!current) return false;
-    const favorites: string[] = current[field] || [];
+    const favorites = current[field] ?? [];
     const exists = favorites.includes(id);
     const updated = exists ? favorites.filter((favorite) => favorite !== id) : [...favorites, id];
     await this.records.save('users', this.userId, { ...current, [field]: updated });
@@ -111,4 +118,5 @@ export class AccountsService {
     const { passwordHash: _passwordHash, ...safeUser } = user;
     return safeUser;
   }
+
 }

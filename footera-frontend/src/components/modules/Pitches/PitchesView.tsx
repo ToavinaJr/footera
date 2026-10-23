@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Shield, Check, Plus, Building2, CheckSquare, Square, Sparkles } from 'lucide-react';
 import { pitchesService, CreatePitchInput } from '../../../services/pitchesService';
@@ -111,9 +112,9 @@ export const PitchesView: React.FC = () => {
         setPitches(data);
         hasLoadedPitches.current = true;
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (requestId !== pitchRequestId.current) return;
-        showToast(err.message || 'Erreur lors du chargement des terrains', 'error');
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des terrains', 'error');
       } finally {
         if (requestId === pitchRequestId.current) setIsLoading(false);
       }
@@ -204,8 +205,8 @@ export const PitchesView: React.FC = () => {
       showToast(`${created.length} créneau(x) confirmé(s) sur ${selectedPitch.name}.`, 'success');
       navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
       setSelectedSlots([]);
-    } catch (e: any) {
-      showToast(e.message || 'Erreur lors de la réservation', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur lors de la réservation', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -267,8 +268,8 @@ export const PitchesView: React.FC = () => {
       const updated = await pitchesService.list();
       setPitches(updated);
       navigate(`/pitches/${encodeURIComponent(created.id)}`, { replace: true });
-    } catch (err: any) {
-      showToast(err.message || 'Erreur lors de l’ajout du terrain', 'error');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Erreur lors de l’ajout du terrain', 'error');
     } finally {
       setIsCreating(false);
     }
@@ -397,9 +398,9 @@ export const PitchesView: React.FC = () => {
       <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface</label>
-          <select
+          <SelectField
             value={surfaceFilter}
-            onChange={(e) => setSurfaceFilter(e.target.value as any)}
+            onChange={(e) => setSurfaceFilter(e.target.value as SurfaceType | 'Toutes')}
             className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
           >
             {surfaces.map((s) => (
@@ -407,12 +408,12 @@ export const PitchesView: React.FC = () => {
                 {s === 'Toutes' ? 'Toutes les surfaces' : s}
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">Localisation</label>
-          <select
+          <SelectField
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
@@ -422,7 +423,7 @@ export const PitchesView: React.FC = () => {
             <option value="Antananarivo">Antananarivo</option>
             <option value="Toamasina">Toamasina</option>
             <option value="Paris">Paris</option>
-          </select>
+          </SelectField>
         </div>
       </div>
 
@@ -687,7 +688,7 @@ export const PitchesView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface *</label>
-                <select
+                <SelectField
                   value={formSurface}
                   onChange={(e) => setFormSurface(e.target.value as SurfaceType)}
                   required
@@ -696,7 +697,7 @@ export const PitchesView: React.FC = () => {
                 >
                   <option value="" disabled>Choisir un type de surface</option>
                   {surfaceOptions.map((surface) => <option key={surface} value={surface}>{surface}</option>)}
-                </select>
+                </SelectField>
               </div>
 
               <div>

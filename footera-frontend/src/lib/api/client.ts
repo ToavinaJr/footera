@@ -1,7 +1,23 @@
 import { API_BASE_URL } from '../../config/dataMode';
 import { AppApiError } from './errors';
 
+interface ApiErrorBody extends Record<string, unknown> {
+  message?: string;
+  code?: string;
+}
+
+function isApiErrorBody(value: unknown): value is ApiErrorBody {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 let refreshInFlight: Promise<boolean> | null = null;
+let sessionExpiredEventSent = false;
+
+function notifySessionExpired() {
+  if (sessionExpiredEventSent || typeof window === 'undefined') return;
+  sessionExpiredEventSent = true;
+  window.dispatchEvent(new Event('footera:session-expired'));
+}
 
 function refreshSession(): Promise<boolean> {
   if (!refreshInFlight) {
@@ -33,14 +49,20 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     });
 
     const authEndpoint = /^auth\/(login|register|logout|refresh)$/.test(endpoint.replace(/^\//, ''));
-    if (response.status === 401 && !authEndpoint && await refreshSession()) {
-      response = await fetch(url, { ...options, headers, credentials: 'include' });
+    if (response.status === 401 && !authEndpoint) {
+      if (await refreshSession()) {
+        response = await fetch(url, { ...options, headers, credentials: 'include' });
+      }
+      if (response.status === 401) notifySessionExpired();
     }
 
+    if (authEndpoint && response.ok) sessionExpiredEventSent = false;
+
     if (!response.ok) {
-      let errorData: any = {};
+      let errorData: ApiErrorBody = {};
       try {
-        errorData = await response.json();
+        const payload: unknown = await response.json();
+        if (isApiErrorBody(payload)) errorData = payload;
       } catch {
         errorData = { message: response.statusText };
       }
@@ -67,12 +89,12 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     }
 
     return await response.json();
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof AppApiError) {
       throw err;
     }
     throw new AppApiError(
-      err?.message || 'Impossible de joindre le serveur API Footera. Vérifiez votre connexion.',
+      err instanceof Error ? err.message : 'Impossible de joindre le serveur API Footera. Vérifiez votre connexion.',
       0,
       'NETWORK_OFFLINE'
     );

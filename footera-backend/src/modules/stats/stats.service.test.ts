@@ -12,9 +12,9 @@ describe('StatsService tournament leaderboards', () => {
       { id: 'unregistered-team', tournamentId: 'cup-1', status: 'FINISHED', homeTeam: { id: 'team-1' }, awayTeam: { id: 'team-3' }, events: [{ type: 'goal', teamId: 'team-1', playerId: 'player-1', player: 'A. Striker' }] },
     ];
     const service = new StatsService(
-      { list: vi.fn().mockResolvedValue(players) } as any,
-      { list: vi.fn().mockResolvedValue(teams) } as any,
-      { list: vi.fn((collection: string) => Promise.resolve(collection === 'matches' ? matches : [tournament])) } as any,
+      { list: vi.fn().mockResolvedValue(players) } as unknown as never,
+      { list: vi.fn().mockResolvedValue(teams) } as unknown as never,
+      { list: vi.fn((collection: string) => Promise.resolve(collection === 'matches' ? matches : [tournament])) } as unknown as never,
     );
 
     await expect(service.topScorers({ tournamentId: 'cup-1' })).resolves.toMatchObject([
@@ -24,9 +24,9 @@ describe('StatsService tournament leaderboards', () => {
 
   it('returns no tournament scorers if no team has registered', async () => {
     const service = new StatsService(
-      { list: vi.fn().mockResolvedValue([{ id: 'player-1', name: 'A. Striker' }]) } as any,
-      { list: vi.fn().mockResolvedValue([]) } as any,
-      { list: vi.fn((collection: string) => Promise.resolve(collection === 'matches' ? [] : [{ id: 'cup-1', participantTeamIds: [] }])) } as any,
+      { list: vi.fn().mockResolvedValue([{ id: 'player-1', name: 'A. Striker' }]) } as unknown as never,
+      { list: vi.fn().mockResolvedValue([]) } as unknown as never,
+      { list: vi.fn((collection: string) => Promise.resolve(collection === 'matches' ? [] : [{ id: 'cup-1', participantTeamIds: [] }])) } as unknown as never,
     );
 
     await expect(service.topScorers({ tournamentId: 'cup-1' })).resolves.toEqual([]);

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { aggregatePlayerMatchStats } from './player-match-stats.js';
+import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
+import { calculateAge } from '../accounts/calculate-age.js';
 
 @Injectable()
 export class PlayersService {
@@ -13,17 +15,37 @@ export class PlayersService {
   }
 
   async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
-    const [players, matches, users, tournaments]: [any[], any[], any[], any[]] = await Promise.all([
-      this.records.list('players'), this.records.list('matches'), this.records.list('users'), this.records.list('tournaments'),
+    const [players, matches, users, tournaments, teams] = await Promise.all([
+      this.records.list<PlayerRecord>('players'),
+      this.records.list<MatchRecord>('matches'),
+      this.records.list<UserRecord>('users'),
+      this.records.list<TournamentRecord>('tournaments'),
+      this.records.list<TeamRecord>('teams'),
     ]);
     const matchStats = aggregatePlayerMatchStats(players, matches, undefined, tournaments);
     const enrichedPlayers = players.map((player) => {
       const stats = matchStats.get(player.id);
       const user = users.find((record) => record.id === player.userId);
-      const age = user ? this.ageFromDateOfBirth(user.dateOfBirth) : player.age;
+      const sportsCv = user?.sportsCv;
+      const currentTeam = typeof sportsCv?.currentTeam === 'string' ? sportsCv.currentTeam : player.currentTeam;
+      const matchingTeam = teams.find((team) => team.name?.toLowerCase() === currentTeam?.toLowerCase()
+        || team.clubName?.toLowerCase() === currentTeam?.toLowerCase());
+      const age = user ? calculateAge(user.dateOfBirth) : player.age;
       return {
         ...player,
-        ...(Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
+        ...(sportsCv ? {
+          primaryPosition: sportsCv.primaryPosition || player.primaryPosition,
+          secondaryPosition: sportsCv.secondaryPosition || player.secondaryPosition,
+          strongFoot: sportsCv.strongFoot || player.strongFoot,
+          height: sportsCv.height || player.height,
+          weight: sportsCv.weight || player.weight,
+          experienceYears: sportsCv.experienceYears,
+          currentTeam,
+          currentTeamId: matchingTeam?.id ?? '',
+          bio: sportsCv.bio || player.bio,
+        } : {}),
+        ...(user?.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+        ...(age !== undefined && Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
         goals: stats?.goals ?? 0,
         assists: stats?.assists ?? 0,
         yellowCards: stats?.yellowCards ?? 0,
@@ -43,15 +65,15 @@ export class PlayersService {
 
   async getById(id: string) {
     const players = await this.list();
-    return players.find((player) => player.id === id) ?? null;
+    const player = players.find((item) => item.id === id);
+    if (!player) return null;
+    const source = await this.records.find<PlayerRecord>('players', id);
+    const user = source?.userId ? await this.records.find<UserRecord>('users', source.userId) : null;
+    return {
+      ...player,
+      ...(user?.email ? { email: user.email } : {}),
+      ...(user?.phone?.trim() ? { phone: user.phone } : {}),
+    };
   }
 
-  private ageFromDateOfBirth(value?: unknown): number | undefined {
-    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
-    const [year, month, day] = value.split('-').map(Number);
-    const now = new Date();
-    let age = now.getFullYear() - year;
-    if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1;
-    return age >= 0 ? age : undefined;
-  }
 }

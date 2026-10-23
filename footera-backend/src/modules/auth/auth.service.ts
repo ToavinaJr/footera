@@ -1,6 +1,8 @@
 import { ConflictException, Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { createHash, createHmac, randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
+import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
+import { calculateAge } from '../accounts/calculate-age.js';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -75,8 +77,8 @@ export class AuthService {
   async login(input: { email?: unknown; password?: unknown }) {
     const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
     const password = typeof input.password === 'string' ? input.password : '';
-    const credential: any = await this.records.find('authCredentials', email);
-    const user = credential ? await this.records.find<any>('users', credential.userId) : null;
+    const credential = await this.records.find<AuthCredentialRecord>('authCredentials', email);
+    const user = credential ? await this.records.find<UserRecord>('users', credential.userId) : null;
     if (password.length > 256) throw new UnauthorizedException('Adresse e-mail ou mot de passe incorrect.');
     const valid = credential?.passwordHash
       ? await this.verifyPassword(password, credential.passwordHash)
@@ -87,7 +89,7 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     const sessionId = this.hashRefreshToken(refreshToken);
-    const session: any = await this.records.find('authSessions', sessionId);
+    const session = await this.records.find<AuthSessionRecord>('authSessions', sessionId);
     if (!session || !Number.isFinite(Date.parse(session.expiresAt)) || Date.parse(session.expiresAt) <= Date.now()) {
       if (session) await this.records.consumeAuthSession(sessionId);
       throw new UnauthorizedException('Session expirée. Veuillez vous reconnecter.');
@@ -104,9 +106,9 @@ export class AuthService {
   }
 
   async validateSession(id: string, sessionId: string) {
-    const [user, session]: any[] = await Promise.all([
-      this.records.find('users', id),
-      this.records.find('authSessions', sessionId),
+    const [user, session] = await Promise.all([
+      this.records.find<UserRecord>('users', id),
+      this.records.find<AuthSessionRecord>('authSessions', sessionId),
     ]);
     if (!user || session?.userId !== id || !Number.isFinite(Date.parse(session.expiresAt)) || Date.parse(session.expiresAt) <= Date.now()) {
       throw new UnauthorizedException('Session invalide ou expirée.');
@@ -115,10 +117,10 @@ export class AuthService {
   }
 
   async getProfile(id: string) {
-    const user: any = await this.records.find('users', id);
+    const user = await this.records.find<UserRecord>('users', id);
     if (!user) return null;
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return { ...safeUser, age: calculateAge(user.dateOfBirth) };
   }
 
   verifyToken(token: string): { id: string; sessionId: string } {
@@ -181,7 +183,7 @@ export class AuthService {
     return createHmac('sha256', this.secret).update(value).digest('base64url');
   }
 
-  private toPublicUser(user: any): AuthenticatedUser {
+  private toPublicUser(user: UserRecord): AuthenticatedUser {
     return { id: user.id, email: user.email, name: user.name, roles: user.roles || ['Joueur'], activeRole: user.activeRole || 'Joueur' };
   }
 }

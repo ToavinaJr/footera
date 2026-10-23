@@ -3,8 +3,25 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { PlayersService } from '../players/players.service.js';
 import { TeamsService } from '../teams/teams.service.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
+import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord } from '../../database/domain-records.js';
 
 const FALLBACK_LOGO = 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80';
+
+interface ContributionAccumulator {
+  playerId: string;
+  playerName: string;
+  avatarUrl?: string;
+  teamId: string;
+  teamName: string;
+  teamLogo: string;
+  tournamentId: string;
+  tournamentTitle?: string;
+  position?: string;
+  goals: number;
+  assists: number;
+  penalties: number;
+  matchIds: Set<string>;
+}
 
 @Injectable()
 export class StatsService {
@@ -43,12 +60,12 @@ export class StatsService {
   }
 
   private async aggregatePlayerContributions(tournamentId?: string) {
-    const [players, teams, matches, tournaments]: any[][] = await Promise.all([
-      this.playersService.list(), this.teamsService.list(), this.records.list('matches'),
-      this.records.list('tournaments'),
+    const [players, teams, matches, tournaments] = await Promise.all([
+      this.playersService.list(), this.teamsService.list(), this.records.list<MatchRecord>('matches'),
+      this.records.list<TournamentRecord>('tournaments'),
     ]);
     const selectedTournaments = tournaments.filter((tournament) => !tournamentId || tournament.id === tournamentId);
-    const totals = new Map<string, any>();
+    const totals = new Map<string, ContributionAccumulator>();
     for (const tournament of selectedTournaments) {
       const participantIds = new Set<string>(tournament.participantTeamIds ?? []);
       if (!participantIds.size) continue;
@@ -88,7 +105,7 @@ export class StatsService {
     return [...totals.values()].map(({ matchIds, ...row }) => ({ ...row, matchesPlayed: matchIds.size }));
   }
 
-  private newContributionRow(player: any, team: any, tournament: any) {
+  private newContributionRow(player: PlayerRecord, team: TeamRecord, tournament: TournamentRecord): ContributionAccumulator {
     return {
       playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl,
       teamId: team.id, teamName: team.name, teamLogo: team.logoUrl || FALLBACK_LOGO,
@@ -99,8 +116,8 @@ export class StatsService {
   }
 
   async teamStats(filters: { tournamentId?: string } = {}) {
-    const [teams, tournaments, matches, scorers, assisters]: [any[], any[], any[], any[], any[]] = await Promise.all([
-      this.teamsService.list(), this.records.list('tournaments'), this.records.list('matches'),
+    const [teams, tournaments, matches, scorers, assisters] = await Promise.all([
+      this.teamsService.list(), this.records.list<TournamentRecord>('tournaments'), this.records.list<MatchRecord>('matches'),
       this.topScorers({ tournamentId: filters.tournamentId }),
       this.topAssisters({ tournamentId: filters.tournamentId }),
     ]);
@@ -121,7 +138,7 @@ export class StatsService {
         .sort((a, b) => b.goals - a.goals)[0];
       const topAssister = assisters.filter((row) => row.teamId === team.id && row.tournamentId === tournament.id)
         .sort((a, b) => b.assists - a.assists)[0];
-      const events = tournamentMatches.flatMap((match) => (match.events ?? []).filter((event: any) =>
+      const events = tournamentMatches.flatMap((match) => (match.events ?? []).filter((event) =>
         event.teamId === match.homeTeam?.id || event.teamId === match.awayTeam?.id));
       const played = standing?.played ?? 0;
       const goalsFor = standing?.goalsFor ?? 0;
@@ -151,7 +168,7 @@ export class StatsService {
   }
 
   async playerStats(filters: { teamId?: string; position?: string; searchQuery?: string } = {}) {
-    const [players, teams]: any[][] = await Promise.all([this.playersService.list(), this.teamsService.list()]);
+    const [players, teams] = await Promise.all([this.playersService.list(), this.teamsService.list()]);
     let rows = players.map((player) => {
       const team = teams.find((item) => item.id === player.currentTeamId)
         || { id: player.currentTeamId || 'team_unknown', name: player.currentTeam || 'Club Libre', logoUrl: FALLBACK_LOGO };

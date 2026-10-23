@@ -25,7 +25,10 @@ export type UserRole =
 export interface Player {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   age?: number;
+  experienceYears?: number;
   city: string;
   avatarUrl: string;
   primaryPosition: Position;
@@ -65,8 +68,21 @@ export interface TeamMember {
   avatarUrl: string;
   age?: number;
   matchesPlayed?: number;
+  appearances?: number;
   goals?: number;
   assists?: number;
+  yellowCards?: number;
+  redCards?: number;
+  minutesPlayed?: number | null;
+  competitionStats?: Array<{
+    competitionId: string;
+    appearances: number;
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards: number;
+    minutesPlayed: number | null;
+  }>;
 }
 
 export interface NextMatchInfo {
@@ -105,6 +121,7 @@ export interface Team {
     losses: number;
     goalsFor: number;
     goalsAgainst: number;
+    goalDifference: number;
     goalsPerMatch?: number;
     points: number;
     position: number;
@@ -180,6 +197,7 @@ export interface TeamMatch extends Match {
 }
 
 export interface TeamDetail extends Team {
+  competitions: Array<{ id: string; title: string }>;
   recentMatches: TeamMatch[];
   upcomingMatches: TeamMatch[];
   topScorers: Array<{ playerId: string; playerName: string; goals: number }>;
@@ -225,6 +243,14 @@ export interface TournamentMatchFixture {
   isFinished: boolean;
 }
 
+export interface TournamentStadium {
+  id: string;
+  name: string;
+  pitchId?: string;
+  city?: string;
+  address?: string;
+}
+
 export interface Tournament {
   id: string;
   title: string;
@@ -236,6 +262,9 @@ export interface Tournament {
   maxTeams: number;
   registeredTeams: number;
   participantTeamIds?: string[];
+  participatingTeams?: Team[];
+  stadiums?: TournamentStadium[];
+  registrationOpen?: boolean;
   remainingTeams?: number;
   entryFee: number; // in EUR
   prizePool: number; // in EUR
@@ -404,6 +433,7 @@ export interface UserProfile {
   email: string;
   phone: string;
   dateOfBirth?: string;
+  age?: number;
   city: string;
   avatarUrl: string;
   activeRole: UserRole;

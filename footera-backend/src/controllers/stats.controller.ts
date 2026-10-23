@@ -1,11 +1,13 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { StatsService } from '../modules/stats/stats.service.js';
+import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('stats')
 export class StatsController {
   constructor(private readonly stats: StatsService) {}
 
   @Get('top-scorers')
+  @Public()
   getTopScorers(
     @Query('tournamentId') tournamentId?: string,
     @Query('teamId') teamId?: string,
@@ -15,6 +17,7 @@ export class StatsController {
   }
 
   @Get('top-assisters')
+  @Public()
   getTopAssisters(
     @Query('tournamentId') tournamentId?: string,
     @Query('teamId') teamId?: string,
@@ -24,11 +27,13 @@ export class StatsController {
   }
 
   @Get('teams')
+  @Public()
   getTeamStats(@Query('tournamentId') tournamentId?: string) {
     return this.stats.teamStats({ tournamentId });
   }
 
   @Get('players')
+  @Public()
   getPlayerStats(
     @Query('teamId') teamId?: string,
     @Query('position') position?: string,

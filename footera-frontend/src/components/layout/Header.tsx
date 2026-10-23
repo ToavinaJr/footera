@@ -5,6 +5,7 @@ import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
 import { NotificationsDrawer } from './NotificationsDrawer';
 import { SidebarDrawer } from './SidebarDrawer';
+import { Modal } from '../common/Modal';
 
 export const Header: React.FC = () => {
   const { activeSection, setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
@@ -12,7 +13,18 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const isNotifOpen = location.pathname === '/notifications';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
+
+  const confirmLogout = async () => {
+    try {
+      await logout();
+      setIsLogoutConfirmOpen(false);
+      navigate('/', { replace: true });
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'La déconnexion a échoué.', 'error');
+    }
+  };
 
   const openNotifications = () => {
     if (!isNotifOpen) {
@@ -25,7 +37,7 @@ export const Header: React.FC = () => {
       (location.state as { backgroundLocation?: unknown } | null)?.backgroundLocation,
     );
     if (hasBackgroundRoute) navigate(-1);
-    else navigate('/', { replace: true });
+    else navigate('/home', { replace: true });
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -136,7 +148,7 @@ export const Header: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => void logout().catch((error: unknown) => showToast(error instanceof Error ? error.message : 'La déconnexion a échoué.', 'error'))}
+              onClick={() => setIsLogoutConfirmOpen(true)}
               aria-label="Se déconnecter"
               title="Se déconnecter"
               className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-700"
@@ -152,6 +164,32 @@ export const Header: React.FC = () => {
 
       {/* Notifications Drawer */}
       <NotificationsDrawer isOpen={isNotifOpen} onClose={closeNotifications} />
+
+      <Modal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        title="Confirmer la déconnexion"
+        subtitle="Vous pourrez vous reconnecter à tout moment."
+        maxWidth="sm"
+      >
+        <p className="text-sm text-slate-600">Voulez-vous vraiment vous déconnecter de votre compte ?</p>
+        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setIsLogoutConfirmOpen(false)}
+            className="min-h-11 rounded-xl border border-pitch-line px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-pitch-panel"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={() => void confirmLogout()}
+            className="min-h-11 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700"
+          >
+            Oui, me déconnecter
+          </button>
+        </div>
+      </Modal>
     </>
   );
 };

@@ -1,16 +1,19 @@
 import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
 import { RecruitmentService } from '../modules/recruitment/recruitment.service.js';
+import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('recruitment')
 export class RecruitmentController {
   constructor(private readonly recruitment: RecruitmentService) {}
 
   @Get('ads')
+  @Public()
   listAds(@Query('q') query?: string, @Query('position') position?: string, @Query('division') division?: string) {
     return this.recruitment.listAds({ query, position, division });
   }
 
   @Get('ads/:id')
+  @Public()
   async getAdById(@Param('id') id: string) {
     const ad = await this.recruitment.getAd(id);
     if (!ad) throw new NotFoundException('Annonce introuvable');

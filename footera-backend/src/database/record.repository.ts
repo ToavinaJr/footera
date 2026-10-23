@@ -1,5 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service.js';
+import { Prisma } from '../generated/prisma/client.js';
+
+export interface StoredRecord { id: string; payload: unknown }
+export interface RecordDelegate {
+  findMany(args?: { orderBy?: { id: 'asc' } }): Promise<StoredRecord[]>;
+  findUnique(args: { where: { id: string } }): Promise<StoredRecord | null>;
+  upsert(args: { where: { id: string }; create: { id: string; payload: Prisma.InputJsonValue }; update: { payload: Prisma.InputJsonValue } }): Promise<StoredRecord>;
+  create(args: { data: { id: string; payload: Prisma.InputJsonValue } }): Promise<StoredRecord>;
+  update(args: { where: { id: string }; data: { payload: Prisma.InputJsonValue } }): Promise<StoredRecord>;
+  deleteMany(args?: { where?: { id: string } }): Promise<{ count: number }>;
+  count(): Promise<number>;
+}
+type DynamicRecordClient = Record<string, RecordDelegate>;
+
+export const asJson = (payload: unknown): Prisma.InputJsonValue => payload as Prisma.InputJsonValue;
 
 export const RECORD_MODELS = {
   users: 'userRecord',
@@ -28,45 +43,45 @@ export type RecordCollection = keyof typeof RECORD_MODELS;
 export class RecordRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private delegate(collection: RecordCollection): any {
-    return (this.prisma as any)[RECORD_MODELS[collection]];
+  private delegate(collection: RecordCollection): RecordDelegate {
+    return (this.prisma as unknown as DynamicRecordClient)[RECORD_MODELS[collection]];
   }
 
   async list<T>(collection: RecordCollection): Promise<T[]> {
     const records = await this.delegate(collection).findMany({ orderBy: { id: 'asc' } });
-    return records.map((record: { payload: T }) => record.payload);
+    return records.map((record) => record.payload as T);
   }
 
   async find<T>(collection: RecordCollection, id: string): Promise<T | null> {
     const record = await this.delegate(collection).findUnique({ where: { id } });
-    return record?.payload ?? null;
+    return record ? record.payload as T : null;
   }
 
   async save<T>(collection: RecordCollection, id: string, payload: T): Promise<T> {
     const record = await this.delegate(collection).upsert({
       where: { id },
-      create: { id, payload: payload as any },
-      update: { payload: payload as any },
+      create: { id, payload: asJson(payload) },
+      update: { payload: asJson(payload) },
     });
     return record.payload as T;
   }
 
   async create<T>(collection: RecordCollection, id: string, payload: T): Promise<T> {
-    const record = await this.delegate(collection).create({ data: { id, payload: payload as any } });
+    const record = await this.delegate(collection).create({ data: { id, payload: asJson(payload) } });
     return record.payload as T;
   }
 
   async createUserAccount<T>(id: string, email: string, user: T, credential: { userId: string; passwordHash: string }, player?: unknown): Promise<void> {
-    const operations = [
-      (this.prisma as any).userRecord.create({ data: { id, payload: user as any } }),
-      (this.prisma as any).authCredentialRecord.create({ data: { id: email, payload: credential as any } }),
-    ];
-    if (player) operations.push((this.prisma as any).playerRecord.create({ data: { id, payload: player as any } }));
-    await this.prisma.$transaction(operations as any);
+    await this.prisma.$transaction(async (transaction) => {
+      const client = transaction as unknown as DynamicRecordClient;
+      await client.userRecord.create({ data: { id, payload: asJson(user) } });
+      await client.authCredentialRecord.create({ data: { id: email, payload: asJson(credential) } });
+      if (player) await client.playerRecord.create({ data: { id, payload: asJson(player) } });
+    });
   }
 
   async consumeAuthSession(id: string): Promise<boolean> {
-    const result = await (this.prisma as any).authSessionRecord.deleteMany({ where: { id } });
+    const result = await (this.delegate('authSessions')).deleteMany({ where: { id } });
     return result.count === 1;
   }
 

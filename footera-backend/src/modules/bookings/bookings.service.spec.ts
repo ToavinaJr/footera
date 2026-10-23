@@ -15,7 +15,7 @@ function makeService(profile: { activeRole: string; roles: string[] }) {
     options: vi.fn(async () => catalogOptions),
     values: vi.fn(async (key: keyof typeof catalogOptions) => catalogOptions[key]),
   };
-  return { service: new BookingsService(records as any, accounts as any, notifications as any, catalogs as any), records };
+  return { service: new BookingsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never, catalogs as unknown as never), records };
 }
 
 describe('BookingsService pitch permissions', () => {
@@ -43,7 +43,7 @@ describe('BookingsService pitch permissions', () => {
 });
 
 describe('BookingsService bookings and ratings', () => {
-  const pitchRecord: any = {
+  const pitchRecord = {
     id: 'pitch-test', name: 'Terrain test', complexName: 'Complexe test', surface: 'Indoor Five',
     rating: 4.8, reviewsCount: 2,
     reviews: [
@@ -58,17 +58,17 @@ describe('BookingsService bookings and ratings', () => {
 
   function makeBookingService() {
     let pitch = structuredClone(pitchRecord);
-    const created: any[] = [];
+    const created: unknown[] = [];
     const records = {
       find: vi.fn(async (collection: string, id: string) => collection === 'pitches' && id === pitch.id ? pitch : null),
       list: vi.fn(async (collection: string) => collection === 'bookings' ? created : []),
-      create: vi.fn(async (_collection: string, _id: string, payload: any) => { created.push(payload); return payload; }),
-      save: vi.fn(async (_collection: string, _id: string, payload: any) => { pitch = payload; return payload; }),
+      create: vi.fn(async (_collection: string, _id: string, payload: unknown) => { created.push(payload); return payload; }),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => { pitch = payload; return payload; }),
     };
     const accounts = { profile: vi.fn(async () => ({ id: 'user-1', name: 'Alex', roles: ['Joueur'], sportsCv: {} })) };
     const notifications = { add: vi.fn(async () => undefined) };
     const catalogs = { options: vi.fn(async () => ({})), values: vi.fn(async () => []) };
-    return { service: new BookingsService(records as any, accounts as any, notifications as any, catalogs as any), records, created, getPitch: () => pitch };
+    return { service: new BookingsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never, catalogs as unknown as never), records, created, getPitch: () => pitch };
   }
 
   it('quotes selected slot prices from backend data rather than client-supplied prices', async () => {
@@ -79,7 +79,7 @@ describe('BookingsService bookings and ratings', () => {
     })).resolves.toEqual({ total: 115, perDate: { '2026-10-24': 50, '2026-10-25': 65 } });
   });
 
-  it('rejects duplicate or already reserved selections before creating any booking', async () => {
+  it('rejects duplicate or already reserved selections before creating bookings', async () => {
     const { service, created } = makeBookingService();
     await expect(service.createBookings({
       pitchId: 'pitch-test',
@@ -110,7 +110,7 @@ describe('BookingsService bookings and ratings', () => {
 
   it('does not include seed aggregate ratings without real reviews', async () => {
     const { service, records } = makeBookingService();
-    records.find.mockResolvedValue({ ...pitchRecord, reviews: [] } as any);
+    records.find.mockResolvedValue({ ...pitchRecord, reviews: [] } as unknown as never);
     // The persisted legacy aggregate is ignored; only review records determine the score.
     await expect(service.getPitch('pitch-test')).resolves.toMatchObject({ rating: 0, reviewsCount: 0, reviews: [] });
   });

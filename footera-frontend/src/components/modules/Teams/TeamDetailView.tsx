@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, CalendarDays, MapPin, Trophy } from 'lucide-react';
+import { SelectField } from '../../common/SelectField';
+import { ArrowLeft, CalendarDays, MapPin, Shield, Trophy, Users } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { teamsService } from '../../../services/teamsService';
 import { TeamDetail, TeamMatch } from '../../../types';
@@ -68,11 +69,16 @@ export const TeamDetailView: React.FC = () => {
   const { showToast } = useApp();
   const [team, setTeam] = useState<TeamDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [competitionFilter, setCompetitionFilter] = useState('all');
+  const [rosterSort, setRosterSort] = useState<'goals' | 'assists' | 'appearances' | 'yellowCards' | 'redCards'>('goals');
 
   useEffect(() => {
     let active = true;
     setIsLoading(true);
-    teamsService.getDetail(teamId).then((teamData) => {
+    teamsService.getDetail(teamId, {
+      competitionId: competitionFilter,
+      sortBy: rosterSort,
+    }).then((teamData) => {
       if (!active) return;
       setTeam(teamData);
     }).catch((error: unknown) => {
@@ -81,13 +87,13 @@ export const TeamDetailView: React.FC = () => {
       if (active) setIsLoading(false);
     });
     return () => { active = false; };
-  }, [teamId, showToast]);
+  }, [teamId, showToast, competitionFilter, rosterSort]);
 
-  if (isLoading) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>;
+  if (isLoading && (!team || team.id !== teamId)) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>;
   if (!team) return <EmptyState icon={Trophy} title="Équipe introuvable" description="Cette équipe n’existe pas ou n’est plus disponible." actionLabel="Retour aux équipes" onAction={() => navigate('/teams')} />;
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="min-w-0 space-y-6 overflow-x-clip pb-16">
       <button type="button" onClick={() => navigate('/teams')} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-bold text-pitch-primary hover:bg-pitch-light">
         <ArrowLeft className="h-4 w-4" /> Retour aux équipes
       </button>
@@ -111,7 +117,74 @@ export const TeamDetailView: React.FC = () => {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
+        <article className="min-w-0 rounded-2xl border border-pitch-line bg-white p-5 shadow-xs">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-pitch-primary" />
+            <h2 className="text-lg font-extrabold text-pitch-ink">Entraîneur</h2>
+          </div>
+          <p className="mt-4 wrap-break-words text-base font-bold text-pitch-ink">{team.coachName?.trim() || 'Entraîneur non renseigné'}</p>
+          <p className="mt-1 wrap-break-words text-sm text-slate-500">Staff de {team.name}</p>
+        </article>
+
+        <article className="min-w-0 rounded-2xl border border-pitch-line bg-white p-5 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-pitch-primary" />
+              <h2 className="text-lg font-extrabold text-pitch-ink">Effectif</h2>
+            </div>
+            <span className="text-sm text-slate-500">{team.members.length} joueur{team.members.length === 1 ? '' : 's'}</span>
+          </div>
+          {team.members.length ? (
+            <>
+              <div className="mt-4 flex min-w-0 flex-col gap-3 sm:flex-row">
+                <label className="min-w-0 flex-1 text-xs font-semibold text-slate-600">
+                  Compétition
+                  <SelectField value={competitionFilter} onChange={(event) => setCompetitionFilter(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-white px-3 text-sm text-pitch-ink focus:border-pitch-primary">
+                    <option value="all">Toutes les compétitions</option>
+                    {team.competitions.map((competition) => <option key={competition.id} value={competition.id}>{competition.title}</option>)}
+                  </SelectField>
+                </label>
+                <label className="min-w-0 flex-1 text-xs font-semibold text-slate-600">
+                  Trier par
+                  <SelectField value={rosterSort} onChange={(event) => setRosterSort(event.target.value as typeof rosterSort)} className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-white px-3 text-sm text-pitch-ink focus:border-pitch-primary">
+                    <option value="goals">Buts</option>
+                    <option value="assists">Passes décisives</option>
+                    <option value="appearances">Matchs joués*</option>
+                    <option value="yellowCards">Cartons jaunes</option>
+                    <option value="redCards">Cartons rouges</option>
+                  </SelectField>
+                </label>
+              </div>
+              <div className="mt-4 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
+                <table className="w-full min-w-160 text-left text-xs">
+                  <thead className="border-b border-pitch-line text-slate-500">
+                    <tr><th className="py-3 pr-3">Joueur</th><th className="px-3 py-3 text-center">Matchs*</th><th className="px-3 py-3 text-center">Buts</th><th className="px-3 py-3 text-center">Passes D</th><th className="px-3 py-3 text-center">Jaunes</th><th className="px-3 py-3 text-center">Rouges</th><th className="px-3 py-3 text-center">Minutes</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-pitch-separator">
+                    {team.members.map((member) => (
+                      <tr key={member.playerId}>
+                        <td className="py-3 pr-3"><div className="flex items-center gap-2"><img src={member.avatarUrl || team.logoUrl} alt="" className="h-9 w-9 rounded-full object-cover" /><div className="min-w-0"><EntityLink section="players" id={member.playerId} className="block max-w-48 truncate font-bold text-pitch-ink" title={member.name}>{member.name}</EntityLink><span className="text-slate-500">{member.position}</span></div></div></td>
+                        <td className="px-3 py-3 text-center tabular-nums">{member.appearances ?? 0}</td>
+                        <td className="px-3 py-3 text-center tabular-nums">{member.goals ?? 0}</td>
+                        <td className="px-3 py-3 text-center tabular-nums">{member.assists ?? 0}</td>
+                        <td className="px-3 py-3 text-center tabular-nums">{member.yellowCards ?? 0}</td>
+                        <td className="px-3 py-3 text-center tabular-nums">{member.redCards ?? 0}</td>
+                        <td className="px-3 py-3 text-center text-slate-400">—</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-caption text-slate-500">* Les matchs joués sont comptabilisés à partir des événements enregistrés. Les feuilles de match et les minutes individuelles ne sont pas encore disponibles.</p>
+            </>
+          ) : (
+            <p className="mt-4 rounded-xl bg-pitch-panel p-4 text-sm text-slate-500">Aucun joueur n’est encore renseigné dans l’effectif.</p>
+          )}
+        </article>
+      </section>
+
+      <section className="grid min-w-0 gap-6 lg:grid-cols-2">
         <div className="space-y-3">
           <div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-pitch-primary" /><h2 className="text-lg font-extrabold text-pitch-ink">Résultats récents</h2></div>
           {team.recentMatches.length ? team.recentMatches.map((match) => <MatchCard key={match.id} match={match} onOpen={(id) => navigate(`/matches/${encodeURIComponent(id)}`)} />) : <p className="rounded-2xl border border-pitch-line bg-white p-5 text-sm text-slate-500">Aucun résultat enregistré pour cette équipe.</p>}
@@ -126,7 +199,6 @@ export const TeamDetailView: React.FC = () => {
               <ul className="mt-3 divide-y divide-pitch-separator">
                 {team.topScorers.map((scorer) => <li key={scorer.playerId} className="flex items-center justify-between gap-3 py-2 text-sm"><EntityLink section="players" id={scorer.playerId}>{scorer.playerName}</EntityLink><span className="font-bold tabular-nums text-pitch-primary">{scorer.goals} buts</span></li>)}
               </ul>
-              <p className="mt-2 text-caption text-slate-500">Les buteurs d’un match à venir ne sont connus qu’après la rencontre.</p>
             </div>
           )}
         </div>

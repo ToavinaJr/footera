@@ -4,7 +4,6 @@ import {
   Club,
   Match,
   Tournament,
-  Pitch,
   Booking,
   RecruitmentAd,
   Application,
@@ -13,10 +12,8 @@ import {
   UserProfile,
   LeagueStandingRow,
   ActivityFeedItem,
-  PitchReview,
   TeamInvitation,
 } from '../types';
-import { normalizeDateKey } from '../utils/date';
 
 import {
   INITIAL_USER_PROFILE,
@@ -25,7 +22,6 @@ import {
   INITIAL_CLUBS,
   INITIAL_MATCHES,
   INITIAL_TOURNAMENTS,
-  INITIAL_PITCHES,
   INITIAL_BOOKINGS,
   INITIAL_RECRUITMENT_ADS,
   INITIAL_APPLICATIONS,
@@ -42,7 +38,6 @@ const STORAGE_KEYS = {
   CLUBS: 'footera_mock_clubs_v2',
   MATCHES: 'footera_mock_matches_v2',
   TOURNAMENTS: 'footera_mock_tournaments_v2',
-  PITCHES: 'footera_mock_pitches_v2',
   BOOKINGS: 'footera_mock_bookings_v2',
   RECRUITMENT: 'footera_mock_recruitment_v2',
   APPLICATIONS: 'footera_mock_applications_v2',
@@ -85,7 +80,6 @@ class MockStorageRepository {
   private clubs: Club[];
   private matches: Match[];
   private tournaments: Tournament[];
-  private pitches: Pitch[];
   private bookings: Booking[];
   private recruitmentAds: RecruitmentAd[];
   private applications: Application[];
@@ -102,7 +96,6 @@ class MockStorageRepository {
     this.clubs = loadFromStorage(STORAGE_KEYS.CLUBS, INITIAL_CLUBS);
     this.matches = loadFromStorage(STORAGE_KEYS.MATCHES, INITIAL_MATCHES);
     this.tournaments = loadFromStorage(STORAGE_KEYS.TOURNAMENTS, INITIAL_TOURNAMENTS);
-    this.pitches = loadFromStorage(STORAGE_KEYS.PITCHES, INITIAL_PITCHES);
     this.bookings = loadFromStorage(STORAGE_KEYS.BOOKINGS, INITIAL_BOOKINGS);
     this.recruitmentAds = loadFromStorage(STORAGE_KEYS.RECRUITMENT, INITIAL_RECRUITMENT_ADS);
     this.applications = loadFromStorage(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
@@ -353,149 +346,9 @@ class MockStorageRepository {
     return structuredClone(newTourn);
   }
 
-  // Pitches & Bookings
-  getPitches(): Pitch[] {
-    return structuredClone(this.pitches.map((pitch) => this.withReviewStats(pitch)));
-  }
-
-  getPitchById(id: string): Pitch | undefined {
-    const pitch = this.pitches.find((p) => p.id === id);
-    return pitch ? this.withReviewStats(pitch) : undefined;
-  }
-
-  private withReviewStats(pitch: Pitch): Pitch {
-    const reviews = (pitch.reviews ?? []).filter((review) => Number.isInteger(review.rating) && review.rating >= 1 && review.rating <= 5);
-    const latestByUser = new Map<string, PitchReview>();
-    for (const review of reviews) {
-      const previous = latestByUser.get(review.userId);
-      if (!previous || review.createdAt >= previous.createdAt) latestByUser.set(review.userId, review);
-    }
-    const uniqueReviews = [...latestByUser.values()];
-    const rating = uniqueReviews.length
-      ? Number((uniqueReviews.reduce((sum, review) => sum + review.rating, 0) / uniqueReviews.length).toFixed(2))
-      : 0;
-    const myReview = uniqueReviews.find((review) => review.userId === this.profile.id);
-    return { ...pitch, reviews: uniqueReviews, rating, reviewsCount: uniqueReviews.length, myReview, myRating: myReview?.rating };
-  }
-
-  ratePitch(id: string, rating: number, comment = ''): Pitch {
-    const pitch = this.pitches.find((item) => item.id === id);
-    if (!pitch) throw new Error('Terrain introuvable.');
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.trim().length > 500) {
-      throw new Error('La note doit être comprise entre 1 et 5 et le commentaire ne doit pas dépasser 500 caractères.');
-    }
-    const reviews = pitch.reviews ?? [];
-    const existingIndex = reviews.findIndex((review) => review.userId === this.profile.id);
-    const updatedReview: PitchReview = {
-      userId: this.profile.id,
-      reviewerName: this.profile.name,
-      rating,
-      comment: comment.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    const updatedReviews = [...reviews];
-    if (existingIndex >= 0) updatedReviews[existingIndex] = updatedReview;
-    else updatedReviews.push(updatedReview);
-    const updatedPitch = this.withReviewStats({ ...pitch, reviews: updatedReviews });
-    this.pitches = this.pitches.map((item) => item.id === id ? updatedPitch : item);
-    saveToStorage(STORAGE_KEYS.PITCHES, this.pitches);
-    emitChange();
-    return structuredClone(updatedPitch);
-  }
-
-  createPitch(input: {
-    name: string;
-    complexName: string;
-    city: string;
-    address: string;
-    surface: Pitch['surface'];
-    dimensions: string;
-    imageUrl: string;
-    hourlyRate: number;
-    amenities: string[];
-  }): Pitch {
-    if (!this.profile.roles.includes('Gestionnaire Terrain')) {
-      throw new Error('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
-    }
-    const id = `pitch_${Date.now()}`;
-    const availableSlots: Pitch['availableSlots'] = [
-      { id: `${id}_slot_1`, time: '09:00 - 10:30', price: input.hourlyRate, isAvailable: true },
-      { id: `${id}_slot_2`, time: '14:00 - 15:30', price: input.hourlyRate, isAvailable: true },
-      { id: `${id}_slot_3`, time: '18:00 - 19:30', price: Math.round(input.hourlyRate * 1.1), isAvailable: true },
-      { id: `${id}_slot_4`, time: '20:00 - 21:30', price: Math.round(input.hourlyRate * 1.15), isAvailable: true },
-    ];
-    const newPitch: Pitch = {
-      ...input,
-      id,
-      rating: 0,
-      reviewsCount: 0,
-      reviews: [],
-      availableSlots,
-    };
-    this.pitches.unshift(newPitch);
-    saveToStorage(STORAGE_KEYS.PITCHES, this.pitches);
-
-    this.addNotification({
-      title: 'Nouveau terrain disponible',
-      message: `Le terrain "${newPitch.name}" est désormais réservable sur Footera.`,
-      type: 'booking',
-      targetSection: 'pitches',
-      targetId: newPitch.id,
-    });
-
-    emitChange();
-    return structuredClone(newPitch);
-  }
-
+  // Bookings are read from fixtures in mock mode; slot quotes and mutations belong to the API.
   getBookings(): Booking[] {
     return structuredClone(this.bookings.filter((booking) => booking.userId === this.profile.id));
-  }
-
-  createBooking(input: {
-    pitchId: string;
-    date: string;
-    time: string;
-    teamName?: string;
-    totalPrice: number;
-  }): Booking {
-    const pitch = this.pitches.find((p) => p.id === input.pitchId);
-    const slot = pitch?.availableSlots.find((candidate) => candidate.time === input.time && candidate.isAvailable);
-    const alreadyBooked = this.bookings.some((booking) => booking.pitchId === input.pitchId
-      && normalizeDateKey(booking.date) === normalizeDateKey(input.date) && booking.time === input.time && booking.status !== 'CANCELLED');
-    if (!slot || alreadyBooked) {
-      throw new Error('Ce créneau n’est plus disponible pour cette date.');
-    }
-    const newBooking: Booking = {
-      id: `bkg_${Date.now()}`,
-      userId: this.profile.id,
-      pitchId: input.pitchId,
-      pitchName: pitch ? pitch.name : 'Terrain réservé',
-      complexName: pitch ? pitch.complexName : 'Complexe Footera',
-      surface: pitch ? pitch.surface : 'Synthétique dernière génération',
-      date: input.date,
-      time: input.time,
-      durationMinutes: 90,
-      totalPrice: slot.price,
-      bookerName: this.profile.name,
-      bookerPhone: this.profile.phone,
-      teamName: input.teamName || this.profile.sportsCv.currentTeam,
-      status: 'CONFIRMED',
-      createdAt: new Date().toISOString(),
-    };
-
-    this.bookings.unshift(newBooking);
-    saveToStorage(STORAGE_KEYS.BOOKINGS, this.bookings);
-
-    this.addNotification({
-      title: 'Réservation confirmée',
-      message: `Créneau validé le ${input.date} à ${input.time} (${newBooking.pitchName}).`,
-      type: 'booking',
-      targetSection: 'bookings',
-      targetId: newBooking.id,
-    });
-
-    emitChange();
-    return structuredClone(newBooking);
   }
 
   cancelBooking(bookingId: string): boolean {
@@ -666,7 +519,6 @@ class MockStorageRepository {
     this.clubs = structuredClone(INITIAL_CLUBS);
     this.matches = structuredClone(INITIAL_MATCHES);
     this.tournaments = structuredClone(INITIAL_TOURNAMENTS);
-    this.pitches = structuredClone(INITIAL_PITCHES);
     this.bookings = structuredClone(INITIAL_BOOKINGS);
     this.recruitmentAds = structuredClone(INITIAL_RECRUITMENT_ADS);
     this.applications = structuredClone(INITIAL_APPLICATIONS);

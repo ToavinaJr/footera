@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
 import { UserContext } from '../auth/user-context.js';
+import type { NotificationRecord } from '../../database/domain-records.js';
 
 @Injectable()
 export class NotificationsService {
@@ -9,21 +10,24 @@ export class NotificationsService {
 
   async list() {
     const userId = this.userContext.userId;
-    const records: any[] = await this.records.list('notifications');
-    return records.filter((notification) => !notification.recipientId || notification.recipientId === userId)
+    if (!userId) return [];
+    const records = await this.records.list<NotificationRecord>('notifications');
+    return records.filter((notification) => notification.recipientId === userId)
       .sort((a, b) => String(b.createdAt || b.id).localeCompare(String(a.createdAt || a.id)));
   }
 
   async markRead(id: string) {
-    const item = await this.records.find<any>('notifications', id);
-    if (item && (!item.recipientId || item.recipientId === this.userContext.userId)) {
+    const userId = this.userContext.userId;
+    if (!userId) return;
+    const item = await this.records.find<NotificationRecord>('notifications', id);
+    if (item && item.recipientId === userId) {
       await this.records.save('notifications', id, { ...item, isRead: true });
     }
   }
 
   async markAllRead() {
     const items = await this.list();
-    await Promise.all(items.map((item: any) => this.records.save('notifications', item.id, { ...item, isRead: true })));
+    await Promise.all(items.map((item) => this.records.save('notifications', item.id, { ...item, isRead: true })));
   }
 
   async add(item: {
@@ -36,7 +40,17 @@ export class NotificationsService {
     invitationId?: string;
     invitationStatus?: string;
   }) {
-    const notification = { ...item, id: `notif_${randomUUID()}`, time: 'À l’instant', createdAt: new Date().toISOString(), isRead: false };
+    if (!this.userContext.userId) throw new UnauthorizedException('Connectez-vous pour créer une notification.');
+    const recipientId = item.recipientId ?? this.userContext.userId;
+    if (!recipientId) throw new UnauthorizedException('Une notification doit être liée à un utilisateur.');
+    const notification = {
+      ...item,
+      recipientId,
+      id: `notif_${randomUUID()}`,
+      time: 'À l’instant',
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    };
     await this.records.create('notifications', notification.id, notification);
     return notification;
   }

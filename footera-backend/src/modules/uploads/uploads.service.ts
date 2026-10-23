@@ -118,7 +118,7 @@ export class UploadsService {
       : purpose === 'pitch' ? 'Gestionnaire Terrain'
         : purpose === 'club-logo' ? 'Entraîneur' : undefined;
     if (requiredRole) {
-      const user: any = await this.accounts.profile();
+      const user = await this.accounts.profile();
       if (!user?.roles?.includes(requiredRole)) {
         throw new ForbiddenException(`Votre compte doit disposer du rôle ${requiredRole} pour cet upload.`);
       }

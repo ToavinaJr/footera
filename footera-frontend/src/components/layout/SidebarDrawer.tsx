@@ -6,7 +6,6 @@ import {
   Medal,
   MapPin, 
   ShoppingBag, 
-  Bell, 
   Settings, 
   X,
   Shield,
@@ -22,21 +21,19 @@ interface SidebarDrawerProps {
 }
 
 export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose }) => {
-  const { activeSection, setActiveSection, unreadNotificationsCount, user } = useApp();
+  const { activeSection, setActiveSection, user } = useApp();
 
   if (!isOpen) return null;
 
   const menuItems: { label: string; section: NavigationSection; icon: React.ElementType }[] = [
     { label: 'Accueil', section: 'home', icon: Home },
-    { label: 'Explorer', section: 'players', icon: Compass },
+    { label: 'Joueurs', section: 'players', icon: Compass },
     { label: 'Matchs et compétitions', section: 'matches', icon: Trophy },
     { label: 'Tournois', section: 'tournaments', icon: Medal },
     { label: 'Stats & Buteurs', section: 'stats', icon: BarChart3 },
     { label: 'Terrains', section: 'pitches', icon: MapPin },
     { label: 'Marketplace', section: 'marketplace', icon: ShoppingBag },
-    { label: 'Mercato & Recrutement', section: 'recruitment', icon: Briefcase },
-    { label: 'Notifications', section: 'notifications', icon: Bell },
-    { label: 'Paramètres & Profil', section: 'profile', icon: Settings },
+    { label: 'Mercato', section: 'recruitment', icon: Briefcase },
   ];
 
   return (
@@ -52,7 +49,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
       <div className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" />
 
       {/* Drawer content: Pitch tactical grid green background from user reference */}
-      <div className="relative w-72 max-w-[85vw] h-full pitch-tactical-grid border-r border-[#155a36] shadow-2xl flex flex-col justify-between p-5 text-white animate-in slide-in-from-left duration-200">
+      <div className="sidebar-drawer-panel relative h-dvh max-h-dvh min-h-0 w-72 max-w-[85vw] shrink-0 overflow-y-auto overscroll-contain pitch-tactical-grid border-r border-[#155a36] shadow-2xl flex flex-col justify-between p-5 text-white animate-in slide-in-from-left duration-200">
         <div>
           {/* Header with Footera Brand and Close Button */}
           <div className="flex items-center justify-between pb-6 border-b border-[#144f2f]">
@@ -96,11 +93,6 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
                 >
                   <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-pitch-ink' : 'text-slate-300'}`} />
                   <span className="truncate">{item.label}</span>
-                  {item.label === 'Notifications' && unreadNotificationsCount > 0 && (
-                    <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold">
-                      {unreadNotificationsCount}
-                    </span>
-                  )}
                 </button>
               );
             })}

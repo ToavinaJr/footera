@@ -14,7 +14,7 @@ describe('UploadsService security', () => {
   beforeEach(async () => {
     uploadDirectory = await mkdtemp(join(tmpdir(), 'footera-uploads-'));
     vi.stubEnv('UPLOAD_DIR', uploadDirectory);
-    service = new UploadsService({ profile: async () => ({ activeRole: 'Joueur', roles: ['Joueur'] }) } as any);
+    service = new UploadsService({ profile: async () => ({ activeRole: 'Joueur', roles: ['Joueur'] }) } as unknown as never);
   });
 
   afterEach(async () => {
@@ -46,7 +46,7 @@ describe('UploadsService security', () => {
   it('allows an upload when the required role is assigned but another role is active', async () => {
     const multiRoleService = new UploadsService({
       profile: async () => ({ activeRole: 'Joueur', roles: ['Joueur', 'Vendeur'] }),
-    } as any);
+    } as unknown as never);
     await expect(multiRoleService.uploadImage({ buffer: onePixelPng, mimetype: 'image/png' }, 'marketplace', 'multi-role-ip'))
       .resolves.toMatchObject({ mimeType: 'image/png' });
   });
