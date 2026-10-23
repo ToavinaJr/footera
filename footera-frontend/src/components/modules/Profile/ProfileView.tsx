@@ -217,63 +217,71 @@ export const ProfileView: React.FC = () => {
       {/* Profile Header */}
       <section className="relative isolate overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-2 bg-pitch-primary" />
-        <div className="relative flex flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-center lg:gap-8">
+        {isOwner && <button
+          type="button"
+          onClick={() => {
+            setContactName(user!.name);
+            setContactPhone(user!.phone ?? '');
+            setDateOfBirth(user!.dateOfBirth ?? '');
+            setPersonalInfoError('');
+            setIsEditInfoOpen(true);
+          }}
+          aria-label="Modifier mes informations personnelles"
+          title="Modifier mes informations"
+          className="absolute right-4 top-5 z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pitch-line bg-white text-pitch-primary shadow-xs transition-colors hover:bg-pitch-panel-hover sm:right-6 sm:top-6"
+        >
+          <Edit3 className="h-4 w-4" />
+        </button>}
+        <div className="relative flex flex-col gap-6 p-5 pt-16 sm:p-7 sm:pt-16 lg:flex-row lg:items-center lg:gap-8">
           <div className="flex min-w-0 flex-1 flex-col items-start gap-5 sm:flex-row sm:items-center">
             <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
-            <img
-              src={displayedAvatar}
-              alt={displayedName}
-              className="h-full w-full rounded-3xl border-2 border-pitch-primary bg-slate-100 object-cover shadow-sm"
-              referrerPolicy="no-referrer"
-            />
-            {isOwner && <ImageUploadField
-              purpose="avatar"
-              label="Changer la photo"
-              variant="avatar"
-              onUploaded={(avatarUrl) => { void updateProfile({ avatarUrl }); }}
-            />}
+              <img
+                src={displayedAvatar}
+                alt={displayedName}
+                className="h-full w-full rounded-3xl border-2 border-pitch-primary bg-slate-100 object-cover shadow-sm"
+                referrerPolicy="no-referrer"
+              />
+              {isOwner && <ImageUploadField
+                purpose="avatar"
+                label="Changer la photo"
+                variant="avatar"
+                onUploaded={(avatarUrl) => { void updateProfile({ avatarUrl }); }}
+              />}
             </div>
-            <div className="min-w-0 flex-1 space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0 flex-1 space-y-4 lg:pr-14">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="break-words text-2xl font-black tracking-tight text-pitch-ink sm:text-3xl">{displayedName}</h1>
-                <div className="ml-auto flex shrink-0 items-center gap-2">
-              {isOwner && myPlayer && (
-                <button
+                {isOwner && myPlayer && <button
                   type="button"
                   onClick={() => navigate(`/profile/${encodeURIComponent(myPlayer.id)}`)}
                   className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pitch-line px-3 text-xs font-bold text-pitch-primary transition-colors hover:bg-pitch-panel-hover"
                 >
-                  <ExternalLink className="h-4 w-4" /><span className="hidden sm:inline">Voir le profil public</span><span className="sm:hidden">Profil public</span>
-                </button>
-              )}
-              {isOwner && <button
-                type="button"
-                onClick={() => {
-                  setContactName(user!.name);
-                  setContactPhone(user!.phone ?? '');
-                  setDateOfBirth(user!.dateOfBirth ?? '');
-                  setPersonalInfoError('');
-                  setIsEditInfoOpen(true);
-                }}
-                aria-label="Modifier mes coordonnées et ma date de naissance"
-                title="Modifier mes coordonnées"
-                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-pitch-line text-pitch-primary transition-colors hover:bg-pitch-panel-hover"
-              >
-                <Edit3 className="h-4 w-4" />
-              </button>}
+                  <ExternalLink className="h-4 w-4" /> Voir le profil public
+                </button>}
               </div>
-              <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
-                {(isOwner ? user!.city : publicPlayer!.city) && <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.city : publicPlayer!.city}</span>}
-                {isOwner && <span className="inline-flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0 text-pitch-primary" /><span className="break-all">{user!.email}</span></span>}
-                {isOwner && user!.phone?.trim() && <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{user!.phone}</span>}
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {(isOwner ? user!.city : publicPlayer!.city) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                  <span className="block text-caption font-semibold text-slate-500">Ville</span>
+                  <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><MapPin className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.city : publicPlayer!.city}</span>
+                </div>}
+                {isOwner && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                  <span className="block text-caption font-semibold text-slate-500">Adresse e-mail</span>
+                  <span className="mt-1 flex min-w-0 items-start gap-2 break-all text-sm font-semibold text-pitch-ink"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-pitch-primary" />{user!.email}</span>
+                </div>}
+                {isOwner && user!.phone?.trim() && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                  <span className="block text-caption font-semibold text-slate-500">Téléphone</span>
+                  <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{user!.phone}</span>
+                </div>}
+                {displayedAge !== undefined && displayedAge > 0 && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                  <span className="block text-caption font-semibold text-slate-500">Âge</span>
+                  <span className="mt-1 block text-sm font-semibold text-pitch-ink">{displayedAge} ans</span>
+                </div>}
               </div>
-              {displayedAge !== undefined && displayedAge > 0 && <p className="text-sm font-semibold text-slate-600">{displayedAge} ans</p>}
               <p className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-pitch-panel px-3 py-2 text-sm text-slate-600">
                 <span>Équipe officielle :</span><strong className="text-pitch-ink">{displayedTeam || 'Sans équipe actuellement'}</strong>
               </p>
             </div>
           </div>
-        </div>
         </div>
       </section>
 
