@@ -18,7 +18,7 @@ export interface AppContextType {
   user: UserProfile | null;
   isLoadingUser: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (input: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
+  register: (input: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
   updateProfile: (partial: Partial<UserProfile>) => Promise<void>;

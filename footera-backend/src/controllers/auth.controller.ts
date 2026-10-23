@@ -12,7 +12,7 @@ export class AuthController {
   @Post('register')
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() body: { name?: unknown; email?: unknown; password?: unknown; role?: unknown }, @Res({ passthrough: true }) response: Response) {
+  async register(@Body() body: { name?: unknown; email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.register(body);
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };

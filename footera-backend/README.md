@@ -19,7 +19,7 @@ API REST NestJS avec PostgreSQL et Prisma ORM. Le serveur écoute par défaut su
 
 ## Authentification
 
-Les routes métier nécessitent une session. `POST /api/v1/auth/register` crée un compte Joueur ou Supporter, `POST /api/v1/auth/login` ouvre une session, `POST /api/v1/auth/logout` la ferme et `GET /api/v1/auth/me` renvoie le profil courant. Les mots de passe sont dérivés avec `scrypt` et stockés séparément des profils dans `auth_credentials`, dont l’adresse e-mail normalisée est unique.
+Les routes métier nécessitent une session. `POST /api/v1/auth/register` crée un compte avec le rôle initial Joueur (le client ne peut pas choisir ni s'attribuer un rôle), `POST /api/v1/auth/login` ouvre une session sans choix de rôle, `POST /api/v1/auth/logout` la ferme et `GET /api/v1/auth/me` renvoie le profil courant. Les rôles et autorisations restent déterminés et vérifiés côté serveur. Les mots de passe sont dérivés avec `scrypt` et stockés séparément des profils dans `auth_credentials`, dont l’adresse e-mail normalisée est unique.
 
 Configurez `JWT_SECRET` avec au moins 32 caractères aléatoires, différent pour chaque environnement. Le serveur refuse de démarrer en production si la clé manque. Le JWT d’accès expire après 15 minutes ; un jeton de renouvellement opaque, à usage unique et stocké sous forme de hash, permet une rotation de session pendant 7 jours. Les deux sont des cookies `HttpOnly`, `SameSite=Lax` et `Secure` en production. Le frontend renouvelle la session automatiquement. Configurez `FRONTEND_URL` avec l’origine exacte du frontend ; les requêtes d’écriture contrôlent aussi l’en-tête `Origin`.
 

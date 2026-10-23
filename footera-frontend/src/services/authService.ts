@@ -17,7 +17,7 @@ export const authService = {
     return result.user;
   },
 
-  async register(input: { name: string; email: string; password: string; role: UserRole }): Promise<UserProfile> {
+  async register(input: { name: string; email: string; password: string }): Promise<UserProfile> {
     if (IS_MOCK_MODE) return mockDelay(mockStorage.getProfile(), 100);
     const result = await apiClient<{ user: UserProfile }>('auth/register', { method: 'POST', body: JSON.stringify(input) });
     return result.user;

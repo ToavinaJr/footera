@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import { LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
-import type { UserRole } from '../../../types';
 
 interface AuthViewProps {
   onLogin: (credentials: { email: string; password: string }) => Promise<void>;
-  onRegister: (input: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
+  onRegister: (input: { name: string; email: string; password: string }) => Promise<void>;
 }
-
-const roles: UserRole[] = ['Joueur', 'Supporter'];
 
 export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('Joueur');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,7 +19,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
     setError('');
     setIsSubmitting(true);
     try {
-      if (isRegistering) await onRegister({ name, email, password, role });
+      if (isRegistering) await onRegister({ name, email, password });
       else await onLogin({ email, password });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Impossible de vous authentifier.');
@@ -75,15 +71,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
             </span>
             {isRegistering && <span className="mt-1 block text-xs font-normal text-slate-500">12 caractères minimum.</span>}
           </label>
-
-          {isRegistering && (
-            <label className="block text-sm font-semibold text-pitch-ink">
-              Votre rôle
-              <select value={role} onChange={(event) => setRole(event.target.value as UserRole)} className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input px-3 text-sm outline-hidden focus:border-pitch-primary">
-                {roles.map((item) => <option key={item} value={item}>{item}</option>)}
-              </select>
-            </label>
-          )}
 
           {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
 

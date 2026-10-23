@@ -16,14 +16,31 @@ describe('AuthService', () => {
   it('registers with a password hash and issues a verifiable session token', async () => {
     const { auth, records } = makeService();
 
-    const result = await auth.register({ name: 'Test User', email: 'TEST@example.com', password: 'correct horse battery staple', role: 'Joueur' });
+    const result = await auth.register({ name: 'Test User', email: 'TEST@example.com', password: 'correct horse battery staple' });
 
     expect(records.createUserAccount).toHaveBeenCalledOnce();
     const [id, email, user, credentials] = records.createUserAccount.mock.calls[0];
     expect(email).toBe('test@example.com');
+    expect(user.roles).toEqual(['Joueur']);
+    expect(user.activeRole).toBe('Joueur');
     expect(user).not.toHaveProperty('passwordHash');
     expect(credentials.passwordHash).toMatch(/^scrypt\$/);
     expect(auth.verifyToken(result.accessToken).id).toBe(id);
+  });
+
+  it('ignores a client-supplied role and assigns only the default role', async () => {
+    const { auth, records } = makeService();
+
+    await auth.register({
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'correct horse battery staple',
+      role: 'Administrateur',
+    } as any);
+
+    const [, , user] = records.createUserAccount.mock.calls[0];
+    expect(user.roles).toEqual(['Joueur']);
+    expect(user.activeRole).toBe('Joueur');
   });
 
   it('rejects duplicate email addresses', async () => {

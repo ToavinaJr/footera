@@ -66,7 +66,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchNotifications();
   }, [fetchNotifications]);
 
-  const register = useCallback(async (input: { name: string; email: string; password: string; role: UserRole }) => {
+  const register = useCallback(async (input: { name: string; email: string; password: string }) => {
     const profile = await authService.register(input);
     setUser(profile);
     await fetchNotifications();

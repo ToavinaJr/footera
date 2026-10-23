@@ -2,7 +2,6 @@ import { ConflictException, Injectable, UnauthorizedException, BadRequestExcepti
 import { createHash, createHmac, randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
 
-const REGISTRATION_ROLES = ['Joueur', 'Supporter'];
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -39,15 +38,14 @@ export class AuthService {
     return randomBytes(32).toString('base64url');
   }
 
-  async register(input: { name?: unknown; email?: unknown; password?: unknown; role?: unknown }) {
+  async register(input: { name?: unknown; email?: unknown; password?: unknown }) {
     const name = typeof input.name === 'string' ? input.name.trim() : '';
     const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
     const password = typeof input.password === 'string' ? input.password : '';
-    const role = typeof input.role === 'string' ? input.role : 'Joueur';
     if (name.length < 2 || name.length > 80) throw new BadRequestException('Le nom doit contenir entre 2 et 80 caractères.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new BadRequestException('Adresse e-mail invalide.');
     if (password.length < 12 || password.length > 256) throw new BadRequestException('Le mot de passe doit contenir au moins 12 caractères.');
-    if (!REGISTRATION_ROLES.includes(role)) throw new BadRequestException('Les rôles du staff sont attribués par un administrateur.');
+    const role = 'Joueur';
 
     if (await this.records.find('authCredentials', email)) throw new ConflictException('Un compte utilise déjà cette adresse e-mail.');
     const id = `usr_${randomUUID()}`;
