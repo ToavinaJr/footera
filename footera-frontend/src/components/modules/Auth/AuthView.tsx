@@ -21,6 +21,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
     try {
       if (isRegistering) await onRegister({ name, email, password });
       else await onLogin({ email, password });
+      setName('');
+      setEmail('');
+      setPassword('');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Impossible de vous authentifier.');
     } finally {
@@ -50,7 +53,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
               Nom complet
               <span className="relative mt-1 block">
                 <UserRound className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                <input required minLength={2} maxLength={80} autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} className="min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input pl-10 pr-3 text-sm outline-hidden focus:border-pitch-primary" />
+                <input required minLength={2} maxLength={80} autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} disabled={isSubmitting} className="min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input pl-10 pr-3 text-sm outline-hidden focus:border-pitch-primary disabled:cursor-wait disabled:opacity-60" />
               </span>
             </label>
           )}
@@ -59,7 +62,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
             Adresse e-mail
             <span className="relative mt-1 block">
               <Mail className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-              <input required type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} className="min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input pl-10 pr-3 text-sm outline-hidden focus:border-pitch-primary" />
+              <input required type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} disabled={isSubmitting} className="min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input pl-10 pr-3 text-sm outline-hidden focus:border-pitch-primary disabled:cursor-wait disabled:opacity-60" />
             </span>
           </label>
 
@@ -67,14 +70,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
             Mot de passe
             <span className="relative mt-1 block">
               <LockKeyhole className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-              <input required type="password" minLength={isRegistering ? 12 : 1} maxLength={256} autoComplete={isRegistering ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} className="min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input pl-10 pr-3 text-sm outline-hidden focus:border-pitch-primary" />
+              <input required type="password" minLength={isRegistering ? 12 : 1} maxLength={256} autoComplete={isRegistering ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} disabled={isSubmitting} className="min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-input pl-10 pr-3 text-sm outline-hidden focus:border-pitch-primary disabled:cursor-wait disabled:opacity-60" />
             </span>
             {isRegistering && <span className="mt-1 block text-xs font-normal text-slate-500">12 caractères minimum.</span>}
           </label>
 
           {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
 
-          <button type="submit" disabled={isSubmitting} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-pitch-action px-4 font-bold text-white transition-colors hover:bg-pitch-action-hover disabled:cursor-wait disabled:opacity-60">
+          <button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-pitch-action px-4 font-bold text-white transition-colors hover:bg-pitch-action-hover disabled:cursor-wait disabled:opacity-60">
             <ShieldCheck className="h-4 w-4" />
             {isSubmitting ? 'Veuillez patienter…' : isRegistering ? 'Créer mon compte' : 'Se connecter'}
           </button>
@@ -82,7 +85,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister }) => {
 
         <p className="mt-6 text-center text-sm text-slate-600">
           {isRegistering ? 'Vous avez déjà un compte ?' : 'Pas encore de compte ?'}{' '}
-          <button type="button" onClick={() => { setIsRegistering((current) => !current); setError(''); }} className="font-bold text-pitch-primary hover:underline">
+          <button type="button" disabled={isSubmitting} onClick={() => { setIsRegistering((current) => !current); setError(''); }} className="font-bold text-pitch-primary hover:underline disabled:cursor-wait disabled:opacity-60">
             {isRegistering ? 'Se connecter' : 'Créer un compte'}
           </button>
         </p>
