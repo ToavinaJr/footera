@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, NotFoundException, HttpCode, HttpStatus } from '@nestjs/common';
 import { TeamsService } from '../modules/teams/teams.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
@@ -48,7 +48,9 @@ export class TeamsController {
   }
 
   @Post(':id/favorite')
-  toggleFavorite(@Param('id') id: string) {
-    return this.teams.toggleFavorite(id);
+  @HttpCode(HttpStatus.OK)
+  async toggleFavorite(@Param('id') id: string) {
+    const isFavorite = await this.teams.toggleFavorite(id);
+    return { isFavorite };
   }
 }

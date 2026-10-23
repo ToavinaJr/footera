@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { ShoppingBag, Search, Plus, Tag, Star, MapPin, Check, Sparkles } from 'lucide-react';
 import { marketplaceService, CreateListingInput } from '../../../services/marketplaceService';
 import { MarketplaceListing } from '../../../types';
@@ -184,7 +185,7 @@ export const MarketplaceView: React.FC = () => {
         </div>
 
         <div>
-          <select
+          <SelectField
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             aria-label="Filtrer par catégorie d'équipement"
@@ -195,7 +196,7 @@ export const MarketplaceView: React.FC = () => {
                 {c === 'Toutes' ? 'Toutes les catégories' : c}
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
       </div>
 
@@ -360,7 +361,7 @@ export const MarketplaceView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Catégorie *</label>
-                <select
+                <SelectField
                   value={formCategory}
                   onChange={(e) => handleCategoryChange(e.target.value as MarketplaceListing['category'])}
                   required
@@ -369,7 +370,7 @@ export const MarketplaceView: React.FC = () => {
                 >
                   <option value="" disabled>Choisir une catégorie</option>
                   {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-                </select>
+                </SelectField>
               </div>
 
               <div>
@@ -390,7 +391,7 @@ export const MarketplaceView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">État de l&apos;article *</label>
-                <select
+                <SelectField
                   value={formCondition}
                   onChange={(e) => setFormCondition(e.target.value)}
                   required
@@ -399,7 +400,7 @@ export const MarketplaceView: React.FC = () => {
                 >
                   <option value="" disabled>Choisir un état</option>
                   {conditions.map((condition) => <option key={condition} value={condition}>{condition}</option>)}
-                </select>
+                </SelectField>
               </div>
 
               <div>
@@ -417,7 +418,7 @@ export const MarketplaceView: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Marque *</label>
-              <select
+              <SelectField
                 required
                 value={formBrand}
                 onChange={(e) => setFormBrand(e.target.value)}
@@ -426,7 +427,7 @@ export const MarketplaceView: React.FC = () => {
               >
                 <option value="" disabled>Choisir une marque</option>
                 {brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
-              </select>
+              </SelectField>
             </div>
 
             <div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   MapPin, 
@@ -540,7 +541,7 @@ export const ProfileView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Poste principal *
               </label>
-              <select
+              <SelectField
                 value={cvPosition}
                 onChange={(e) => setCvPosition(e.target.value as Position)}
                 required
@@ -549,7 +550,7 @@ export const ProfileView: React.FC = () => {
               >
                 <option value="" disabled>Choisir un poste</option>
                 {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
-              </select>
+              </SelectField>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -583,7 +584,7 @@ export const ProfileView: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Pied fort</label>
-                <select
+                <SelectField
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as StrongFoot)}
                   required
@@ -592,7 +593,7 @@ export const ProfileView: React.FC = () => {
                 >
                   <option value="" disabled>Choisir un pied fort</option>
                   {strongFootOptions.map((foot) => <option key={foot} value={foot}>{foot}</option>)}
-                </select>
+                </SelectField>
               </div>
             </div>
 

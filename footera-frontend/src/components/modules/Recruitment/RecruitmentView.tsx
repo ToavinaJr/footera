@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { Briefcase, Search, CheckCircle2, Send } from 'lucide-react';
 import { recruitmentService } from '../../../services/recruitmentService';
 import { RecruitmentAd, Application } from '../../../types';
@@ -135,7 +136,7 @@ export const RecruitmentView: React.FC = () => {
               />
             </div>
             <div>
-              <select
+              <SelectField
                 value={positionFilter}
                 onChange={(e) => setPositionFilter(e.target.value)}
                 aria-label="Filtrer par poste recherché"
@@ -143,7 +144,7 @@ export const RecruitmentView: React.FC = () => {
               >
                 <option value="Tous">Tous les postes</option>
                 {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
-              </select>
+              </SelectField>
             </div>
           </div>
 

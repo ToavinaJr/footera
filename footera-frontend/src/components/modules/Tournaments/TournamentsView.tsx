@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { Trophy, Calendar, MapPin, Users, Award, Shield, CheckCircle2, Plus, Sparkles, Building2, Layers, Target } from 'lucide-react';
 import { tournamentsService, CreateTournamentInput } from '../../../services/tournamentsService';
 import { statsService } from '../../../services/statsService';
@@ -604,7 +605,7 @@ export const TournamentsView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Équipe participante *
               </label>
-              <select
+              <SelectField
                 value={registerTeamId}
                 onChange={(e) => setRegisterTeamId(e.target.value)}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
@@ -613,7 +614,7 @@ export const TournamentsView: React.FC = () => {
                 {teams.filter((team) => !(selectedTournament.participantTeamIds ?? []).includes(team.id)).map((team) => (
                   <option key={team.id} value={team.id}>{team.name}</option>
                 ))}
-              </select>
+              </SelectField>
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
@@ -661,7 +662,7 @@ export const TournamentsView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Format de jeu *</label>
-                <select
+                <SelectField
                   value={formFormat}
                   onChange={(e) => setFormFormat(e.target.value as Tournament['format'] | '')}
                   required
@@ -672,12 +673,12 @@ export const TournamentsView: React.FC = () => {
                   <option value="7v7">Foot à 7</option>
                   <option value="5v5 (Five)">Five (5v5)</option>
                   <option value="Futsal">Futsal officiel</option>
-                </select>
+                </SelectField>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nombre d&apos;équipes max *</label>
-                <select
+                <SelectField
                   value={formMaxTeams}
                   onChange={(e) => setFormMaxTeams(e.target.value ? Number(e.target.value) : '')}
                   required
@@ -689,7 +690,7 @@ export const TournamentsView: React.FC = () => {
                   <option value={16}>16 équipes (Format standard mondial)</option>
                   <option value={24}>24 équipes (Grande compétition)</option>
                   <option value={32}>32 équipes (Mondial des clubs)</option>
-                </select>
+                </SelectField>
               </div>
             </div>
 

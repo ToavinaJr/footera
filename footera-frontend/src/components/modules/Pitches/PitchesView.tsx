@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Star, Shield, Check, Plus, Building2, CheckSquare, Square, Sparkles } from 'lucide-react';
 import { pitchesService, CreatePitchInput } from '../../../services/pitchesService';
@@ -397,7 +398,7 @@ export const PitchesView: React.FC = () => {
       <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface</label>
-          <select
+          <SelectField
             value={surfaceFilter}
             onChange={(e) => setSurfaceFilter(e.target.value as SurfaceType | 'Toutes')}
             className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
@@ -407,12 +408,12 @@ export const PitchesView: React.FC = () => {
                 {s === 'Toutes' ? 'Toutes les surfaces' : s}
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">Localisation</label>
-          <select
+          <SelectField
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
@@ -422,7 +423,7 @@ export const PitchesView: React.FC = () => {
             <option value="Antananarivo">Antananarivo</option>
             <option value="Toamasina">Toamasina</option>
             <option value="Paris">Paris</option>
-          </select>
+          </SelectField>
         </div>
       </div>
 
@@ -687,7 +688,7 @@ export const PitchesView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface *</label>
-                <select
+                <SelectField
                   value={formSurface}
                   onChange={(e) => setFormSurface(e.target.value as SurfaceType)}
                   required
@@ -696,7 +697,7 @@ export const PitchesView: React.FC = () => {
                 >
                   <option value="" disabled>Choisir un type de surface</option>
                   {surfaceOptions.map((surface) => <option key={surface} value={surface}>{surface}</option>)}
-                </select>
+                </SelectField>
               </div>
 
               <div>

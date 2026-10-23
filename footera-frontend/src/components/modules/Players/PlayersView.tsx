@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { Search, Filter, Shield, Trophy, UserPlus, Star, Heart } from 'lucide-react';
 import { playersService, PlayerFilters } from '../../../services/playersService';
 import { Player, Position, Team, TeamInvitationStatus } from '../../../types';
@@ -158,7 +159,7 @@ export const PlayersView: React.FC = () => {
           </div>
 
           <div>
-            <select
+            <SelectField
               value={selectedPosition}
               onChange={(e) => setSelectedPosition(e.target.value)}
               aria-label="Filtrer par poste"
@@ -169,11 +170,11 @@ export const PlayersView: React.FC = () => {
                   {p === 'Toutes' ? 'Tous les postes' : p}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </div>
 
           <div>
-            <select
+            <SelectField
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
               aria-label="Filtrer par niveau"
@@ -181,7 +182,7 @@ export const PlayersView: React.FC = () => {
             >
               <option value="Tous">Tous les niveaux</option>
               {levels.map((level) => <option key={level} value={level}>{level}</option>)}
-            </select>
+            </SelectField>
           </div>
         </div>
       </div>

@@ -64,14 +64,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = useCallback(async (credentials: { email: string; password: string }) => {
     const profile = await authService.login(credentials);
     setUser(profile);
-    await fetchNotifications();
-  }, [fetchNotifications]);
+  }, []);
 
   const register = useCallback(async (input: { name: string; email: string; password: string }) => {
     const profile = await authService.register(input);
     setUser(profile);
-    await fetchNotifications();
-  }, [fetchNotifications]);
+  }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();
@@ -81,16 +79,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     fetchUserData();
-    fetchNotifications();
 
     // Subscribe to mock storage mutations for real-time reactivity
     const unsubscribe = mockStorage.subscribe(() => {
       fetchUserData();
-      fetchNotifications();
     });
 
     return () => unsubscribe();
-  }, [fetchUserData, fetchNotifications]);
+  }, [fetchUserData]);
+
+  useEffect(() => {
+    if (user) {
+      void fetchNotifications();
+    } else {
+      setNotifications([]);
+    }
+  }, [user, fetchNotifications]);
 
   useEffect(() => {
     const handleSessionExpired = () => {

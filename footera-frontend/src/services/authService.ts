@@ -65,7 +65,8 @@ export const authService = {
       const res = mockStorage.toggleFavoriteTeam(teamId);
       return mockDelay(res, 80);
     }
-    return apiClient<boolean>(`teams/${teamId}/favorite`, { method: 'POST' });
+    const result = await apiClient<{ isFavorite: boolean }>(`teams/${teamId}/favorite`, { method: 'POST' });
+    return result.isFavorite;
   },
 
   async resetDemoData(): Promise<void> {

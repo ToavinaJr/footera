@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { 
   Trophy, 
   Target, 
@@ -159,7 +160,7 @@ export const StatsView: React.FC = () => {
             <Trophy className="w-3.5 h-3.5 text-pitch-primary" />
             <span>Filtrer par Tournoi ou Compétition</span>
           </label>
-          <select
+          <SelectField
             value={selectedTournamentId}
             onChange={(e) => setSelectedTournamentId(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
@@ -170,7 +171,7 @@ export const StatsView: React.FC = () => {
                 {t.title} ({t.format})
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
 
         <div>
@@ -178,7 +179,7 @@ export const StatsView: React.FC = () => {
             <Shield className="w-3.5 h-3.5 text-pitch-primary" />
             <span>Filtrer par Équipe</span>
           </label>
-          <select
+          <SelectField
             value={selectedTeamId}
             onChange={(e) => setSelectedTeamId(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
@@ -189,7 +190,7 @@ export const StatsView: React.FC = () => {
                 {t.name} ({t.city})
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
       </div>
 
@@ -831,14 +832,14 @@ export const StatsView: React.FC = () => {
                 </div>
 
                 <div className="w-full sm:w-auto">
-                  <select
+                  <SelectField
                     value={playerPositionFilter}
                     onChange={(e) => setPlayerPositionFilter(e.target.value)}
                     className="w-full sm:w-48 bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
                   >
                     <option value="Tous">Tous les postes</option>
                     {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
-                  </select>
+                  </SelectField>
                 </div>
               </div>
 

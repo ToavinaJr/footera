@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SelectField } from '../../common/SelectField';
 import { Search, Shield, Users, Trophy, UserPlus, MapPin, Heart, ChevronRight, User, Target, Sparkles, BarChart3 } from 'lucide-react';
 import { teamsService } from '../../../services/teamsService';
 import { statsService } from '../../../services/statsService';
@@ -24,6 +25,8 @@ export const TeamsView: React.FC = () => {
   // Filters
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('query') ?? '');
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
+  const [showFavoriteTeams, setShowFavoriteTeams] = useState(false);
+  const [updatingFavoriteTeamIds, setUpdatingFavoriteTeamIds] = useState<string[]>([]);
 
   // Detail Modal & Members Roster Modal
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -37,6 +40,23 @@ export const TeamsView: React.FC = () => {
   const [joinMessage, setJoinMessage] = useState('');
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
   const [updatingClubLogoId, setUpdatingClubLogoId] = useState<string | null>(null);
+
+  const isTeamMember = (team: Team) => Boolean(user && team.members?.some((member) => member.playerId === user.id));
+  const visibleTeams = showFavoriteTeams
+    ? teams.filter((team) => user?.favoriteTeamIds?.includes(team.id))
+    : teams;
+
+  const handleToggleFavorite = async (teamId: string) => {
+    if (updatingFavoriteTeamIds.includes(teamId)) return;
+    setUpdatingFavoriteTeamIds((current) => [...current, teamId]);
+    try {
+      await toggleFavoriteTeam(teamId);
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Impossible de mettre à jour vos équipes favorites.', 'error');
+    } finally {
+      setUpdatingFavoriteTeamIds((current) => current.filter((id) => id !== teamId));
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -137,6 +157,8 @@ export const TeamsView: React.FC = () => {
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
             <input
+              id="team-search"
+              name="teamSearch"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -145,7 +167,7 @@ export const TeamsView: React.FC = () => {
             />
           </div>
           <div>
-            <select
+            <SelectField
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filtrer par catégorie d'équipe"
@@ -156,8 +178,21 @@ export const TeamsView: React.FC = () => {
               <option value="U19">U19</option>
               <option value="U17">U17</option>
               <option value="Féminine">Féminine</option>
-            </select>
+            </SelectField>
           </div>
+          {user && <button
+            type="button"
+            aria-pressed={showFavoriteTeams}
+            onClick={() => setShowFavoriteTeams((current) => !current)}
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors md:col-span-2 md:justify-start ${
+              showFavoriteTeams
+                ? 'border-pitch-primary bg-pitch-light text-pitch-primary'
+                : 'border-pitch-line bg-white text-slate-600 hover:border-pitch-primary hover:text-pitch-primary'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${showFavoriteTeams ? 'fill-current' : ''}`} aria-hidden="true" />
+            Mes équipes favorites ({user?.favoriteTeamIds?.length ?? 0})
+          </button>}
         </div>
       )}
 
@@ -169,16 +204,17 @@ export const TeamsView: React.FC = () => {
             <CardSkeleton />
             <CardSkeleton />
           </div>
-        ) : teams.length === 0 ? (
+        ) : visibleTeams.length === 0 ? (
           <EmptyState
             icon={Shield}
-            title="Aucune équipe trouvée"
-            description="Modifiez vos critères pour explorer d'autres divisions."
+            title={showFavoriteTeams ? 'Aucune équipe favorite' : 'Aucune équipe trouvée'}
+            description={showFavoriteTeams ? 'Marquez une équipe avec le cœur pour la retrouver ici.' : "Modifiez vos critères pour explorer d'autres divisions."}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teams.map((team) => {
-              const isFav = user?.favoriteTeamIds.includes(team.id);
+            {visibleTeams.map((team) => {
+              const isFav = user?.favoriteTeamIds?.includes(team.id) ?? false;
+              const isMember = isTeamMember(team);
               return (
                 <div
                   key={team.id}
@@ -212,16 +248,19 @@ export const TeamsView: React.FC = () => {
                         </div>
                       )}
                       {/* Favorite Button */}
-                      <button
+                      {user && <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          toggleFavoriteTeam(team.id);
+                          void handleToggleFavorite(team.id);
                         }}
-                        aria-label="Ajouter aux favoris"
-                        className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-xs flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                        aria-label={isFav ? `Retirer ${team.name} de mes équipes favorites` : `Ajouter ${team.name} à mes équipes favorites`}
+                        aria-pressed={isFav}
+                        disabled={updatingFavoriteTeamIds.includes(team.id)}
+                        className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-xs flex items-center justify-center text-white hover:bg-black/60 transition-colors disabled:cursor-wait disabled:opacity-60"
                       >
                         <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
-                      </button>
+                      </button>}
                     </div>
 
                     <div className="p-5 space-y-4">
@@ -285,8 +324,9 @@ export const TeamsView: React.FC = () => {
                   </div>
 
                   {/* Primary CTA button matching Screenshot 3: Demander à rejoindre */}
-                  <div className="p-5 pt-0">
+                  {!isMember && user && <div className="p-5 pt-0">
                     <button
+                      type="button"
                       onClick={(event) => {
                         event.stopPropagation();
                         setSelectedTeam(team);
@@ -297,7 +337,7 @@ export const TeamsView: React.FC = () => {
                       <UserPlus className="w-4 h-4" />
                       <span>Demander à rejoindre</span>
                     </button>
-                  </div>
+                  </div>}
                 </div>
               );
             })}
@@ -579,7 +619,7 @@ export const TeamsView: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-3 border-t border-pitch-separator">
+            {!isTeamMember(selectedTeam) && user && <div className="pt-3 border-t border-pitch-separator">
               <button
                 onClick={() => {
                   setIsRosterModalOpen(false);
@@ -590,7 +630,7 @@ export const TeamsView: React.FC = () => {
                 <UserPlus className="w-4 h-4" />
                 <span>Rejoindre cet effectif</span>
               </button>
-            </div>
+            </div>}
           </div>
         </Modal>
       )}
@@ -609,10 +649,12 @@ export const TeamsView: React.FC = () => {
               Votre CV sportif ({user?.sportsCv.primaryPosition}, {user?.sportsCv.height}cm, {user?.sportsCv.strongFoot}) sera directement envoyé au coach <strong>{selectedTeam.coachName}</strong>.
             </p>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label htmlFor="team-join-message" className="block text-xs font-bold text-slate-700 mb-1">
                 Message au staff technique *
               </label>
               <textarea
+                id="team-join-message"
+                name="message"
                 rows={4}
                 value={joinMessage}
                 onChange={(e) => setJoinMessage(e.target.value)}
