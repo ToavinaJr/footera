@@ -56,7 +56,7 @@ export class AuthService {
       sportsCv: { height: 0, weight: 0, strongFoot: '', primaryPosition: '', secondaryPosition: '', experienceYears: 0, preferredNumber: 0, currentTeam: '', bio: '' },
     };
     const player = role === 'Joueur' ? {
-        id, userId: id, name, age: 18, city: '', avatarUrl: '', primaryPosition: '', secondaryPosition: '',
+        id, userId: id, name, age: 0, city: '', avatarUrl: '', primaryPosition: '', secondaryPosition: '',
         strongFoot: '', currentTeam: '', currentTeamId: '', level: '', height: 0, weight: 0,
         appearances: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0,
         isAvailableForTransfer: false, rating: 0, bio: '', previousClubs: [], teamHistoryStats: [],

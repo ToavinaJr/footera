@@ -4,6 +4,8 @@ import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTeamMatchSummary } from './team-match-summary.js';
+import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
+import { aggregatePlayerMatchStats } from '../players/player-match-stats.js';
 
 @Injectable()
 export class TeamsService {
@@ -14,9 +16,10 @@ export class TeamsService {
   ) {}
 
   async list(filters: { query?: string; category?: string; city?: string } = {}) {
-    const [teams, matches] = await Promise.all([
+    const [teams, matches, tournaments] = await Promise.all([
       this.records.list<any>('teams'),
       this.records.list<any>('matches'),
+      this.records.list<any>('tournaments'),
     ]);
     return teams.filter((team) => {
       const query = filters.query?.toLowerCase();
@@ -25,48 +28,85 @@ export class TeamsService {
         && (!filters.category || filters.category === 'Toutes' || team.category === filters.category)
         && (!city || city === 'toutes' || team.city.toLowerCase().includes(city));
     }).map((team) => {
-      const { recentForm } = buildTeamMatchSummary(team.id, matches);
+      const { recentForm } = buildTeamMatchSummary(team.id, this.matchesForTeamCompetition(team, matches));
       const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
+      const stats = this.getComputedTeamStats(team, teams, matches, tournaments);
       return {
         ...publicTeam,
         recentForm,
-        stats: {
-          ...team.stats,
-          goalsPerMatch: team.stats?.matchesPlayed
-            ? Number((team.stats.goalsFor / team.stats.matchesPlayed).toFixed(2))
-            : 0,
-        },
+        stats,
       };
     });
   }
 
   async getById(id: string) {
-    const team: any = await this.records.find('teams', id);
-    if (!team) return null;
-    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
-    return publicTeam;
-  }
-
-  async getDetail(id: string) {
-    const [team, matches] = await Promise.all([
-      this.records.find<any>('teams', id),
-      this.records.list<any>('matches'),
+    const [team, teams, matches, tournaments]: [any, any[], any[], any[]] = await Promise.all([
+      this.records.find('teams', id), this.records.list('teams'), this.records.list('matches'), this.records.list('tournaments'),
     ]);
     if (!team) return null;
     const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
+    return { ...publicTeam, stats: this.getComputedTeamStats(team, teams, matches, tournaments) };
+  }
+
+  async getDetail(id: string) {
+    const [team, teams, matches, tournaments, players] = await Promise.all([
+      this.records.find<any>('teams', id),
+      this.records.list<any>('teams'),
+      this.records.list<any>('matches'),
+      this.records.list<any>('tournaments'),
+      this.records.list<any>('players'),
+    ]);
+    if (!team) return null;
+    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
+    const competitionMatches = this.matchesForTeamCompetition(team, matches);
+    const playerStats = aggregatePlayerMatchStats(players, competitionMatches, team.competitionId, tournaments);
+    const members = (team.members || []).map((member: any) => {
+      const stats = playerStats.get(member.playerId);
+      return { ...member, appearances: stats?.appearances ?? 0, goals: stats?.goals ?? 0, assists: stats?.assists ?? 0, yellowCards: stats?.yellowCards ?? 0, redCards: stats?.redCards ?? 0 };
+    });
+    const topScorers = members
+      .filter((member: any) => member.goals > 0)
+      .sort((left: any, right: any) => right.goals - left.goals)
+      .slice(0, 3)
+      .map((member: any) => ({ playerId: member.playerId, playerName: member.name, goals: member.goals }));
     return {
       ...publicTeam,
-      ...buildTeamMatchSummary(id, matches),
-      topScorers: [...(team.members || [])]
-        .sort((left: any, right: any) => Number(right.goals || 0) - Number(left.goals || 0))
-        .slice(0, 3)
-        .map((member: any) => ({ playerId: member.playerId, playerName: member.name, goals: Number(member.goals || 0) })),
-      stats: {
-        ...team.stats,
-        goalsPerMatch: team.stats?.matchesPlayed
-          ? Number((team.stats.goalsFor / team.stats.matchesPlayed).toFixed(2))
-          : 0,
-      },
+      members,
+      ...buildTeamMatchSummary(id, competitionMatches),
+      topScorers,
+      stats: this.getComputedTeamStats(team, teams, matches, tournaments),
+    };
+  }
+
+  private matchesForTeamCompetition(team: any, matches: any[]) {
+    return team.competitionId
+      ? matches.filter((match) => match.tournamentId === team.competitionId)
+      : matches.filter((match) => !match.tournamentId);
+  }
+
+  private getComputedTeamStats(team: any, teams: any[], matches: any[], tournaments: any[]) {
+    const competition = tournaments.find((item) => item.id === team.competitionId)
+      ?? tournaments.find((item) => item.title?.toLowerCase().includes('championnat')
+        && item.participantTeamIds?.includes(team.id));
+    const standing = competition
+      ? buildTournamentStandings(competition, teams, matches).find((row) => row.teamId === team.id)
+      : undefined;
+    const playedMatches = this.matchesForTeamCompetition({ ...team, competitionId: competition?.id }, matches)
+      .filter((match) => match.status === 'FINISHED' && (match.homeTeam?.id === team.id || match.awayTeam?.id === team.id));
+    const goalsFor = standing?.goalsFor ?? 0;
+    const goalsAgainst = standing?.goalsAgainst ?? 0;
+    return {
+      matchesPlayed: standing?.played ?? 0,
+      wins: standing?.won ?? 0,
+      draws: standing?.drawn ?? 0,
+      losses: standing?.lost ?? 0,
+      goalsFor,
+      goalsAgainst,
+      goalsPerMatch: standing?.played ? Number((goalsFor / standing.played).toFixed(2)) : 0,
+      points: standing?.points ?? 0,
+      position: standing?.position ?? 0,
+      competitionId: competition?.id,
+      cleanSheets: playedMatches.filter((match) => (match.homeTeam.id === team.id ? match.awayTeam.score : match.homeTeam.score) === 0).length,
     };
   }
 

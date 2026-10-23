@@ -60,6 +60,7 @@ export interface TeamMemberSeed {
 
 export interface TeamSeed {
   id: string;
+  competitionId?: string;
   ownerId?: string;
   name: string;
   shortName: string;
@@ -101,7 +102,7 @@ export const SEED_USER = {
   id: 'usr_me',
   name: 'Alexandre Morel',
   email: 'alex.morel@footera.app',
-  phone: '06 12 34 56 78',
+  phone: '',
   city: 'Antananarivo / Paris',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80',
   activeRole: 'Joueur',
@@ -292,6 +293,7 @@ export const SEED_PLAYERS: PlayerSeed[] = [
 export const SEED_TEAMS: TeamSeed[] = [
   {
     id: 'team_betsileo',
+    competitionId: 'championnat_r2_2026',
     ownerId: 'usr_me',
     name: 'Betsileo FC',
     shortName: 'BFC',
@@ -364,6 +366,7 @@ export const SEED_TEAMS: TeamSeed[] = [
   },
   {
     id: 'team_analakely',
+    competitionId: 'championnat_r2_2026',
     name: 'AS Analakely',
     shortName: 'ASA',
     city: 'Antananarivo',
@@ -413,6 +416,7 @@ export const SEED_TEAMS: TeamSeed[] = [
   },
   {
     id: 'team_01',
+    competitionId: 'championnat_r2_2026',
     name: 'FC Étoile Belleville',
     shortName: 'FCEB',
     city: 'Paris 20e',
@@ -449,6 +453,7 @@ export const SEED_TEAMS: TeamSeed[] = [
   },
   {
     id: 'team_03',
+    competitionId: 'championnat_r2_2026',
     name: 'Sporting Club Parisien',
     shortName: 'SCP',
     city: 'Paris 15e',
@@ -527,6 +532,7 @@ export const SEED_CLUBS = [
 export const SEED_MATCHES = [
   {
     id: 'match_01',
+    tournamentId: 'championnat_r2_2026',
     homeTeam: {
       id: 'team_betsileo',
       name: 'Betsileo FC',
@@ -562,6 +568,7 @@ export const SEED_MATCHES = [
   },
   {
     id: 'match_02',
+    tournamentId: 'championnat_r2_2026',
     homeTeam: {
       id: 'team_01',
       name: 'FC Étoile Belleville',
@@ -584,6 +591,7 @@ export const SEED_MATCHES = [
   },
   {
     id: 'match_betsileo_next',
+    tournamentId: 'championnat_r2_2026',
     homeTeam: {
       id: 'team_betsileo',
       name: 'Betsileo FC',
@@ -609,6 +617,7 @@ export const SEED_MATCHES = [
   },
   {
     id: 'match_analakely_history',
+    tournamentId: 'championnat_r2_2026',
     homeTeam: {
       id: 'team_analakely',
       name: 'AS Analakely',
@@ -631,15 +640,34 @@ export const SEED_MATCHES = [
     city: 'Antananarivo',
     competition: 'Championnat R2 - 16e Journee',
     events: [
-      { minute: 14, type: 'goal', teamId: 'team_analakely', player: 'Mika Randrianasolo' },
+      { minute: 14, type: 'goal', teamId: 'team_analakely', playerId: 'ply_mika', player: 'Mika Randrianasolo' },
       { minute: 33, type: 'goal', teamId: 'team_01', player: 'Lucas Martin' },
-      { minute: 58, type: 'goal', teamId: 'team_analakely', player: 'Mika Randrianasolo', assist: 'Tiana Rakoto' },
+      { minute: 58, type: 'goal', teamId: 'team_analakely', playerId: 'ply_mika', player: 'Mika Randrianasolo', assistPlayerId: 'ply_tahina', assist: 'Tahina Rakotomalala' },
       { minute: 81, type: 'goal', teamId: 'team_analakely', player: 'Fara Andrianina' },
     ],
   },
 ];
 
 export const SEED_TOURNAMENTS = [
+  {
+    id: 'championnat_r2_2026',
+    title: 'Championnat R2 2026',
+    format: '11v11',
+    city: 'Antananarivo & Fianarantsoa',
+    venue: 'Stades régionaux',
+    startDate: '01 Septembre 2026',
+    endDate: '30 Juin 2027',
+    maxTeams: 16,
+    registeredTeams: 4,
+    participantTeamIds: ['team_betsileo', 'team_analakely', 'team_01', 'team_03'],
+    entryFee: 0,
+    prizePool: 0,
+    status: 'EN_COURS',
+    bannerUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1000&h=400&q=80',
+    organizer: 'Ligue régionale Footera',
+    standings: [],
+    fixtures: [],
+  },
   {
     id: 'tourn_01',
     title: 'Footera Grand Master Cup 2026',
@@ -656,10 +684,7 @@ export const SEED_TOURNAMENTS = [
     status: 'INSCRIPTIONS_OUVERTES',
     bannerUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1000&h=400&q=80',
     organizer: 'Ligue Footera Internationale',
-    standings: [
-      { position: 1, teamId: 'team_analakely', teamName: 'AS Analakely', logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=96&h=96&q=80', played: 3, won: 3, drawn: 0, lost: 0, goalsFor: 9, goalsAgainst: 2, goalDifference: 7, points: 9 },
-      { position: 2, teamId: 'team_betsileo', teamName: 'Betsileo FC', logoUrl: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80', played: 3, won: 2, drawn: 0, lost: 1, goalsFor: 6, goalsAgainst: 4, goalDifference: 2, points: 6 },
-    ],
+    standings: [],
     fixtures: [
       { round: '1/2 Finale', homeTeam: 'AS Analakely', awayTeam: 'Betsileo FC', date: '22 Nov', isFinished: false },
     ],
@@ -843,14 +868,6 @@ export const SEED_NOTIFICATIONS = [
     targetSection: 'recruitment',
     targetId: 'rec_01',
   },
-];
-
-export const SEED_LEAGUE_STANDINGS = [
-  { position: 1, teamId: 'team_analakely', teamName: 'AS Analakely', logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=96&h=96&q=80', played: 16, won: 11, drawn: 3, lost: 2, goalsFor: 35, goalsAgainst: 14, goalDifference: 21, points: 36, form: ['V', 'V', 'N', 'V', 'V'] },
-  { position: 2, teamId: 'team_01', teamName: 'FC Étoile Belleville', logoUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=96&h=96&q=80', played: 16, won: 10, drawn: 4, lost: 2, goalsFor: 34, goalsAgainst: 15, goalDifference: 19, points: 34, form: ['V', 'N', 'V', 'V', 'D'] },
-  { position: 3, teamId: 'team_03', teamName: 'Sporting Club Parisien', logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=96&h=96&q=80', played: 16, won: 9, drawn: 3, lost: 4, goalsFor: 31, goalsAgainst: 19, goalDifference: 12, points: 30, form: ['V', 'D', 'N', 'V', 'V'] },
-  { position: 4, teamId: 'team_betsileo', teamName: 'Betsileo FC (Mon Équipe)', logoUrl: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80', played: 16, won: 7, drawn: 4, lost: 5, goalsFor: 26, goalsAgainst: 21, goalDifference: 5, points: 25, form: ['D', 'D', 'N', 'V', 'D'] },
-  { position: 5, teamId: 'team_04', teamName: 'Red Star Académie B', logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=96&h=96&q=80', played: 16, won: 6, drawn: 2, lost: 8, goalsFor: 22, goalsAgainst: 27, goalDifference: -5, points: 20, form: ['D', 'V', 'D', 'D', 'N'] },
 ];
 
 export const SEED_ACTIVITY_FEED = [

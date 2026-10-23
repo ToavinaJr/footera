@@ -31,7 +31,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
     { label: 'Explorer', section: 'players', icon: Compass },
     { label: 'Matchs et compétitions', section: 'matches', icon: Trophy },
     { label: 'Tournois', section: 'tournaments', icon: Medal },
-    { label: 'Statistiques & Buteurs', section: 'stats', icon: BarChart3 },
+    { label: 'Stats & Buteurs', section: 'stats', icon: BarChart3 },
     { label: 'Terrains', section: 'pitches', icon: MapPin },
     { label: 'Marketplace', section: 'marketplace', icon: ShoppingBag },
     { label: 'Mercato & Recrutement', section: 'recruitment', icon: Briefcase },

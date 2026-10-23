@@ -22,7 +22,7 @@ export class AccountsService {
   }
 
   async updateProfile(partial: Record<string, unknown>) {
-    const allowedFields = new Set(['name', 'phone', 'city', 'avatarUrl']);
+    const allowedFields = new Set(['name', 'phone', 'city', 'avatarUrl', 'dateOfBirth']);
     if (!partial || typeof partial !== 'object' || Array.isArray(partial)) {
       throw new BadRequestException('Le profil doit être un objet JSON.');
     }
@@ -31,7 +31,28 @@ export class AccountsService {
       throw new BadRequestException('Le profil contient des champs non autorisés ou aucune donnée.');
     }
     for (const [field, value] of Object.entries(partial)) {
-      if (typeof value !== 'string' || !value.trim() || value.trim().length > 160) {
+      if (typeof value !== 'string') {
+        throw new BadRequestException(`${field} doit être une chaîne de caractères.`);
+      }
+      const normalized = value.trim();
+      if (field === 'phone') {
+        if (normalized.length > 32 || (normalized && !/^[+()\d.\-\s]{7,32}$/.test(normalized))) {
+          throw new BadRequestException('Le numéro de téléphone est invalide.');
+        }
+        continue;
+      }
+      if (field === 'dateOfBirth') {
+        if (normalized) {
+          const parsed = new Date(`${normalized}T00:00:00.000Z`);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized) || Number.isNaN(parsed.valueOf())
+            || parsed.toISOString().slice(0, 10) !== normalized
+            || normalized > new Date().toISOString().slice(0, 10)) {
+            throw new BadRequestException('La date de naissance est invalide.');
+          }
+        }
+        continue;
+      }
+      if (!normalized || normalized.length > 160) {
         throw new BadRequestException(`${field} doit contenir entre 1 et 160 caractères.`);
       }
     }
@@ -45,6 +66,11 @@ export class AccountsService {
       ...current,
       ...Object.fromEntries(Object.entries(partial).map(([key, value]) => [key, (value as string).trim()])),
     });
+    if (typeof partial.dateOfBirth === 'string') {
+      const players: any[] = await this.records.list('players');
+      const player = players.find((item) => item.userId === this.userId);
+      if (player) await this.records.save('players', player.id, { ...player, age: 0 });
+    }
     return this.withoutPasswordHash(updated);
   }
 

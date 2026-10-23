@@ -57,6 +57,10 @@ export const ProfileView: React.FC = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [positionOptions, setPositionOptions] = useState<string[]>([]);
   const [strongFootOptions, setStrongFootOptions] = useState<string[]>([]);
+  const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
+  const [contactPhone, setContactPhone] = useState(user?.phone ?? '');
+  const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth ?? '');
+  const [personalInfoError, setPersonalInfoError] = useState('');
 
   // Edit CV modal
   const [cvPosition, setCvPosition] = useState<Position>(user?.sportsCv.primaryPosition || '');
@@ -76,6 +80,11 @@ export const ProfileView: React.FC = () => {
       })
       .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les options du CV sportif.', 'error'));
   }, [showToast]);
+
+  useEffect(() => {
+    setContactPhone(user?.phone ?? '');
+    setDateOfBirth(user?.dateOfBirth ?? '');
+  }, [user?.phone, user?.dateOfBirth]);
 
   useEffect(() => {
     if (!profileId) return;
@@ -146,6 +155,27 @@ export const ProfileView: React.FC = () => {
 
   const closeEditCv = () => navigate('/profile', { replace: true });
 
+  const handleSavePersonalInfo = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const phone = contactPhone.trim();
+    if (phone && !/^[+()\d.\-\s]{7,32}$/.test(phone)) {
+      setPersonalInfoError('Saisissez un numéro de téléphone valide.');
+      return;
+    }
+    if (dateOfBirth) {
+      const parsed = new Date(`${dateOfBirth}T00:00:00.000Z`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) || Number.isNaN(parsed.valueOf())
+        || parsed.toISOString().slice(0, 10) !== dateOfBirth
+        || dateOfBirth > new Date().toISOString().slice(0, 10)) {
+        setPersonalInfoError('Saisissez une date de naissance valide.');
+        return;
+      }
+    }
+    setPersonalInfoError('');
+    const saved = await updateProfile({ phone, dateOfBirth });
+    if (saved) setIsEditInfoOpen(false);
+  };
+
   const handleCancelBooking = async (bookingId: string) => {
     try {
       const ok = await bookingsService.cancelBooking(bookingId);
@@ -199,7 +229,7 @@ export const ProfileView: React.FC = () => {
               purpose="avatar"
               label="Changer la photo"
               variant="avatar"
-              onUploaded={async (avatarUrl) => updateProfile({ avatarUrl })}
+              onUploaded={(avatarUrl) => { void updateProfile({ avatarUrl }); }}
             />}
           </div>
           <div className="space-y-1">
@@ -217,6 +247,20 @@ export const ProfileView: React.FC = () => {
                   <ExternalLink className="h-3.5 w-3.5" /> Voir le profil public
                 </button>
               )}
+              {isOwner && <button
+                type="button"
+                onClick={() => {
+                  setContactPhone(user!.phone ?? '');
+                  setDateOfBirth(user!.dateOfBirth ?? '');
+                  setPersonalInfoError('');
+                  setIsEditInfoOpen(true);
+                }}
+                aria-label="Modifier mes coordonnées et ma date de naissance"
+                title="Modifier mes coordonnées"
+                className="inline-flex min-h-9 items-center justify-center rounded-xl border border-pitch-line px-2.5 text-pitch-primary hover:bg-pitch-panel-hover"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </button>}
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span className="flex items-center gap-1">
@@ -228,14 +272,15 @@ export const ProfileView: React.FC = () => {
                 <Mail className="w-3.5 h-3.5 text-pitch-primary" />
                 {user!.email}
               </span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5 text-pitch-primary" />
-                {user!.phone}
-              </span></>}
+              {user!.phone?.trim() && <><span>·</span>
+                <span className="flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-pitch-primary" />
+                  {user!.phone}
+                </span>
+              </>}</>}
             </div>
             <p className="text-xs text-slate-600 pt-1">
-              {displayedPlayer?.primaryPosition} · {displayedPlayer?.age} ans · {displayedPlayer?.level}<br />
+              {displayedPlayer?.primaryPosition || 'Poste non renseigné'} · {displayedPlayer?.age ? `${displayedPlayer.age} ans` : 'Âge non renseigné'} · {displayedPlayer?.level || 'Niveau non renseigné'}<br />
               Équipe officielle : <strong className="text-pitch-ink">{displayedTeam || 'Sans équipe actuellement'}</strong>
             </p>
           </div>
@@ -332,7 +377,9 @@ export const ProfileView: React.FC = () => {
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
                 <span className="text-slate-400 block text-caption font-semibold">Expérience</span>
                 <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
-                  {isOwner ? user!.sportsCv.experienceYears : publicPlayer!.age} ans
+                  {isOwner
+                    ? `${user!.sportsCv.experienceYears} ans`
+                    : publicPlayer!.age ? `${publicPlayer!.age} ans` : 'Non renseigné'}
                 </strong>
               </div>
             </div>
@@ -452,6 +499,44 @@ export const ProfileView: React.FC = () => {
           )}
         </div>
       )}
+
+      {isEditInfoOpen && isOwner && <Modal
+        isOpen={isEditInfoOpen}
+        onClose={() => setIsEditInfoOpen(false)}
+        title="Mes informations personnelles"
+        subtitle="Votre date de naissance reste privée. Elle sert uniquement à calculer votre âge."
+        maxWidth="md"
+      >
+        <form onSubmit={handleSavePersonalInfo} className="space-y-4">
+          <label className="block text-xs font-bold text-slate-700">
+            Numéro de téléphone
+            <input
+              type="tel"
+              autoComplete="tel"
+              maxLength={32}
+              value={contactPhone}
+              onChange={(event) => setContactPhone(event.target.value)}
+              placeholder="Ex. +261 34 00 000 00"
+              className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
+            />
+          </label>
+          <label className="block text-xs font-bold text-slate-700">
+            Date de naissance
+            <input
+              type="date"
+              max={new Date().toISOString().slice(0, 10)}
+              value={dateOfBirth}
+              onChange={(event) => setDateOfBirth(event.target.value)}
+              className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
+            />
+          </label>
+          {personalInfoError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">{personalInfoError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setIsEditInfoOpen(false)} className="min-h-11 rounded-xl px-4 text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button>
+            <button type="submit" className="min-h-11 rounded-xl bg-pitch-action px-4 text-xs font-bold text-white hover:bg-pitch-action-hover">Enregistrer</button>
+          </div>
+        </form>
+      </Modal>}
 
       {/* Edit CV Modal */}
       {isEditCvOpen && (

@@ -97,7 +97,7 @@ export const Header: React.FC = () => {
                   : 'bg-[#f4f7f2] hover:bg-pitch-light text-pitch-ink border border-pitch-line'
               }`}
             >
-              <BarChart3 className="w-3.5 h-3.5 text-pitch-primary" />
+              <BarChart3 className={`w-3.5 h-3.5 ${activeSection === 'stats' ? 'text-white' : 'text-pitch-primary'}`} />
               <span>Stats & Buteurs</span>
             </button>
 

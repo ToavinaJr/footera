@@ -1070,7 +1070,7 @@ export const StatsView: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {selectedPlayerModal.age} ans · {selectedPlayerModal.strongFoot} · {selectedPlayerModal.teamName}
+                  {selectedPlayerModal.age ? `${selectedPlayerModal.age} ans` : 'Âge non renseigné'} · {selectedPlayerModal.strongFoot} · {selectedPlayerModal.teamName}
                 </p>
               </div>
             </div>

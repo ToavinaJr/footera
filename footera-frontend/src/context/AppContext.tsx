@@ -143,8 +143,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = await authService.updateProfile(partial);
       setUser(updated);
       showToast('Profil mis à jour avec succès');
+      return true;
     } catch (e: any) {
       showToast(e.message || 'Erreur lors de la mise à jour', 'error');
+      return false;
     }
   };
 

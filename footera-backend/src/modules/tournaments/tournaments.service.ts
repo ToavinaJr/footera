@@ -2,31 +2,33 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { randomUUID } from 'node:crypto';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
+import { buildTournamentStandings } from './tournament-standings.js';
 
 @Injectable()
 export class TournamentsService {
   constructor(private readonly records: RecordRepository, private readonly notifications: NotificationsService) {}
   async list() {
-    const tournaments: any[] = await this.records.list('tournaments');
-    return tournaments.map((tournament) => {
-      const participantTeamIds = tournament.participantTeamIds ?? tournament.standings?.map((row: any) => row.teamId) ?? [];
-      return {
-        ...tournament,
-        participantTeamIds,
-        registeredTeams: participantTeamIds.length,
-        remainingTeams: Math.max(0, Number(tournament.maxTeams || 0) - participantTeamIds.length),
-      };
-    });
+    const [tournaments, teams, matches]: [any[], any[], any[]] = await Promise.all([
+      this.records.list('tournaments'), this.records.list('teams'), this.records.list('matches'),
+    ]);
+    return tournaments.map((tournament) => this.withComputedStandings(tournament, teams, matches));
   }
   async getById(id: string) {
-    const tournament: any = await this.records.find('tournaments', id);
+    const [tournament, teams, matches]: [any, any[], any[]] = await Promise.all([
+      this.records.find('tournaments', id), this.records.list('teams'), this.records.list('matches'),
+    ]);
     if (!tournament) return null;
-    const participantTeamIds = tournament.participantTeamIds ?? tournament.standings?.map((row: any) => row.teamId) ?? [];
+    return this.withComputedStandings(tournament, teams, matches);
+  }
+
+  private withComputedStandings(tournament: any, teams: any[], matches: any[]) {
+    const participantTeamIds = tournament.participantTeamIds ?? [];
     return {
       ...tournament,
       participantTeamIds,
       registeredTeams: participantTeamIds.length,
       remainingTeams: Math.max(0, Number(tournament.maxTeams || 0) - participantTeamIds.length),
+      standings: buildTournamentStandings({ ...tournament, participantTeamIds }, teams, matches),
     };
   }
   async create(input: any) {

@@ -11,8 +11,8 @@ export class MatchesController {
   }
 
   @Get('standings')
-  getStandings() {
-    return this.matches.standings();
+  getStandings(@Query('tournamentId') tournamentId?: string) {
+    return this.matches.standings(tournamentId);
   }
 
   @Get(':id')

@@ -1,6 +1,6 @@
 import {
   SEED_ACTIVITY_FEED, SEED_APPLICATIONS, SEED_BOOKINGS, SEED_CLUBS,
-  SEED_LEAGUE_STANDINGS, SEED_MARKETPLACE, SEED_MATCHES,
+  SEED_MARKETPLACE, SEED_MATCHES,
   SEED_NOTIFICATIONS, SEED_PITCHES, SEED_PLAYERS, SEED_RECRUITMENT_ADS,
   SEED_TEAMS, SEED_TOURNAMENTS, SEED_USER, SEED_CATALOGS,
 } from './seeds.js';
@@ -30,7 +30,6 @@ const collections: Array<[RecordCollection, string, unknown[]]> = [
   ['applications', 'id', SEED_APPLICATIONS],
   ['marketplace', 'id', SEED_MARKETPLACE],
   ['notifications', 'id', SEED_NOTIFICATIONS],
-  ['standings', 'position', SEED_LEAGUE_STANDINGS],
   ['activity', 'id', SEED_ACTIVITY_FEED],
   ['catalogs', 'id', SEED_CATALOGS],
 ];
@@ -56,6 +55,22 @@ export async function seedDatabase(prisma: PrismaService, { reset = false } = {}
         }
         if (collection === 'teams' && payload.ownerId && !existing.payload.ownerId) {
           await delegate.update({ where: { id }, data: { payload: { ...existing.payload, ownerId: payload.ownerId } } });
+        }
+        if (collection === 'teams' && payload.competitionId && !existing.payload.competitionId) {
+          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, competitionId: payload.competitionId } } });
+        }
+        if (collection === 'matches' && payload.tournamentId && !existing.payload.tournamentId) {
+          const seededEvents = Array.isArray(payload.events) ? payload.events : [];
+          const storedEvents = Array.isArray(existing.payload.events) ? existing.payload.events : [];
+          const events = storedEvents.map((event: Record<string, any>, index: number) => {
+            const seededEvent = seededEvents[index];
+            if (!seededEvent || event.playerId || !seededEvent.playerId) return event;
+            return { ...event, playerId: seededEvent.playerId,
+              ...(seededEvent.assistPlayerId && !event.assistPlayerId ? { assistPlayerId: seededEvent.assistPlayerId } : {}),
+              ...(seededEvent.assist && !event.assist ? { assist: seededEvent.assist } : {}),
+            };
+          });
+          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, tournamentId: payload.tournamentId, events } } });
         }
         continue;
       }

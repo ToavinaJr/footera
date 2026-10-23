@@ -269,7 +269,7 @@ export const HomeView: React.FC = () => {
                     <div>
                       <h3 className="text-base font-extrabold text-pitch-ink"><EntityLink section="players" id={player.id}>{player.name}</EntityLink></h3>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {player.primaryPosition} · {player.age} ans
+                        {player.primaryPosition} · {player.age ? `${player.age} ans` : 'Âge non renseigné'}
                       </p>
                     </div>
 

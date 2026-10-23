@@ -19,7 +19,7 @@ export const INITIAL_USER_PROFILE: UserProfile = {
   id: 'usr_me',
   name: 'Alexandre Morel',
   email: 'alex.morel@footera.app',
-  phone: '06 12 34 56 78',
+  phone: '',
   city: 'Antananarivo / Paris',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80',
   activeRole: 'Joueur',

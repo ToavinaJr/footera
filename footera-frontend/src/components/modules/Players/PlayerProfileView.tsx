@@ -45,7 +45,7 @@ export const PlayerProfileView: React.FC = () => {
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-wider text-pitch-primary">Profil joueur</p>
           <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-pitch-ink md:text-3xl">{player.name}</h1>
-          <p className="mt-1 text-sm text-slate-500">{player.primaryPosition} · {player.age} ans · {player.city}</p>
+          <p className="mt-1 text-sm text-slate-500">{player.primaryPosition} · {player.age ? `${player.age} ans` : 'Âge non renseigné'} · {player.city}</p>
           <p className="mt-2 text-xs text-slate-600">{player.currentTeam ? `Équipe actuelle : ${player.currentTeam}` : 'Sans équipe actuellement'} · {player.level}</p>
         </div>
         {player.isAvailableForTransfer && <span className="rounded-full bg-[#ecfdf5] px-3 py-2 text-xs font-bold text-[#059669]">Disponible</span>}

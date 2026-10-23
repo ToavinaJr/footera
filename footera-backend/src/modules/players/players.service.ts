@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
+import { aggregatePlayerMatchStats } from './player-match-stats.js';
 
 @Injectable()
 export class PlayersService {
@@ -12,8 +13,25 @@ export class PlayersService {
   }
 
   async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
-    const players = await this.records.list<any>('players');
-    return players.filter((player) => {
+    const [players, matches, users, tournaments]: [any[], any[], any[], any[]] = await Promise.all([
+      this.records.list('players'), this.records.list('matches'), this.records.list('users'), this.records.list('tournaments'),
+    ]);
+    const matchStats = aggregatePlayerMatchStats(players, matches, undefined, tournaments);
+    const enrichedPlayers = players.map((player) => {
+      const stats = matchStats.get(player.id);
+      const user = users.find((record) => record.id === player.userId);
+      const age = user ? this.ageFromDateOfBirth(user.dateOfBirth) : player.age;
+      return {
+        ...player,
+        ...(Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
+        goals: stats?.goals ?? 0,
+        assists: stats?.assists ?? 0,
+        yellowCards: stats?.yellowCards ?? 0,
+        redCards: stats?.redCards ?? 0,
+        ...(stats ? { appearances: stats.appearances } : { appearances: 0 }),
+      };
+    });
+    return enrichedPlayers.filter((player) => {
       const query = filters.query?.toLowerCase();
       return (!query || `${player.name} ${player.city}`.toLowerCase().includes(query))
         && (!filters.position || filters.position === 'Toutes' || player.primaryPosition === filters.position || player.secondaryPosition === filters.position)
@@ -23,5 +41,17 @@ export class PlayersService {
     });
   }
 
-  getById(id: string) { return this.records.find<any>('players', id); }
+  async getById(id: string) {
+    const players = await this.list();
+    return players.find((player) => player.id === id) ?? null;
+  }
+
+  private ageFromDateOfBirth(value?: unknown): number | undefined {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+    const [year, month, day] = value.split('-').map(Number);
+    const now = new Date();
+    let age = now.getFullYear() - year;
+    if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1;
+    return age >= 0 ? age : undefined;
+  }
 }

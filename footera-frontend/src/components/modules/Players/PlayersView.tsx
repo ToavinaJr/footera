@@ -266,7 +266,7 @@ export const PlayersView: React.FC = () => {
                     <div>
                       <h2 className="text-xl font-extrabold text-pitch-ink tracking-tight">{player.name}</h2>
                       <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                        {player.primaryPosition} · {player.age} ans
+                        {player.primaryPosition} · {player.age ? `${player.age} ans` : 'Âge non renseigné'}
                       </p>
                     </div>
 
@@ -325,7 +325,7 @@ export const PlayersView: React.FC = () => {
           isOpen={!!profilePlayer}
           onClose={playerModal.close}
           title={profilePlayer.name}
-          subtitle={`${profilePlayer.primaryPosition} · ${profilePlayer.age} ans · ${profilePlayer.city}`}
+          subtitle={`${profilePlayer.primaryPosition} · ${profilePlayer.age ? `${profilePlayer.age} ans` : 'Âge non renseigné'} · ${profilePlayer.city}`}
           maxWidth="md"
         >
           <div className="space-y-5">

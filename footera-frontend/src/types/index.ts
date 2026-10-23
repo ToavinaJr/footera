@@ -25,7 +25,7 @@ export type UserRole =
 export interface Player {
   id: string;
   name: string;
-  age: number;
+  age?: number;
   city: string;
   avatarUrl: string;
   primaryPosition: Position;
@@ -91,6 +91,7 @@ export interface Team {
   coverUrl: string;
   category: 'Senior' | 'U19' | 'U17' | 'Vétérans' | 'Féminine';
   division: string;
+  competitionId?: string;
   coachName: string;
   membersCount: number;
   isRecruiting: boolean;
@@ -402,6 +403,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string;
+  dateOfBirth?: string;
   city: string;
   avatarUrl: string;
   activeRole: UserRole;
@@ -507,7 +509,7 @@ export interface PlayerStatsItem {
   teamLogo: string;
   position: Position;
   strongFoot: StrongFoot;
-  age: number;
+  age?: number;
   appearances: number;
   minutesPlayed: number;
   goals: number;

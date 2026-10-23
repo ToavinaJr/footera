@@ -21,7 +21,7 @@ export interface AppContextType {
   register: (input: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
-  updateProfile: (partial: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (partial: Partial<UserProfile>) => Promise<boolean>;
   updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<boolean>;
   toggleFavoriteTeam: (teamId: string) => Promise<boolean>;
   notifications: NotificationItem[];
