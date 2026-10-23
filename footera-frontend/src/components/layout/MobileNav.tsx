@@ -8,7 +8,7 @@ export const MobileNav: React.FC = () => {
 
   const tabs: { label: string; section: NavigationSection; icon: React.ElementType }[] = [
     { label: 'Accueil', section: 'home', icon: Home },
-    { label: 'Explorer', section: 'players', icon: Compass },
+    { label: 'Joueurs', section: 'players', icon: Compass },
     { label: 'Matchs', section: 'matches', icon: Trophy },
     { label: 'Profil', section: 'profile', icon: User },
   ];
