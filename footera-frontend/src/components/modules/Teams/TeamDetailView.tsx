@@ -88,7 +88,7 @@ export const TeamDetailView: React.FC = () => {
     return () => { active = false; };
   }, [teamId, showToast, competitionFilter, rosterSort]);
 
-  if (isLoading) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>;
+  if (isLoading && (!team || team.id !== teamId)) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>;
   if (!team) return <EmptyState icon={Trophy} title="Équipe introuvable" description="Cette équipe n’existe pas ou n’est plus disponible." actionLabel="Retour aux équipes" onAction={() => navigate('/teams')} />;
 
   return (

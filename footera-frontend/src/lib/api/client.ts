@@ -11,6 +11,13 @@ function isApiErrorBody(value: unknown): value is ApiErrorBody {
 }
 
 let refreshInFlight: Promise<boolean> | null = null;
+let sessionExpiredEventSent = false;
+
+function notifySessionExpired() {
+  if (sessionExpiredEventSent || typeof window === 'undefined') return;
+  sessionExpiredEventSent = true;
+  window.dispatchEvent(new Event('footera:session-expired'));
+}
 
 function refreshSession(): Promise<boolean> {
   if (!refreshInFlight) {
@@ -42,9 +49,14 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     });
 
     const authEndpoint = /^auth\/(login|register|logout|refresh)$/.test(endpoint.replace(/^\//, ''));
-    if (response.status === 401 && !authEndpoint && await refreshSession()) {
-      response = await fetch(url, { ...options, headers, credentials: 'include' });
+    if (response.status === 401 && !authEndpoint) {
+      if (await refreshSession()) {
+        response = await fetch(url, { ...options, headers, credentials: 'include' });
+      }
+      if (response.status === 401) notifySessionExpired();
     }
+
+    if (authEndpoint && response.ok) sessionExpiredEventSent = false;
 
     if (!response.ok) {
       let errorData: ApiErrorBody = {};

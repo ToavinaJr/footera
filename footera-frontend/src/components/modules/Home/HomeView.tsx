@@ -28,6 +28,7 @@ import { Match, RecruitmentAd, Pitch, Player, Team, LeagueStandingRow, ActivityF
 import { Badge, FormIndicator } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { EntityLink } from '../../common/EntityLink';
+import { AppApiError } from '../../../lib/api/errors';
 
 export const HomeView: React.FC = () => {
   const { navigateToResource, user, showToast } = useApp();
@@ -71,8 +72,10 @@ export const HomeView: React.FC = () => {
         setAllPlayers(players);
         setFeaturedPlayers(players.slice(0, 2));
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('Error loading home data:', e);
+        if (!(e instanceof AppApiError && e.statusCode === 401)) {
+          // eslint-disable-next-line no-console
+          console.error('Error loading home data:', e);
+        }
       } finally {
         setIsLoading(false);
       }

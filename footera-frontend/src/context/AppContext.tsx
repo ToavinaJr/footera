@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from './app-context';
 import type { AppContextType, ToastMessage } from './app-context';
 import type { NavigationSection } from './navigation';
+import { AppApiError } from '../lib/api/errors';
 
 const routeForSection = (section: NavigationSection) => {
   if (section === 'home') return '/';
@@ -44,7 +45,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       setUser(null);
       // eslint-disable-next-line no-console
-      if (!(typeof e === 'object' && e !== null && 'status' in e && e.status === 401)) console.error('Failed to load user profile:', e);
+      if (!(e instanceof AppApiError && e.statusCode === 401)) console.error('Failed to load user profile:', e);
     } finally {
       setIsLoadingUser(false);
     }
@@ -56,7 +57,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setNotifications(notifs);
     } catch (e) {
       // eslint-disable-next-line no-console
-      if (!(typeof e === 'object' && e !== null && 'status' in e && e.status === 401)) console.error('Failed to load notifications:', e);
+      if (!(e instanceof AppApiError && e.statusCode === 401)) console.error('Failed to load notifications:', e);
     }
   }, []);
 
@@ -90,6 +91,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     return () => unsubscribe();
   }, [fetchUserData, fetchNotifications]);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setNotifications([]);
+      setIsLoadingUser(false);
+    };
+    window.addEventListener('footera:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('footera:session-expired', handleSessionExpired);
+  }, []);
 
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = `toast_${Date.now()}_${Math.random()}`;

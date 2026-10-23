@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
 import { PlayersService } from '../modules/players/players.service.js';
 import { TeamsService } from '../modules/teams/teams.service.js';
+import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('players')
 export class PlayersController {
@@ -10,11 +11,13 @@ export class PlayersController {
   ) {}
 
   @Get('options')
+  @Public()
   options() {
     return this.players.options();
   }
 
   @Get()
+  @Public()
   list(
     @Query('q') query?: string,
     @Query('position') position?: string,
@@ -32,6 +35,7 @@ export class PlayersController {
   }
 
   @Get(':id')
+  @Public()
   async getById(@Param('id') id: string) {
     const player = await this.players.getById(id);
     if (!player) throw new NotFoundException('Joueur introuvable');

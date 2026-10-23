@@ -39,11 +39,12 @@ export const teamsService = {
     return apiClient<TeamDetail>(`teams/${encodeURIComponent(id)}/detail?${params.toString()}`);
   },
 
-  async getMyTeam(): Promise<Team | undefined> {
+  async getMyTeam(): Promise<Team | null> {
     if (IS_MOCK_MODE) {
-      return mockDelay(mockStorage.getMyTeam(), 120);
+      return mockDelay(mockStorage.getMyTeam() ?? null, 120);
     }
-    return apiClient<Team>('teams/my-team');
+    const response = await apiClient<{ team: Team | null }>('teams/my-team');
+    return response.team;
   },
 
   async listMyTeamInvitations(): Promise<TeamInvitation[]> {
