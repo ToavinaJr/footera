@@ -82,10 +82,10 @@ export class TeamsService {
     const teamCompetitionIds = new Set(competitions.map((competition) => competition.id));
     const teamCompetitionMatches = matches.filter((match) => match.tournamentId !== undefined && teamCompetitionIds.has(match.tournamentId));
     const primaryCompetitionMatches = this.matchesForTeamCompetition(team, matches);
-    const playerStats = aggregatePlayerMatchStats(synchronized.players, teamCompetitionMatches, undefined, competitions.length ? tournaments : []);
+    const playerStats = aggregatePlayerMatchStats(synchronized.players, teamCompetitionMatches, { teamId: id }, competitions.length ? tournaments : []);
     const statsByCompetition = new Map(competitions.map((competition) => [
       competition.id,
-      aggregatePlayerMatchStats(synchronized.players, teamCompetitionMatches, competition.id, tournaments),
+      aggregatePlayerMatchStats(synchronized.players, teamCompetitionMatches, { teamId: id, competitionId: competition.id }, tournaments),
     ]));
     const teamMembers: TeamMemberRecord[] = synchronized.team.members || [];
     const membersByPlayerId = new Map<string, EnrichedTeamMember>();

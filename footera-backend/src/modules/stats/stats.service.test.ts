@@ -32,4 +32,19 @@ describe('StatsService tournament leaderboards', () => {
     await expect(service.topScorers({ tournamentId: 'cup-1' })).resolves.toEqual([]);
     await expect(service.topAssisters({ tournamentId: 'cup-1' })).resolves.toEqual([]);
   });
+
+  it('filters player goals and cards by current team and competition', async () => {
+    const players = [{ id: 'player-1', name: 'A. Striker', currentTeamId: 'team-1', primaryPosition: 'Attaquant', goals: 1, yellowCards: 1 }];
+    const listPlayers = vi.fn().mockResolvedValue(players);
+    const service = new StatsService(
+      { list: listPlayers } as unknown as never,
+      { list: vi.fn().mockResolvedValue([{ id: 'team-1', name: 'Team One', logoUrl: '/team.png' }]) } as unknown as never,
+      { list: vi.fn().mockResolvedValue([]) } as unknown as never,
+    );
+
+    await expect(service.playerStats({ teamId: 'team-1', tournamentId: 'cup-1' })).resolves.toMatchObject([
+      { playerId: 'player-1', goals: 1, yellowCards: 1 },
+    ]);
+    expect(listPlayers).toHaveBeenCalledWith({ competitionId: 'cup-1' });
+  });
 });

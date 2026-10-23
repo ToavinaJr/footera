@@ -101,7 +101,7 @@ describe('seed reference integrity', () => {
     const stats = aggregatePlayerMatchStats(
       players as PlayerRecord[],
       SEED_MATCHES as unknown as MatchRecord[],
-      undefined,
+      {},
       SEED_TOURNAMENTS as TournamentRecord[],
     );
 
@@ -109,5 +109,37 @@ describe('seed reference integrity', () => {
     expect(stats.get('ply_tahina')).toEqual({ appearances: 1, goals: 1, assists: 1, yellowCards: 0, redCards: 0 });
     expect(stats.get('ply_malik')).toEqual({ appearances: 1, goals: 1, assists: 0, yellowCards: 0, redCards: 0 });
     expect(stats.get('ply_05')).toEqual({ appearances: 1, goals: 0, assists: 0, yellowCards: 1, redCards: 0 });
+  });
+
+  it('limits player contributions to their team matches and selected competition', () => {
+    const scopedPlayers: PlayerRecord[] = [
+      { id: 'player-1', name: 'Buteur', currentTeamId: 'team-1' },
+      { id: 'player-2', name: 'Adversaire', currentTeamId: 'team-2' },
+    ];
+    const scopedTournaments: TournamentRecord[] = [
+      { id: 'cup-1', participantTeamIds: ['team-1', 'team-2'] },
+      { id: 'league-1', participantTeamIds: ['team-1', 'team-2'] },
+    ];
+    const scopedMatches: MatchRecord[] = [
+      {
+        id: 'cup-match', tournamentId: 'cup-1', status: 'FINISHED',
+        homeTeam: { id: 'team-1', score: 1 }, awayTeam: { id: 'team-2', score: 1 },
+        events: [
+          { minute: 10, type: 'goal', teamId: 'team-1', playerId: 'player-1', player: 'Buteur' },
+          { minute: 20, type: 'yellow_card', teamId: 'team-1', playerId: 'player-1', player: 'Buteur' },
+          { minute: 30, type: 'goal', teamId: 'team-2', playerId: 'player-1', player: 'Buteur' },
+        ],
+      },
+      {
+        id: 'league-match', tournamentId: 'league-1', status: 'FINISHED',
+        homeTeam: { id: 'team-1', score: 1 }, awayTeam: { id: 'team-2', score: 0 },
+        events: [{ minute: 40, type: 'goal', teamId: 'team-1', playerId: 'player-1', player: 'Buteur' }],
+      },
+    ];
+
+    const stats = aggregatePlayerMatchStats(scopedPlayers, scopedMatches, { teamId: 'team-1', competitionId: 'cup-1' }, scopedTournaments);
+
+    expect(stats.get('player-1')).toEqual({ appearances: 1, goals: 1, assists: 0, yellowCards: 1, redCards: 0 });
+    expect(stats.has('player-2')).toBe(false);
   });
 });

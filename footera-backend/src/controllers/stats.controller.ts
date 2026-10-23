@@ -36,10 +36,11 @@ export class StatsController {
   @Public()
   getPlayerStats(
     @Query('teamId') teamId?: string,
+    @Query('tournamentId') tournamentId?: string,
     @Query('position') position?: string,
     @Query('searchQuery') searchQuery?: string,
   ) {
-    return this.stats.playerStats({ teamId, position, searchQuery });
+    return this.stats.playerStats({ teamId, tournamentId, position, searchQuery });
   }
 
   private parseLimit(value?: string): number | undefined {

@@ -102,6 +102,7 @@ export const StatsView: React.FC = () => {
           }),
           statsService.getPlayersStats({
             teamId: selectedTeamId,
+            tournamentId: selectedTournamentId,
             position: playerPositionFilter as import('../../../types').Position,
             searchQuery: playerSearchQuery,
           }),

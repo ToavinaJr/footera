@@ -167,8 +167,11 @@ export class StatsService {
       || right.goalsFor - left.goalsFor || left.teamName.localeCompare(right.teamName));
   }
 
-  async playerStats(filters: { teamId?: string; position?: string; searchQuery?: string } = {}) {
-    const [players, teams] = await Promise.all([this.playersService.list(), this.teamsService.list()]);
+  async playerStats(filters: { teamId?: string; tournamentId?: string; position?: string; searchQuery?: string } = {}) {
+    const [players, teams] = await Promise.all([
+      this.playersService.list({ competitionId: filters.tournamentId }),
+      this.teamsService.list(),
+    ]);
     let rows = players.map((player) => {
       const team = teams.find((item) => item.id === player.currentTeamId)
         || { id: player.currentTeamId || 'team_unknown', name: player.currentTeam || 'Club Libre', logoUrl: FALLBACK_LOGO };

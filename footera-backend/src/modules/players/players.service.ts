@@ -14,7 +14,7 @@ export class PlayersService {
     return { positions: options.playerPositions, levels: options.playerLevels };
   }
 
-  async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
+  async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean; competitionId?: string } = {}) {
     const [players, matches, users, tournaments, teams] = await Promise.all([
       this.records.list<PlayerRecord>('players'),
       this.records.list<MatchRecord>('matches'),
@@ -22,9 +22,15 @@ export class PlayersService {
       this.records.list<TournamentRecord>('tournaments'),
       this.records.list<TeamRecord>('teams'),
     ]);
-    const matchStats = aggregatePlayerMatchStats(players, matches, undefined, tournaments);
+    const matchStatsByTeam = new Map<string, ReturnType<typeof aggregatePlayerMatchStats>>();
+    for (const teamId of new Set(players.flatMap((player) => player.currentTeamId ? [player.currentTeamId] : []))) {
+      matchStatsByTeam.set(teamId, aggregatePlayerMatchStats(players, matches, {
+        competitionId: filters.competitionId,
+        teamId,
+      }, tournaments));
+    }
     const enrichedPlayers = players.map((player) => {
-      const stats = matchStats.get(player.id);
+      const stats = player.currentTeamId ? matchStatsByTeam.get(player.currentTeamId)?.get(player.id) : undefined;
       const user = users.find((record) => record.id === player.userId);
       const sportsCv = user?.sportsCv;
       const currentTeam = typeof sportsCv?.currentTeam === 'string' ? sportsCv.currentTeam : player.currentTeam;

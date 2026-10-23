@@ -8,13 +8,18 @@ export interface PlayerMatchStats {
 
 import type { MatchEventRecord, MatchRecord, PlayerRecord, TournamentRecord } from '../../database/domain-records.js';
 
-export function aggregatePlayerMatchStats(players: PlayerRecord[], matches: MatchRecord[], tournamentId?: string, tournaments: TournamentRecord[] = []) {
+export function aggregatePlayerMatchStats(
+  players: PlayerRecord[],
+  matches: MatchRecord[],
+  filters: { competitionId?: string; teamId?: string } = {},
+  tournaments: TournamentRecord[] = [],
+) {
   const totals = new Map<string, PlayerMatchStats>();
   const competitions = new Map(tournaments.map((tournament) => [tournament.id, new Set<string>(tournament.participantTeamIds ?? [])]));
   const finishedMatches = matches.filter((match) => match.status === 'FINISHED'
-    && typeof match.tournamentId === 'string'
-    && (!tournamentId || match.tournamentId === tournamentId)
-    && (!tournaments.length || (competitions.get(match.tournamentId)?.has(match.homeTeam?.id)
+    && (!filters.competitionId || match.tournamentId === filters.competitionId)
+    && (!filters.teamId || match.homeTeam?.id === filters.teamId || match.awayTeam?.id === filters.teamId)
+    && (!match.tournamentId || !tournaments.length || (competitions.get(match.tournamentId)?.has(match.homeTeam?.id)
       && competitions.get(match.tournamentId)?.has(match.awayTeam?.id))));
 
   const resolvePlayer = (event: MatchEventRecord, teamId: string, field: 'player' | 'assist', idField: 'playerId' | 'assistPlayerId') => {
@@ -30,6 +35,7 @@ export function aggregatePlayerMatchStats(players: PlayerRecord[], matches: Matc
     const participants = new Set<string>();
     for (const event of Array.isArray(match.events) ? match.events : []) {
       if (typeof event.teamId !== 'string'
+        || (filters.teamId && event.teamId !== filters.teamId)
         || (event.teamId !== match.homeTeam?.id && event.teamId !== match.awayTeam?.id)) continue;
       const scorer = resolvePlayer(event, event.teamId, 'player', 'playerId');
       if (scorer) {
@@ -51,6 +57,7 @@ export function aggregatePlayerMatchStats(players: PlayerRecord[], matches: Matc
       }
     }
     for (const lineup of match.lineups ?? []) {
+      if (filters.teamId && lineup.teamId !== filters.teamId) continue;
       if (lineup.teamId !== match.homeTeam?.id && lineup.teamId !== match.awayTeam?.id) continue;
       for (const playerId of lineup.playerIds) {
         const player = players.find((candidate) => candidate.id === playerId && candidate.currentTeamId === lineup.teamId);

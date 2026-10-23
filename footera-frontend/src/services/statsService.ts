@@ -33,9 +33,10 @@ export const statsService = {
     return apiClient<TeamStatsItem[]>(`stats/teams${query ? `?${query}` : ''}`);
   },
 
-  getPlayersStats(filters?: { teamId?: string; position?: Position | 'Tous'; searchQuery?: string }): Promise<PlayerStatsItem[]> {
+  getPlayersStats(filters?: { teamId?: string; tournamentId?: string; position?: Position | 'Tous'; searchQuery?: string }): Promise<PlayerStatsItem[]> {
     const query = buildQuery({
       teamId: filters?.teamId,
+      tournamentId: filters?.tournamentId,
       position: filters?.position,
       searchQuery: filters?.searchQuery,
     });
