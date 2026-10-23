@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -7,6 +7,7 @@ import type { ApplicationRecord, RecruitmentAdRecord } from '../../database/doma
 
 @Injectable()
 export class RecruitmentService {
+  private readonly logger = new Logger(RecruitmentService.name);
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService) {}
   async listAds(filters: { query?: string; position?: string; division?: string } = {}) {
     const ads = await this.records.list<RecruitmentAdRecord>('recruitmentAds');
@@ -34,7 +35,11 @@ export class RecruitmentService {
     };
     await this.records.create('applications', id, application);
     await this.records.save('recruitmentAds', adId, { ...ad, candidatesCount: Number(ad.candidatesCount || 0) + 1 });
-    await this.notifications.add({ title: 'Candidature transmise', message: `Votre candidature pour ${application.teamName} a été envoyée avec succès.`, type: 'recruitment', targetSection: 'recruitment', targetId: adId });
+    try {
+      await this.notifications.add({ title: 'Candidature transmise', message: `Votre candidature pour ${application.teamName} a été envoyée avec succès.`, type: 'recruitment', targetSection: 'recruitment', targetId: adId });
+    } catch (error: unknown) {
+      this.logger.warn(`Application ${id} was saved, but its notification could not be created: ${String(error)}`);
+    }
     return application;
   }
 }

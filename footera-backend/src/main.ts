@@ -31,6 +31,5 @@ async function bootstrap() {
     ? Number(process.env.PORT) || 3000
     : 3000;
   await app.listen(port, '0.0.0.0');
-  console.info(`Footera API listening on http://localhost:${port}/api/v1`);
 }
 await bootstrap();

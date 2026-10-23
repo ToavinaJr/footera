@@ -35,4 +35,21 @@ describe('RecruitmentService applications', () => {
     expect(application.userId).toBe('user-1');
     expect(records.create).toHaveBeenCalledWith('applications', application.id, application);
   });
+
+  it('keeps the application successful if its notification cannot be created', async () => {
+    const ad = { id: 'ad-1', positionSought: 'Gardien', teamName: 'FC Test', candidatesCount: 0 };
+    const records = {
+      find: vi.fn(async () => ad),
+      create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+    };
+    const accounts = { profile: vi.fn(async () => ({ id: 'user-1', name: 'Joueur' })) };
+    const notifications = { add: vi.fn(async () => { throw new Error('Notification indisponible'); }) };
+    const service = new RecruitmentService(records as unknown as never, accounts as unknown as never, notifications as unknown as never);
+
+    const application = await service.apply('ad-1', { message: 'Disponible', phone: '0340000000' });
+
+    expect(application.userId).toBe('user-1');
+    expect(records.create).toHaveBeenCalledWith('applications', application.id, application);
+  });
 });

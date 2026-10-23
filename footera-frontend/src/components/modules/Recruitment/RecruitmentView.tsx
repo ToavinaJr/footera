@@ -12,7 +12,7 @@ import { EntityLink } from '../../common/EntityLink';
 import { catalogsService } from '../../../services/catalogsService';
 
 export const RecruitmentView: React.FC = () => {
-  const { showToast, selectedResourceId } = useApp();
+  const { showToast, selectedResourceId, user } = useApp();
   const adModal = useRouteModal('/recruitment');
   const [activeTab, setActiveTab] = useState<'ads' | 'my-applications'>('ads');
   const [ads, setAds] = useState<RecruitmentAd[]>([]);
@@ -65,7 +65,7 @@ export const RecruitmentView: React.FC = () => {
     if (!activeAd || !applyMessage.trim() || !applicantPhone.trim()) return;
     setIsSubmitting(true);
     try {
-      await recruitmentService.apply(activeAd.id, {
+      const application = await recruitmentService.apply(activeAd.id, {
         message: applyMessage,
         phone: applicantPhone,
       });
@@ -73,11 +73,13 @@ export const RecruitmentView: React.FC = () => {
       setIsApplyModalOpen(false);
       setApplyMessage('');
       adModal.close();
-      const updatedApps = await recruitmentService.listMyApplications();
-      setMyApplications(updatedApps);
+      setMyApplications((current) => [application, ...current.filter((item) => item.id !== application.id)]);
+      setAds((current) => current.map((ad) => ad.id === activeAd.id
+        ? { ...ad, candidatesCount: ad.candidatesCount + 1 }
+        : ad));
       setActiveTab('my-applications');
-    } catch {
-      showToast('Erreur lors de la candidature', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Erreur lors de la candidature', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -193,7 +195,7 @@ export const RecruitmentView: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         adModal.openDetail(ad.id);
-                        setApplicantPhone('');
+                        setApplicantPhone(user?.phone || '');
                         setApplyMessage('');
                         setIsApplyModalOpen(true);
                       }}
@@ -244,7 +246,7 @@ export const RecruitmentView: React.FC = () => {
       )}
 
       {/* Ad Details Modal */}
-      {activeAd && (
+      {activeAd && !isApplyModalOpen && (
         <Modal
           isOpen={!!activeAd}
           onClose={adModal.close}
@@ -272,7 +274,7 @@ export const RecruitmentView: React.FC = () => {
 
             <button
               onClick={() => {
-                setApplicantPhone('');
+                setApplicantPhone(user?.phone || '');
                 setApplyMessage('');
                 setIsApplyModalOpen(true);
               }}
