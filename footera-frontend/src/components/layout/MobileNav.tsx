@@ -2,20 +2,22 @@ import React from 'react';
 import { Home, Compass, Trophy, User } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
+import { useTranslation } from '../../i18n';
 
 export const MobileNav: React.FC = () => {
   const { activeSection, setActiveSection } = useApp();
+  const { t } = useTranslation();
 
   const tabs: { label: string; section: NavigationSection; icon: React.ElementType }[] = [
-    { label: 'Accueil', section: 'home', icon: Home },
-    { label: 'Joueurs', section: 'players', icon: Compass },
-    { label: 'Matchs', section: 'matches', icon: Trophy },
-    { label: 'Profil', section: 'profile', icon: User },
+    { label: t('nav.home'), section: 'home', icon: Home },
+    { label: t('nav.players'), section: 'players', icon: Compass },
+    { label: t('nav.matches'), section: 'matches', icon: Trophy },
+    { label: t('nav.profileShort'), section: 'profile', icon: User },
   ];
 
   return (
     <nav
-      aria-label="Navigation mobile"
+      aria-label={t('nav.mobile')}
       className="header-glass lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle shadow-lg"
     >
       <div className="grid grid-cols-4 h-16 max-w-md mx-auto items-center">

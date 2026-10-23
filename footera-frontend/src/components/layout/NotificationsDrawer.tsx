@@ -2,6 +2,7 @@ import React from 'react';
 import { X, CheckCheck, Bell, ChevronRight } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
+import { useTranslation } from '../../i18n';
 
 interface NotificationsDrawerProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface NotificationsDrawerProps {
 }
 
 export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const {
     notifications,
     unreadNotificationsCount,
@@ -34,7 +36,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
             <div className="w-8 h-8 rounded-xl bg-pitch-light flex items-center justify-center text-pitch-primary">
               <Bell className="w-4 h-4" />
             </div>
-            <h2 className="text-base font-extrabold text-pitch-ink">Centre d&apos;alertes</h2>
+            <h2 className="text-base font-extrabold text-pitch-ink">{t('notifications.title')}</h2>
             {unreadNotificationsCount > 0 && (
               <span className="text-micro font-extrabold px-2 py-0.5 rounded-full bg-[#dc2626] text-white">
                 {unreadNotificationsCount}
@@ -45,16 +47,16 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
             {unreadNotificationsCount > 0 && (
               <button
                 onClick={markAllNotificationsRead}
-                title="Tout marquer comme lu"
+                title={t('notifications.markAll')}
                 className="p-1.5 text-xs text-pitch-primary hover:bg-pitch-light rounded-xl font-semibold transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <CheckCheck className="w-4 h-4" />
-                <span className="hidden sm:inline">Tout lire</span>
+                <span className="hidden sm:inline">{t('notifications.readAll')}</span>
               </button>
             )}
             <button
               onClick={onClose}
-              aria-label="Fermer le volet"
+              aria-label={t('notifications.close')}
               className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-800 hover:bg-pitch-light cursor-pointer"
             >
               <X className="w-5 h-5 stroke-[2.2]" />
@@ -65,7 +67,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
         <div className="flex-1 overflow-y-auto divide-y divide-pitch-separator p-3 space-y-1">
           {notifications.length === 0 ? (
             <div className="text-center py-12 text-slate-400 text-xs">
-              Aucune notification pour le moment.
+              {t('notifications.empty')}
             </div>
           ) : (
             notifications.map((notif) => (

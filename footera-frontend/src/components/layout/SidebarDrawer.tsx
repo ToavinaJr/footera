@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
+import { LanguageSwitcher, useTranslation } from '../../i18n';
 
 interface SidebarDrawerProps {
   isOpen: boolean;
@@ -22,18 +23,19 @@ interface SidebarDrawerProps {
 
 export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose }) => {
   const { activeSection, setActiveSection, user } = useApp();
+  const { t } = useTranslation();
 
   if (!isOpen) return null;
 
   const menuItems: { label: string; section: NavigationSection; icon: React.ElementType }[] = [
-    { label: 'Accueil', section: 'home', icon: Home },
-    { label: 'Joueurs', section: 'players', icon: Compass },
-    { label: 'Matchs et compétitions', section: 'matches', icon: Trophy },
-    { label: 'Tournois', section: 'tournaments', icon: Medal },
-    { label: 'Stats & Buteurs', section: 'stats', icon: BarChart3 },
-    { label: 'Terrains', section: 'pitches', icon: MapPin },
-    { label: 'Marketplace', section: 'marketplace', icon: ShoppingBag },
-    { label: 'Mercato', section: 'recruitment', icon: Briefcase },
+    { label: t('nav.home'), section: 'home', icon: Home },
+    { label: t('nav.players'), section: 'players', icon: Compass },
+    { label: t('nav.teamsMatches'), section: 'matches', icon: Trophy },
+    { label: t('nav.tournaments'), section: 'tournaments', icon: Medal },
+    { label: t('nav.stats'), section: 'stats', icon: BarChart3 },
+    { label: t('nav.pitches'), section: 'pitches', icon: MapPin },
+    { label: t('nav.marketplace'), section: 'marketplace', icon: ShoppingBag },
+    { label: t('nav.recruitment'), section: 'recruitment', icon: Briefcase },
   ];
 
   return (
@@ -63,7 +65,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
             </div>
             <button
               onClick={onClose}
-              aria-label="Fermer le menu"
+              aria-label={t('nav.closeMenu')}
               className="min-h-11 min-w-11 flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-[#124227] transition-colors"
             >
               <X className="w-5 h-5" />
@@ -71,7 +73,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
           </div>
 
           {/* Navigation Items */}
-          <nav aria-label="Menu latéral Footera" className="mt-6 space-y-1.5">
+          <nav aria-label={t('nav.sidebar')} className="mt-6 space-y-1.5">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -100,7 +102,8 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
         </div>
 
         {/* User shortcut at the bottom */}
-        <div className="pt-4 border-t border-[#144f2f] flex items-center justify-between">
+        <div className="pt-4 border-t border-[#144f2f] flex flex-col gap-3">
+          <LanguageSwitcher />
           <button
             onClick={() => {
               setActiveSection('profile');

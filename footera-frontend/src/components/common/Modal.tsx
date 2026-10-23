@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 
 interface ModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = 'lg',
   overlayClassName = 'bg-black/60 backdrop-blur-xs',
 }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -61,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            aria-label="Fermer la boîte de dialogue"
+            aria-label={t('common.closeDialog')}
             className="min-h-11 min-w-11 -mr-2 -mt-2 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-800 hover:bg-pitch-light transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 stroke-[2.2]" />

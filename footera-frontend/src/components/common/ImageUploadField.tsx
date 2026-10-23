@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import { Camera, ImagePlus, LoaderCircle } from 'lucide-react';
 import { ImageUploadPurpose, uploadImage } from '../../services/imageUploadService';
+import { useTranslation } from '../../i18n';
 
 interface ImageUploadFieldProps {
   purpose: ImageUploadPurpose;
@@ -12,6 +13,7 @@ interface ImageUploadFieldProps {
 }
 
 export function ImageUploadField({ purpose, label, onUploaded, disabled = false, disabledHint, variant = 'default' }: ImageUploadFieldProps) {
+  const { t } = useTranslation();
   const inputId = useId();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +28,7 @@ export function ImageUploadField({ purpose, label, onUploaded, disabled = false,
       const url = await uploadImage(file, purpose);
       await onUploaded(url);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Échec de l’envoi de l’image.');
+      setError(uploadError instanceof Error ? uploadError.message : t('upload.imageError'));
     } finally {
       setIsUploading(false);
     }
@@ -41,7 +43,7 @@ export function ImageUploadField({ purpose, label, onUploaded, disabled = false,
           className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-pitch-action text-white shadow-md transition-colors ${disabled || isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-pitch-action-hover'} focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-pitch-primary`}
         >
           {isUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-          <span className="sr-only">{isUploading ? 'Envoi de la photo en cours' : label}</span>
+          <span className="sr-only">{isUploading ? t('upload.photoInProgress') : label}</span>
           <input
             id={inputId}
             type="file"
@@ -65,7 +67,7 @@ export function ImageUploadField({ purpose, label, onUploaded, disabled = false,
         className={`inline-flex min-h-10 items-center gap-2 rounded-xl border border-pitch-line bg-white px-3 py-2 text-xs font-bold text-pitch-primary ${disabled || isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-pitch-panel'}`}
       >
         <ImagePlus className="h-4 w-4" />
-        {isUploading ? 'Envoi en cours…' : label}
+        {isUploading ? t('upload.inProgress') : label}
         <input
           id={inputId}
           type="file"
@@ -76,7 +78,7 @@ export function ImageUploadField({ purpose, label, onUploaded, disabled = false,
           aria-label={label}
         />
       </label>
-      <p className="text-caption text-slate-500">PNG, JPEG ou WebP · 5 Mo max</p>
+      <p className="text-caption text-slate-500">{t('upload.formats')}</p>
       {disabled && disabledHint && <p className="text-caption text-slate-500">{disabledHint}</p>}
       {error && <p className="text-xs text-rose-700" role="alert">{error}</p>}
     </div>

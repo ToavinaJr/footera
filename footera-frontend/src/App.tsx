@@ -7,6 +7,7 @@ import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
 import { ToastContainer } from './components/common/Toast';
 import { AuthView } from './components/modules/Auth/AuthView';
+import { LanguageProvider, useTranslation } from './i18n';
 
 const HomeView = lazy(() => import('./components/modules/Home/HomeView').then((module) => ({ default: module.HomeView })));
 const PlayersView = lazy(() => import('./components/modules/Players/PlayersView').then((module) => ({ default: module.PlayersView })));
@@ -28,13 +29,14 @@ const LegacyPlayerRedirect: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const { setActiveSection, user, isLoadingUser, login, register } = useApp();
+  const { t } = useTranslation();
   const location = useLocation();
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
-  if (isLoadingUser) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement de votre session…</div>;
+  if (isLoadingUser) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">{t('common.loadingSession')}</div>;
   if (!user) {
     return (
-      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement...</div>}>
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">{t('common.loading')}</div>}>
         <Routes>
           <Route path="/" element={<LandingView />} />
           <Route path="/auth" element={<AuthView onLogin={login} onRegister={register} />} />
@@ -54,7 +56,7 @@ const AppContent: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
-        <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Chargement de la page…</div>}>
+        <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">{t('common.loading')}</div>}>
         <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/auth" element={<Navigate to="/home" replace />} />
@@ -136,9 +138,11 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <LanguageProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

@@ -11,6 +11,7 @@ import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 import { ImageUploadField } from '../../common/ImageUploadField';
 import { catalogsService } from '../../../services/catalogsService';
+import { useTranslation } from '../../../i18n';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {
@@ -36,6 +37,7 @@ const MARKETPLACE_IMAGE_PRESETS = [
 ];
 
 export const MarketplaceView: React.FC = () => {
+  const { t } = useTranslation();
   const { showToast, user } = useApp();
   const itemModal = useRouteModal('/marketplace');
   const [items, setItems] = useState<MarketplaceListing[]>([]);
@@ -67,7 +69,7 @@ export const MarketplaceView: React.FC = () => {
         setConditions(options.marketplaceConditions);
         setBrands(options.marketplaceBrands);
       })
-      .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les options Marketplace.', 'error'));
+      .catch((err: unknown) => showToast(err instanceof Error ? err.message : t('common.loading'), 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export const MarketplaceView: React.FC = () => {
         });
         setItems(data);
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des équipements', 'error');
+        showToast(err instanceof Error ? err.message : t('market.createError'), 'error');
       } finally {
         setIsLoading(false);
       }
@@ -95,13 +97,13 @@ export const MarketplaceView: React.FC = () => {
   const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formPrice || !formCategory || !formCondition || !formBrand || !formCity.trim() || !formImageUrl) {
-      showToast('Veuillez renseigner tous les champs obligatoires et choisir une photo.', 'info');
+      showToast(t('market.required'), 'info');
       return;
     }
 
     const priceNum = parseFloat(formPrice);
     if (!Number.isFinite(priceNum) || priceNum <= 0) {
-      showToast('Veuillez indiquer un prix valide supérieur à 0.', 'info');
+      showToast(t('market.invalidPrice'), 'info');
       return;
     }
 
@@ -119,7 +121,7 @@ export const MarketplaceView: React.FC = () => {
       };
 
       const created = await marketplaceService.createListing(input);
-      showToast('Votre article a été publié dans la Marketplace avec succès !', 'success');
+      showToast(t('market.created'), 'success');
       // Reset fields
       resetCreateListingForm();
 
@@ -128,7 +130,7 @@ export const MarketplaceView: React.FC = () => {
       setItems(updated);
       itemModal.openDetail(created.id, true);
     } catch {
-      showToast('Erreur lors de la mise en vente', 'error');
+      showToast(t('market.createError'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -155,10 +157,10 @@ export const MarketplaceView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
-            Marketplace Football
+            {t('market.title')}
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Achetez et vendez vos crampons, maillots collectors, ballons et équipements de match.
+            {t('market.subtitle')}
           </p>
         </div>
 
@@ -167,7 +169,7 @@ export const MarketplaceView: React.FC = () => {
           className="px-5 py-2.5 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Vendre un équipement</span>
+          <span>{t('market.sell')}</span>
         </button>
       </div>
 
@@ -179,7 +181,7 @@ export const MarketplaceView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher par modèle, marque, ville..."
+            placeholder={t('market.search')}
             className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-pitch-ink placeholder-slate-400 focus:border-pitch-primary focus:bg-white outline-hidden"
           />
         </div>
@@ -188,12 +190,12 @@ export const MarketplaceView: React.FC = () => {
           <SelectField
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            aria-label="Filtrer par catégorie d'équipement"
+            aria-label={t('market.filter')}
             className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
           >
             {categories.map((c) => (
               <option key={c} value={c}>
-                {c === 'Toutes' ? 'Toutes les catégories' : c}
+                {c === 'Toutes' ? t('market.allCategories') : c}
               </option>
             ))}
           </SelectField>
@@ -211,8 +213,8 @@ export const MarketplaceView: React.FC = () => {
       ) : items.length === 0 ? (
         <EmptyState
           icon={ShoppingBag}
-          title="Aucun équipement en vente"
-          description="Soyez le premier à publier une annonce dans cette catégorie !"
+          title={t('market.emptyTitle')}
+          description={t('market.emptyDescription')}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -323,12 +325,12 @@ export const MarketplaceView: React.FC = () => {
 
             <button
               onClick={() => {
-                showToast(`Message transmis à ${selectedItem.sellerName} !`, 'success');
+                showToast(t('market.contactSent', { seller: selectedItem.sellerName }), 'success');
                 itemModal.close();
               }}
               className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center cursor-pointer shadow-xs transition-colors"
             >
-              <span>Contacter le vendeur pour convenir d&apos;une remise</span>
+              <span>{t('market.contact')}</span>
             </button>
           </div>
         </Modal>
@@ -339,28 +341,28 @@ export const MarketplaceView: React.FC = () => {
         <Modal
           isOpen={itemModal.mode === 'create'}
           onClose={itemModal.close}
-          title="Vendre un équipement"
-          subtitle="Publiez votre article dans la marketplace de la communauté"
+          title={t('market.sell')}
+          subtitle={t('market.createSubtitle')}
           maxWidth="lg"
         >
           <form onSubmit={handleCreateListing} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Titre de l&apos;article *
+                {t('market.itemTitle')}
               </label>
               <input
                 type="text"
                 required
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Ex: Crampons Nike Phantom GX Elite Taille 43"
+                placeholder={t('market.itemExample')}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Catégorie *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.category')}</label>
                 <SelectField
                   value={formCategory}
                   onChange={(e) => handleCategoryChange(e.target.value as MarketplaceListing['category'])}
@@ -368,13 +370,13 @@ export const MarketplaceView: React.FC = () => {
                   disabled={categories.length === 0}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="" disabled>Choisir une catégorie</option>
+                  <option value="" disabled>{t('market.chooseCategory')}</option>
                   {categories.map((category) => <option key={category} value={category}>{category}</option>)}
                 </SelectField>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Prix de vente (€) *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.price')}</label>
                 <input
                   type="number"
                   required
@@ -390,7 +392,7 @@ export const MarketplaceView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">État de l&apos;article *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.condition')}</label>
                 <SelectField
                   value={formCondition}
                   onChange={(e) => setFormCondition(e.target.value)}
@@ -398,26 +400,26 @@ export const MarketplaceView: React.FC = () => {
                   disabled={!conditions.length}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="" disabled>Choisir un état</option>
+                  <option value="" disabled>{t('market.chooseCondition')}</option>
                   {conditions.map((condition) => <option key={condition} value={condition}>{condition}</option>)}
                 </SelectField>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Ville de remise *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.city')}</label>
                 <input
                   type="text"
                   required
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
-                  placeholder="Ex: Fianarantsoa ou Antananarivo"
+                  placeholder={t('market.cityExample')}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Marque *</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.brand')}</label>
               <SelectField
                 required
                 value={formBrand}
@@ -425,20 +427,20 @@ export const MarketplaceView: React.FC = () => {
                 disabled={!brands.length}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               >
-                <option value="" disabled>Choisir une marque</option>
+                <option value="" disabled>{t('market.chooseBrand')}</option>
                 {brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
               </SelectField>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Description & Détails de l&apos;article
+                {t('market.description')}
               </label>
               <textarea
                 rows={3}
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Précisez la pointure/taille, la couleur, les crampons (SG/FG/AG) et l'historique d'utilisation..."
+                placeholder={t('market.descriptionHint')}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
@@ -446,9 +448,9 @@ export const MarketplaceView: React.FC = () => {
             {/* Photo Preset Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Photo illustrative de l&apos;article *
+                {t('market.photo')}
               </label>
-              <ImageUploadField purpose="marketplace" label="Importer une photo" onUploaded={setFormImageUrl} disabled={isSubmitting || !user?.roles?.includes('Vendeur')} disabledHint="Le rôle Vendeur doit être attribué à votre compte pour importer l’image." />
+              <ImageUploadField purpose="marketplace" label={t('market.importPhoto')} onUploaded={setFormImageUrl} disabled={isSubmitting || !user?.roles?.includes('Vendeur')} disabledHint={t('market.sellerRoleRequired')} />
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {MARKETPLACE_IMAGE_PRESETS.map((preset) => {
                   const isSelected = formImageUrl === preset.url;
@@ -484,14 +486,14 @@ export const MarketplaceView: React.FC = () => {
                 onClick={itemModal.close}
                 className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
               >
-                Annuler
+                {t('market.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isSubmitting ? 'Publication...' : 'Publier mon annonce'}
+                {isSubmitting ? t('market.publishing') : t('market.publish')}
               </button>
             </div>
           </form>

@@ -1,9 +1,11 @@
 import React from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 import { useApp } from '../../context/useApp';
+import { useTranslation } from '../../i18n';
 
 export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useApp();
+  const { t } = useTranslation();
 
   if (toasts.length === 0) return null;
 
@@ -23,7 +25,7 @@ export const ToastContainer: React.FC = () => {
           <div className="flex-1 text-xs md:text-sm font-medium">{toast.message}</div>
           <button
             onClick={() => removeToast(toast.id)}
-            aria-label="Fermer la notification"
+            aria-label={t('common.closeNotification')}
             className="text-slate-400 hover:text-white p-1"
           >
             <X className="w-4 h-4" />
