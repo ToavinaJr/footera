@@ -17,6 +17,9 @@ export interface AppContextType {
   navigateToResource: (section: NavigationSection, resourceId?: string) => void;
   user: UserProfile | null;
   isLoadingUser: boolean;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  register: (input: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
+  logout: () => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
   updateProfile: (partial: Partial<UserProfile>) => Promise<void>;
   updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<boolean>;

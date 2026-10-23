@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AccountsModule } from './modules/accounts/accounts.module.js';
+import { AuthenticationModule } from './modules/auth/authentication.module.js';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtAuthGuard } from './modules/auth/jwt-auth.guard.js';
+import { UserContextInterceptor } from './modules/auth/user-context.interceptor.js';
 import { BookingsModule } from './modules/bookings/bookings.module.js';
 import { ClubsModule } from './modules/clubs/clubs.module.js';
 import { CatalogsModule } from './modules/catalogs/catalogs.module.js';
@@ -21,6 +25,7 @@ import { UploadsModule } from './modules/uploads/uploads.module.js';
     DatabaseModule,
     CatalogsModule,
     AccountsModule,
+    AuthenticationModule,
     PlayersModule,
     TeamsModule,
     ClubsModule,
@@ -34,6 +39,6 @@ import { UploadsModule } from './modules/uploads/uploads.module.js';
     UploadsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_INTERCEPTOR, useClass: UserContextInterceptor }],
 })
 export class AppModule {}

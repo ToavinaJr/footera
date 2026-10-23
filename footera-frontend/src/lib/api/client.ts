@@ -1,6 +1,22 @@
 import { API_BASE_URL } from '../../config/dataMode';
 import { AppApiError } from './errors';
 
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshInFlight) {
+    const refreshUrl = `${API_BASE_URL.replace(/\/$/, '')}/auth/refresh`;
+    refreshInFlight = fetch(refreshUrl, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((response) => response.ok).catch(() => false).finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
 export async function apiClient<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
   
@@ -9,16 +25,17 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     headers.set('Content-Type', 'application/json');
   }
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('footera_auth_token') : null;
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
   try {
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include',
     });
+
+    const authEndpoint = /^auth\/(login|register|logout|refresh)$/.test(endpoint.replace(/^\//, ''));
+    if (response.status === 401 && !authEndpoint && await refreshSession()) {
+      response = await fetch(url, { ...options, headers, credentials: 'include' });
+    }
 
     if (!response.ok) {
       let errorData: any = {};

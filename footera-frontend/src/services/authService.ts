@@ -11,6 +11,22 @@ export const authService = {
     return apiClient<UserProfile>('auth/me');
   },
 
+  async login(credentials: { email: string; password: string }): Promise<UserProfile> {
+    if (IS_MOCK_MODE) return mockDelay(mockStorage.getProfile(), 100);
+    const result = await apiClient<{ user: UserProfile }>('auth/login', { method: 'POST', body: JSON.stringify(credentials) });
+    return result.user;
+  },
+
+  async register(input: { name: string; email: string; password: string; role: UserRole }): Promise<UserProfile> {
+    if (IS_MOCK_MODE) return mockDelay(mockStorage.getProfile(), 100);
+    const result = await apiClient<{ user: UserProfile }>('auth/register', { method: 'POST', body: JSON.stringify(input) });
+    return result.user;
+  },
+
+  async logout(): Promise<void> {
+    if (!IS_MOCK_MODE) await apiClient<{ success: boolean }>('auth/logout', { method: 'POST' });
+  },
+
   async updateProfile(partial: Partial<UserProfile>): Promise<UserProfile> {
     if (IS_MOCK_MODE) {
       const updated = mockStorage.updateProfile(partial);
@@ -57,5 +73,6 @@ export const authService = {
       mockStorage.resetAllData();
       return mockDelay(undefined, 200);
     }
+    await apiClient<{ success: boolean }>('auth/reset-demo', { method: 'POST' });
   },
 };

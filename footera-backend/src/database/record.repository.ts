@@ -3,6 +3,8 @@ import { PrismaService } from './prisma.service.js';
 
 export const RECORD_MODELS = {
   users: 'userRecord',
+  authCredentials: 'authCredentialRecord',
+  authSessions: 'authSessionRecord',
   players: 'playerRecord',
   teams: 'teamRecord',
   clubs: 'clubRecord',
@@ -52,6 +54,20 @@ export class RecordRepository {
   async create<T>(collection: RecordCollection, id: string, payload: T): Promise<T> {
     const record = await this.delegate(collection).create({ data: { id, payload: payload as any } });
     return record.payload as T;
+  }
+
+  async createUserAccount<T>(id: string, email: string, user: T, credential: { userId: string; passwordHash: string }, player?: unknown): Promise<void> {
+    const operations = [
+      (this.prisma as any).userRecord.create({ data: { id, payload: user as any } }),
+      (this.prisma as any).authCredentialRecord.create({ data: { id: email, payload: credential as any } }),
+    ];
+    if (player) operations.push((this.prisma as any).playerRecord.create({ data: { id, payload: player as any } }));
+    await this.prisma.$transaction(operations as any);
+  }
+
+  async consumeAuthSession(id: string): Promise<boolean> {
+    const result = await (this.prisma as any).authSessionRecord.deleteMany({ where: { id } });
+    return result.count === 1;
   }
 
   async deleteAll(collection: RecordCollection): Promise<void> {

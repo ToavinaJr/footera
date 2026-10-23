@@ -6,6 +6,7 @@ import { Header } from './components/layout/Header';
 import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
 import { ToastContainer } from './components/common/Toast';
+import { AuthView } from './components/modules/Auth/AuthView';
 
 const HomeView = lazy(() => import('./components/modules/Home/HomeView').then((module) => ({ default: module.HomeView })));
 const PlayersView = lazy(() => import('./components/modules/Players/PlayersView').then((module) => ({ default: module.PlayersView })));
@@ -25,9 +26,12 @@ const LegacyPlayerRedirect: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { setActiveSection } = useApp();
+  const { setActiveSection, user, isLoadingUser, login, register } = useApp();
   const location = useLocation();
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
+
+  if (isLoadingUser) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement de votre session…</div>;
+  if (!user) return <AuthView onLogin={login} onRegister={register} />;
 
   return (
     <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-pitch-ink">

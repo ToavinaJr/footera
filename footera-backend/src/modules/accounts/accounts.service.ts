@@ -1,19 +1,28 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateSportsCvPayload } from './sports-cv.validation.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
-
-const USER_ID = 'usr_me';
+import { UserContext } from '../auth/user-context.js';
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly records: RecordRepository, private readonly catalogs: CatalogsService) {}
+  constructor(private readonly records: RecordRepository, private readonly catalogs: CatalogsService, private readonly userContext: UserContext) {}
 
-  profile() { return this.records.find('users', USER_ID); }
+  private get userId() {
+    if (!this.userContext.userId) throw new UnauthorizedException('Contexte utilisateur absent.');
+    return this.userContext.userId;
+  }
+
+  async profile() {
+    const user: any = await this.records.find('users', this.userId);
+    if (!user) return null;
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return safeUser;
+  }
 
   async updateProfile(partial: Record<string, unknown>) {
-    const allowedFields = new Set(['name', 'email', 'phone', 'city', 'avatarUrl']);
+    const allowedFields = new Set(['name', 'phone', 'city', 'avatarUrl']);
     if (!partial || typeof partial !== 'object' || Array.isArray(partial)) {
       throw new BadRequestException('Le profil doit être un objet JSON.');
     }
@@ -30,11 +39,13 @@ export class AccountsService {
       throw new BadRequestException('Adresse e-mail invalide.');
     }
     if (partial.avatarUrl !== undefined) partial.avatarUrl = validateImageUrl(partial.avatarUrl, 'Photo de profil');
-    const current = await this.profile();
-    return current ? this.records.save('users', USER_ID, {
+    const current: any = await this.records.find('users', this.userId);
+    if (!current) return null;
+    const updated = await this.records.save('users', this.userId, {
       ...current,
       ...Object.fromEntries(Object.entries(partial).map(([key, value]) => [key, (value as string).trim()])),
-    }) : null;
+    });
+    return this.withoutPasswordHash(updated);
   }
 
   async updateSportsCv(input: unknown) {
@@ -43,27 +54,35 @@ export class AccountsService {
       this.catalogs.values('strongFeet'),
     ]);
     const partial = validateSportsCvPayload(input, positions, strongFeet);
-    const current: any = await this.profile();
+    const current: any = await this.records.find('users', this.userId);
     if (!current) return null;
-    return this.records.save('users', USER_ID, { ...current, sportsCv: { ...current.sportsCv, ...partial } });
+    const updated = await this.records.save('users', this.userId, { ...current, sportsCv: { ...current.sportsCv, ...partial } });
+    return this.withoutPasswordHash(updated);
   }
 
   async setActiveRole(role: string) {
-    const current: any = await this.profile();
+    const current: any = await this.records.find('users', this.userId);
     if (!current?.roles?.includes(role)) throw new BadRequestException('Rôle non autorisé pour ce compte.');
-    return current ? this.records.save('users', USER_ID, { ...current, activeRole: role }) : null;
+    if (!current) return null;
+    const updated = await this.records.save('users', this.userId, { ...current, activeRole: role });
+    return this.withoutPasswordHash(updated);
   }
 
   private async toggleFavorite(field: 'favoriteTeamIds' | 'favoriteMatchIds', id: string) {
-    const current: any = await this.profile();
+    const current: any = await this.records.find('users', this.userId);
     if (!current) return false;
     const favorites: string[] = current[field] || [];
     const exists = favorites.includes(id);
     const updated = exists ? favorites.filter((favorite) => favorite !== id) : [...favorites, id];
-    await this.records.save('users', USER_ID, { ...current, [field]: updated });
+    await this.records.save('users', this.userId, { ...current, [field]: updated });
     return !exists;
   }
 
   toggleFavoriteTeam(id: string) { return this.toggleFavorite('favoriteTeamIds', id); }
   toggleFavoriteMatch(id: string) { return this.toggleFavorite('favoriteMatchIds', id); }
+
+  private withoutPasswordHash<T extends Record<string, unknown>>(user: T): Omit<T, 'passwordHash'> {
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return safeUser;
+  }
 }

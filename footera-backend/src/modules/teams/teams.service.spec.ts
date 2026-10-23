@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { TeamsService } from './teams.service.js';
 
 function makeService(existingInvitations: any[] = []) {
-  const team = { id: 'team-1', name: 'FC Test', city: 'Antananarivo', members: [] };
+  const team = { id: 'team-1', ownerId: 'usr_me', name: 'FC Test', city: 'Antananarivo', members: [] };
   const player = { id: 'player-1', name: 'Joueur Test' };
-  const user = { id: 'usr_me', name: 'Responsable' };
+  const user = { id: 'usr_me', name: 'Responsable', roles: ['Entraîneur'] };
   const records = {
     list: vi.fn(async (collection: string) => collection === 'teams' ? [team] : collection === 'matches' ? [] : existingInvitations),
     find: vi.fn(async (collection: string) => collection === 'players' ? player : user),

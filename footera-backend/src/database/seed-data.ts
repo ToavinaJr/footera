@@ -6,6 +6,16 @@ import {
 } from './seeds.js';
 import { PrismaService } from './prisma.service.js';
 import { RECORD_MODELS, RecordCollection } from './record.repository.js';
+import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
+
+function derivePasswordKey(password: string, salt: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scryptCallback(password, salt, 64, { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }, (error, key) => {
+      if (error) reject(error);
+      else resolve(key as Buffer);
+    });
+  });
+}
 
 const collections: Array<[RecordCollection, string, unknown[]]> = [
   ['users', 'id', [SEED_USER]],
@@ -41,6 +51,12 @@ export async function seedDatabase(prisma: PrismaService, { reset = false } = {}
         if (collection === 'notifications' && !existing.payload.createdAt) {
           await delegate.update({ where: { id }, data: { payload: { ...existing.payload, createdAt: new Date().toISOString() } } });
         }
+        if (collection === 'players' && payload.userId && !existing.payload.userId) {
+          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, userId: payload.userId } } });
+        }
+        if (collection === 'teams' && payload.ownerId && !existing.payload.ownerId) {
+          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, ownerId: payload.ownerId } } });
+        }
         continue;
       }
       const seedPayload = collection === 'notifications' && !payload.createdAt
@@ -48,5 +64,16 @@ export async function seedDatabase(prisma: PrismaService, { reset = false } = {}
         : payload;
       await delegate.create({ data: { id, payload: seedPayload } });
     }
+  }
+
+  const seedPassword = process.env.SEED_USER_PASSWORD;
+  if (seedPassword && !await (prisma as any).authCredentialRecord.findUnique({ where: { id: SEED_USER.email.toLowerCase() } })) {
+    if (seedPassword.length < 12) throw new Error('SEED_USER_PASSWORD must contain at least 12 characters.');
+    const salt = randomBytes(16);
+    const hash = await derivePasswordKey(seedPassword, salt);
+    const passwordHash = `scrypt$16384$8$1$${salt.toString('base64url')}$${hash.toString('base64url')}`;
+    await (prisma as any).authCredentialRecord.create({
+      data: { id: SEED_USER.email.toLowerCase(), payload: { userId: SEED_USER.id, passwordHash } },
+    });
   }
 }

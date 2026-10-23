@@ -1,19 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
+import { UserContext } from '../auth/user-context.js';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly records: RecordRepository) {}
+  constructor(private readonly records: RecordRepository, private readonly userContext: UserContext) {}
 
   async list() {
+    const userId = this.userContext.userId;
     const records: any[] = await this.records.list('notifications');
-    return records.sort((a, b) => String(b.createdAt || b.id).localeCompare(String(a.createdAt || a.id)));
+    return records.filter((notification) => !notification.recipientId || notification.recipientId === userId)
+      .sort((a, b) => String(b.createdAt || b.id).localeCompare(String(a.createdAt || a.id)));
   }
 
   async markRead(id: string) {
     const item = await this.records.find<any>('notifications', id);
-    if (item) await this.records.save('notifications', id, { ...item, isRead: true });
+    if (item && (!item.recipientId || item.recipientId === this.userContext.userId)) {
+      await this.records.save('notifications', id, { ...item, isRead: true });
+    }
   }
 
   async markAllRead() {

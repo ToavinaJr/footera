@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, Bell, User, X, BarChart3 } from 'lucide-react';
+import { Menu, Search, Bell, User, X, BarChart3, LogOut } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
 import { NotificationsDrawer } from './NotificationsDrawer';
 import { SidebarDrawer } from './SidebarDrawer';
 
 export const Header: React.FC = () => {
-  const { activeSection, setActiveSection, unreadNotificationsCount, user } = useApp();
+  const { activeSection, setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const isNotifOpen = location.pathname === '/notifications';
@@ -133,6 +133,15 @@ export const Header: React.FC = () => {
                   {user?.name?.charAt(0) || 'U'}
                 </div>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => void logout().catch((error: unknown) => showToast(error instanceof Error ? error.message : 'La déconnexion a échoué.', 'error'))}
+              aria-label="Se déconnecter"
+              title="Se déconnecter"
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-700"
+            >
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>

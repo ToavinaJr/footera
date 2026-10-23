@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -26,8 +26,9 @@ export class TeamsService {
         && (!city || city === 'toutes' || team.city.toLowerCase().includes(city));
     }).map((team) => {
       const { recentForm } = buildTeamMatchSummary(team.id, matches);
+      const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
       return {
-        ...team,
+        ...publicTeam,
         recentForm,
         stats: {
           ...team.stats,
@@ -39,7 +40,12 @@ export class TeamsService {
     });
   }
 
-  getById(id: string) { return this.records.find('teams', id); }
+  async getById(id: string) {
+    const team: any = await this.records.find('teams', id);
+    if (!team) return null;
+    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
+    return publicTeam;
+  }
 
   async getDetail(id: string) {
     const [team, matches] = await Promise.all([
@@ -47,8 +53,9 @@ export class TeamsService {
       this.records.list<any>('matches'),
     ]);
     if (!team) return null;
+    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
     return {
-      ...team,
+      ...publicTeam,
       ...buildTeamMatchSummary(id, matches),
       topScorers: [...(team.members || [])]
         .sort((left: any, right: any) => Number(right.goals || 0) - Number(left.goals || 0))
@@ -65,8 +72,8 @@ export class TeamsService {
 
   async myTeam() {
     const user: any = await this.accounts.profile();
-    const teams: any[] = await this.list();
-    return teams.find((team) => team.name === user?.sportsCv?.currentTeam) || teams[0] || null;
+    const teams: any[] = await this.records.list('teams');
+    return teams.find((team) => team.ownerId === user?.id || team.managerIds?.includes(user?.id)) || null;
   }
 
   async invitePlayer(playerId: string, message: string) {
@@ -76,6 +83,9 @@ export class TeamsService {
       this.accounts.profile(),
     ]);
     if (!team) throw new NotFoundException('Votre équipe est introuvable.');
+    if (!user?.roles?.some((role: string) => ['Entraîneur', 'Organisateur Tournoi'].includes(role))) {
+      throw new ForbiddenException('Seul le staff de l’équipe peut inviter un joueur.');
+    }
     if (!player) throw new NotFoundException('Joueur introuvable.');
     if (team.members?.some((member: any) => member.playerId === playerId)) {
       throw new ConflictException('Ce joueur fait déjà partie de votre équipe.');
@@ -103,7 +113,7 @@ export class TeamsService {
       title: `Invitation de ${team.name}`,
       message: `${team.name} vous propose de rejoindre son équipe. ${trimmedMessage}`,
       type: 'team', targetSection: 'teams', targetId: team.id,
-      recipientId: playerId, invitationId: id, invitationStatus: invitation.status,
+      recipientId: player.userId || player.id, invitationId: id, invitationStatus: invitation.status,
     });
     return { success: true, invitation, message: `Invitation envoyée à ${player.name}.` };
   }
@@ -117,7 +127,7 @@ export class TeamsService {
   }
 
   async join(id: string, message: string) {
-    const team: any = await this.getById(id);
+    const team: any = await this.records.find('teams', id);
     if (!team) return { success: false, message: 'Équipe introuvable' };
     const user: any = await this.accounts.profile();
     if (!user) return { success: false, message: 'Utilisateur non authentifié' };

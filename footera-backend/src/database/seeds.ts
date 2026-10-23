@@ -1,5 +1,6 @@
 export interface PlayerSeed {
   id: string;
+  userId?: string;
   name: string;
   age: number;
   city: string;
@@ -59,6 +60,7 @@ export interface TeamMemberSeed {
 
 export interface TeamSeed {
   id: string;
+  ownerId?: string;
   name: string;
   shortName: string;
   city: string;
@@ -123,6 +125,7 @@ export const SEED_USER = {
 export const SEED_PLAYERS: PlayerSeed[] = [
   {
     id: 'ply_alex',
+    userId: 'usr_me',
     name: 'Alexandre Morel',
     age: 25,
     city: 'Fianarantsoa / Paris',
@@ -289,6 +292,7 @@ export const SEED_PLAYERS: PlayerSeed[] = [
 export const SEED_TEAMS: TeamSeed[] = [
   {
     id: 'team_betsileo',
+    ownerId: 'usr_me',
     name: 'Betsileo FC',
     shortName: 'BFC',
     city: 'Fianarantsoa',

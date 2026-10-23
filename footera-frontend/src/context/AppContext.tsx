@@ -42,8 +42,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const u = await authService.getProfile();
       setUser(u);
     } catch (e) {
+      setUser(null);
       // eslint-disable-next-line no-console
-      console.error('Failed to load user profile:', e);
+      if (!(typeof e === 'object' && e !== null && 'status' in e && e.status === 401)) console.error('Failed to load user profile:', e);
     } finally {
       setIsLoadingUser(false);
     }
@@ -55,8 +56,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setNotifications(notifs);
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.error('Failed to load notifications:', e);
+      if (!(typeof e === 'object' && e !== null && 'status' in e && e.status === 401)) console.error('Failed to load notifications:', e);
     }
+  }, []);
+
+  const login = useCallback(async (credentials: { email: string; password: string }) => {
+    const profile = await authService.login(credentials);
+    setUser(profile);
+    await fetchNotifications();
+  }, [fetchNotifications]);
+
+  const register = useCallback(async (input: { name: string; email: string; password: string; role: UserRole }) => {
+    const profile = await authService.register(input);
+    setUser(profile);
+    await fetchNotifications();
+  }, [fetchNotifications]);
+
+  const logout = useCallback(async () => {
+    await authService.logout();
+    setUser(null);
+    setNotifications([]);
   }, []);
 
   useEffect(() => {
@@ -186,6 +205,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         navigateToResource,
         user,
         isLoadingUser,
+        login,
+        register,
+        logout,
         switchRole,
         updateProfile,
         updateSportsCv,

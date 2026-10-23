@@ -14,6 +14,16 @@ model UserRecord {
   payload Json
   @@map("users")
 }
+model AuthCredentialRecord {
+  id      String @id
+  payload Json
+  @@map("auth_credentials")
+}
+model AuthSessionRecord {
+  id      String @id
+  payload Json
+  @@map("auth_sessions")
+}
 model PlayerRecord {
   id      String @id
   payload Json
