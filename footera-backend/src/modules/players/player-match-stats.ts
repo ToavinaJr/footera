@@ -50,6 +50,13 @@ export function aggregatePlayerMatchStats(players: PlayerRecord[], matches: Matc
         }
       }
     }
+    for (const lineup of match.lineups ?? []) {
+      if (lineup.teamId !== match.homeTeam?.id && lineup.teamId !== match.awayTeam?.id) continue;
+      for (const playerId of lineup.playerIds) {
+        const player = players.find((candidate) => candidate.id === playerId && candidate.currentTeamId === lineup.teamId);
+        if (player) participants.add(player.id);
+      }
+    }
     for (const playerId of participants) {
       const stats = totals.get(playerId)!;
       stats.appearances += 1;

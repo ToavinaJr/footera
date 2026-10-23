@@ -1,12 +1,6 @@
-export type DataMode = 'mock' | 'api';
-
-const rawMode = (import.meta.env.VITE_DATA_MODE as string | undefined)?.toLowerCase();
-
-export const DATA_MODE: DataMode = rawMode === 'mock' ? 'mock' : 'api';
+export const DATA_MODE = 'api' as const;
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/api/v1';
-
-export const IS_MOCK_MODE = DATA_MODE === 'mock';
 
 if (typeof window !== 'undefined') {
   // eslint-disable-next-line no-console

@@ -1,21 +1,8 @@
-import { IS_MOCK_MODE } from '../config/dataMode';
-import { apiClient, mockDelay } from '../lib/api/client';
-import { mockStorage } from '../mocks/mockStorage';
-import { Team, TeamDetail, Club, TeamInvitation } from '../types';
+import { apiClient } from '../lib/api/client';
+import type { Club, Team, TeamDetail, TeamInvitation } from '../types';
 
 export const teamsService = {
   async list(filters?: { query?: string; category?: string; city?: string }): Promise<Team[]> {
-    if (IS_MOCK_MODE) {
-      let teams = mockStorage.getTeams();
-      if (filters?.query) {
-        const q = filters.query.toLowerCase();
-        teams = teams.filter((t) => t.name.toLowerCase().includes(q) || t.city.toLowerCase().includes(q));
-      }
-      if (filters?.category && filters.category !== 'Toutes') {
-        teams = teams.filter((t) => t.category === filters.category);
-      }
-      return mockDelay(teams, 200);
-    }
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
     if (filters?.category && filters.category !== 'Toutes') params.set('category', filters.category);
@@ -23,13 +10,8 @@ export const teamsService = {
     return apiClient<Team[]>(`teams?${params.toString()}`);
   },
 
-  async getById(id: string): Promise<Team> {
-    if (IS_MOCK_MODE) {
-      const team = mockStorage.getTeamById(id);
-      if (!team) throw new Error('Équipe introuvable');
-      return mockDelay(team, 150);
-    }
-    return apiClient<Team>(`teams/${id}`);
+  getById(id: string): Promise<Team> {
+    return apiClient<Team>(`teams/${encodeURIComponent(id)}`);
   },
 
   async getDetail(id: string, filters: { competitionId?: string; sortBy?: 'goals' | 'assists' | 'appearances' | 'yellowCards' | 'redCards' } = {}): Promise<TeamDetail> {
@@ -40,43 +22,23 @@ export const teamsService = {
   },
 
   async getMyTeam(): Promise<Team | null> {
-    if (IS_MOCK_MODE) {
-      return mockDelay(mockStorage.getMyTeam() ?? null, 120);
-    }
     const response = await apiClient<{ team: Team | null }>('teams/my-team');
     return response.team;
   },
 
-  async listMyTeamInvitations(): Promise<TeamInvitation[]> {
-    if (IS_MOCK_MODE) return mockDelay(mockStorage.getMyTeamInvitations(), 120);
+  listMyTeamInvitations(): Promise<TeamInvitation[]> {
     return apiClient<TeamInvitation[]>('teams/my-team/invitations');
   },
 
-  async listClubs(): Promise<Club[]> {
-    if (IS_MOCK_MODE) {
-      return mockDelay(mockStorage.getClubs(), 200);
-    }
+  listClubs(): Promise<Club[]> {
     return apiClient<Club[]>('clubs');
   },
 
-  async updateClubLogo(clubId: string, logoUrl: string): Promise<Club> {
-    if (IS_MOCK_MODE) {
-      return mockDelay(mockStorage.updateClubLogo(clubId, logoUrl), 250);
-    }
-    return apiClient<Club>(`clubs/${encodeURIComponent(clubId)}/logo`, {
-      method: 'PATCH',
-      body: JSON.stringify({ logoUrl }),
-    });
+  updateClubLogo(clubId: string, logoUrl: string): Promise<Club> {
+    return apiClient<Club>(`clubs/${encodeURIComponent(clubId)}/logo`, { method: 'PATCH', body: JSON.stringify({ logoUrl }) });
   },
 
-  async joinTeam(teamId: string, message: string): Promise<{ success: boolean; message: string }> {
-    if (IS_MOCK_MODE) {
-      const res = mockStorage.joinTeam(teamId, message);
-      return mockDelay(res, 350);
-    }
-    return apiClient<{ success: boolean; message: string }>(`teams/${teamId}/join`, {
-      method: 'POST',
-      body: JSON.stringify({ message }),
-    });
+  joinTeam(teamId: string, message: string): Promise<{ success: boolean; message: string }> {
+    return apiClient<{ success: boolean; message: string }>(`teams/${encodeURIComponent(teamId)}/join`, { method: 'POST', body: JSON.stringify({ message }) });
   },
 };

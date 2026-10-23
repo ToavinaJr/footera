@@ -51,7 +51,7 @@ export const LandingView: React.FC = () => {
 
       <div className="relative mx-auto w-full max-w-lg">
         <div className="float-soft absolute -inset-8 rounded-[3rem] bg-lime-volt/20 blur-3xl" aria-hidden="true" />
-        <div className="pitch-tactical-grid relative overflow-hidden rounded-[2rem] border border-pitch-primary/20 p-6 text-white shadow-2xl sm:p-8">
+        <div className="pitch-tactical-grid relative overflow-hidden rounded-4xl border border-pitch-primary/20 p-6 text-white shadow-2xl sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-volt">{t('landing.season')}</p>

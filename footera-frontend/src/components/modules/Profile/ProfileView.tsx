@@ -5,7 +5,6 @@ import {
   MapPin, 
   Phone, 
   Mail, 
-  RotateCcw, 
   Edit3, 
   Check, 
   Calendar, 
@@ -31,7 +30,7 @@ import { catalogsService } from '../../../services/catalogsService';
 import { formatDateForDisplay } from '../../../utils/date';
 
 export const ProfileView: React.FC = () => {
-  const { user, updateProfile, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
+  const { user, updateProfile, updateSportsCv, showToast, selectedResourceId } = useApp();
   const { profileId } = useParams();
   const isOwner = !profileId;
   const location = useLocation();
@@ -366,22 +365,6 @@ export const ProfileView: React.FC = () => {
             </div>
           </div>
 
-          {/* Reset Demo Data */}
-          {isOwner && <div className="p-5 rounded-3xl bg-[#fdf2f2] border border-[#fecaca] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-bold text-rose-800">Données de test locales</h3>
-              <p className="text-xs text-rose-600 mt-0.5">
-                Restaurez les fixtures d&apos;origine du projet Footera (équipes Betsileo FC, AS Analakely, etc.).
-              </p>
-            </div>
-            <button
-              onClick={resetDemo}
-              className="px-4 py-2 min-h-11 rounded-2xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shrink-0 shadow-2xs"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Réinitialiser les données</span>
-            </button>
-          </div>}
           {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
           {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
             <h2 className="text-lg font-extrabold text-pitch-ink">Parcours en club</h2>

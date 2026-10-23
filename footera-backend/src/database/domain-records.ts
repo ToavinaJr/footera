@@ -114,6 +114,7 @@ export interface MatchRecord {
   homeTeam: { id: string; name?: string; score: number; [key: string]: unknown };
   awayTeam: { id: string; name?: string; score: number; [key: string]: unknown };
   events?: MatchEventRecord[];
+  lineups?: Array<{ teamId: string; playerIds: string[] }>;
   [key: string]: unknown;
 }
 

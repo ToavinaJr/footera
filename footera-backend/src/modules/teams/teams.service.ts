@@ -27,36 +27,41 @@ export class TeamsService {
   ) {}
 
   async list(filters: { query?: string; category?: string; city?: string } = {}) {
-    const [teams, matches, tournaments] = await Promise.all([
+    const [teams, matches, tournaments, players] = await Promise.all([
       this.records.list<TeamRecord>('teams'),
       this.records.list<MatchRecord>('matches'),
       this.records.list<TournamentRecord>('tournaments'),
+      this.records.list<PlayerRecord>('players'),
     ]);
-    return teams.filter((team) => {
+    const filteredTeams = teams.filter((team) => {
       const query = filters.query?.toLowerCase();
       const city = filters.city?.toLowerCase();
       return (!query || `${team.name} ${team.city}`.toLowerCase().includes(query))
         && (!filters.category || filters.category === 'Toutes' || team.category === filters.category)
         && (!city || city === 'toutes' || (team.city ?? '').toLowerCase().includes(city));
-    }).map((team) => {
+    });
+    return Promise.all(filteredTeams.map(async (sourceTeam) => {
+      const { team } = await this.ensureTeamMemberProfiles(sourceTeam, players);
       const { recentForm } = buildTeamMatchSummary(team.id, this.matchesForTeamCompetition(team, matches));
       const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
       const stats = this.getComputedTeamStats(team, teams, matches, tournaments);
       return {
         ...publicTeam,
+        membersCount: team.members?.length ?? 0,
         recentForm,
         stats,
       };
-    });
+    }));
   }
 
   async getById(id: string) {
-    const [team, teams, matches, tournaments] = await Promise.all([
-      this.records.find<TeamRecord>('teams', id), this.records.list<TeamRecord>('teams'), this.records.list<MatchRecord>('matches'), this.records.list<TournamentRecord>('tournaments'),
+    const [team, teams, matches, tournaments, players] = await Promise.all([
+      this.records.find<TeamRecord>('teams', id), this.records.list<TeamRecord>('teams'), this.records.list<MatchRecord>('matches'), this.records.list<TournamentRecord>('tournaments'), this.records.list<PlayerRecord>('players'),
     ]);
     if (!team) return null;
-    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
-    return { ...publicTeam, stats: this.getComputedTeamStats(team, teams, matches, tournaments) };
+    const { team: synchronizedTeam } = await this.ensureTeamMemberProfiles(team, players);
+    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = synchronizedTeam;
+    return { ...publicTeam, membersCount: synchronizedTeam.members?.length ?? 0, stats: this.getComputedTeamStats(team, teams, matches, tournaments) };
   }
 
   async getDetail(id: string, filters: { competitionId?: string; sortBy?: 'goals' | 'assists' | 'appearances' | 'yellowCards' | 'redCards' } = {}) {
@@ -69,21 +74,22 @@ export class TeamsService {
       this.records.list<UserRecord>('users'),
     ]);
     if (!team) return null;
-    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
+    const synchronized = await this.ensureTeamMemberProfiles(team, players);
+    const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = synchronized.team;
     const competitions = tournaments.filter((tournament) =>
       tournament.participantTeamIds?.includes(id) || tournament.id === team.competitionId)
       .map((tournament) => ({ id: tournament.id, title: tournament.title }));
     const teamCompetitionIds = new Set(competitions.map((competition) => competition.id));
     const teamCompetitionMatches = matches.filter((match) => match.tournamentId !== undefined && teamCompetitionIds.has(match.tournamentId));
     const primaryCompetitionMatches = this.matchesForTeamCompetition(team, matches);
-    const playerStats = aggregatePlayerMatchStats(players, teamCompetitionMatches, undefined, competitions.length ? tournaments : []);
+    const playerStats = aggregatePlayerMatchStats(synchronized.players, teamCompetitionMatches, undefined, competitions.length ? tournaments : []);
     const statsByCompetition = new Map(competitions.map((competition) => [
       competition.id,
-      aggregatePlayerMatchStats(players, teamCompetitionMatches, competition.id, tournaments),
+      aggregatePlayerMatchStats(synchronized.players, teamCompetitionMatches, competition.id, tournaments),
     ]));
-    const teamMembers: TeamMemberRecord[] = team.members || [];
+    const teamMembers: TeamMemberRecord[] = synchronized.team.members || [];
     const membersByPlayerId = new Map<string, EnrichedTeamMember>();
-    for (const player of players) {
+    for (const player of synchronized.players) {
       const rosterEntry = teamMembers.find((member) =>
         member.playerId === player.id || (player.userId && member.playerId === player.userId));
       if (!rosterEntry && player.currentTeamId !== id) continue;
@@ -121,30 +127,6 @@ export class TeamsService {
         competitionStats,
       } as EnrichedTeamMember);
     }
-    // Keep legacy roster entries that do not yet have a Player record.
-    for (const member of teamMembers) {
-      if (!membersByPlayerId.has(member.playerId)) {
-        const stats = playerStats.get(member.playerId);
-        membersByPlayerId.set(member.playerId, {
-          ...member,
-          appearances: stats?.appearances ?? 0,
-          goals: stats?.goals ?? 0,
-          assists: stats?.assists ?? 0,
-          yellowCards: stats?.yellowCards ?? 0,
-          redCards: stats?.redCards ?? 0,
-          minutesPlayed: null,
-          competitionStats: competitions.map((competition) => ({
-            competitionId: competition.id,
-            appearances: 0,
-            goals: 0,
-            assists: 0,
-            yellowCards: 0,
-            redCards: 0,
-            minutesPlayed: null,
-          })),
-        } as EnrichedTeamMember);
-      }
-    }
     const members = [...membersByPlayerId.values()].map((member) => {
       const selectedStats = filters.competitionId && filters.competitionId !== 'all'
         ? member.competitionStats.find((stats) => stats.competitionId === filters.competitionId)
@@ -162,11 +144,46 @@ export class TeamsService {
     return {
       ...publicTeam,
       members,
+      membersCount: members.length,
       competitions,
       ...buildTeamMatchSummary(id, primaryCompetitionMatches),
       topScorers,
       stats: this.getComputedTeamStats(team, teams, matches, tournaments),
     };
+  }
+
+  private async ensureTeamMemberProfiles(team: TeamRecord, players: PlayerRecord[]) {
+    const profiles = [...players];
+    const seen = new Set<string>();
+    const members: TeamMemberRecord[] = [];
+    let changed = false;
+    for (const entry of team.members || []) {
+      let player = profiles.find((candidate) => candidate.id === entry.playerId || candidate.userId === entry.playerId);
+      if (!player) {
+        player = { id: randomUUID(), name: entry.name, primaryPosition: entry.position || 'Joueur', avatarUrl: entry.avatarUrl, currentTeam: team.name, currentTeamId: team.id };
+        await this.records.save('players', player.id, player);
+        profiles.push(player);
+        changed = true;
+      } else if (player.currentTeamId !== team.id) {
+        player = { ...player, currentTeam: team.name, currentTeamId: team.id };
+        await this.records.save('players', player.id, player);
+        profiles[profiles.findIndex((candidate) => candidate.id === player?.id)] = player;
+        changed = true;
+      }
+      if (seen.has(player.id)) { changed = true; continue; }
+      seen.add(player.id);
+      members.push({ ...entry, playerId: player.id, name: player.name, position: player.primaryPosition || entry.position });
+      if (entry.playerId !== player.id || entry.name !== player.name) changed = true;
+    }
+    for (const player of profiles.filter((candidate) => candidate.currentTeamId === team.id)) {
+      if (seen.has(player.id)) continue;
+      seen.add(player.id);
+      members.push({ playerId: player.id, name: player.name, position: player.primaryPosition || 'Joueur', role: 'Joueur', avatarUrl: player.avatarUrl });
+      changed = true;
+    }
+    const synchronizedTeam = { ...team, members, membersCount: members.length };
+    if (changed || team.membersCount !== members.length) await this.records.save('teams', team.id, synchronizedTeam);
+    return { team: synchronizedTeam, players: profiles };
   }
 
   private matchesForTeamCompetition(team: TeamRecord, matches: MatchRecord[]) {
@@ -264,15 +281,23 @@ export class TeamsService {
     const user = await this.accounts.profile();
     if (!user) return { success: false, message: 'Utilisateur non authentifié' };
     const members = team.members || [];
-    if (members.some((member) => member.playerId === user.id)) {
+    const existingPlayers = await this.records.list<PlayerRecord>('players');
+    let player = existingPlayers.find((candidate) => candidate.userId === user.id || candidate.id === user.id);
+    if (!player) {
+      player = { id: randomUUID(), userId: user.id, name: user.name, city: user.city, avatarUrl: user.avatarUrl,
+        primaryPosition: user.sportsCv?.primaryPosition || 'Joueur', secondaryPosition: user.sportsCv?.secondaryPosition,
+        strongFoot: user.sportsCv?.strongFoot, height: user.sportsCv?.height, weight: user.sportsCv?.weight,
+        experienceYears: user.sportsCv?.experienceYears, bio: user.sportsCv?.bio };
+      await this.records.save('players', player.id, player);
+    }
+    if (members.some((member) => member.playerId === player?.id || member.playerId === user.id)) {
       return { success: false, message: 'Vous êtes déjà membre de cette équipe.' };
     }
-    members.push({
-      playerId: user.id, name: user.name, position: user.sportsCv?.primaryPosition,
-      jerseyNumber: user.sportsCv?.preferredNumber || 14, role: 'Joueur',
-      avatarUrl: user.avatarUrl, age: 25, matchesPlayed: 0, goals: 0,
-    });
-    await this.records.save('teams', id, { ...team, members, membersCount: Number(team.membersCount || 0) + 1 });
+    player = { ...player, currentTeam: team.name, currentTeamId: team.id };
+    await this.records.save('players', player.id, player);
+    members.push({ playerId: player.id, name: player.name, position: player.primaryPosition,
+      jerseyNumber: user.sportsCv?.preferredNumber, role: 'Joueur', avatarUrl: player.avatarUrl });
+    await this.records.save('teams', id, { ...team, members, membersCount: members.length });
     await this.notifications.add({
       title: 'Demande transmise au staff',
       message: `Votre demande pour rejoindre ${team.name} a bien été enregistrée. Message: "${message.slice(0, 40)}..."`,

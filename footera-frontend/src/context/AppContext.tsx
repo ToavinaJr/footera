@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import type { NotificationItem, UserProfile, UserRole } from '../types';
 import { authService } from '../services/authService';
 import { notificationsService } from '../services/notificationsService';
-import { mockStorage } from '../mocks/mockStorage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from './app-context';
 import type { AppContextType, ToastMessage } from './app-context';
@@ -79,13 +78,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     fetchUserData();
-
-    // Subscribe to mock storage mutations for real-time reactivity
-    const unsubscribe = mockStorage.subscribe(() => {
-      fetchUserData();
-    });
-
-    return () => unsubscribe();
   }, [fetchUserData]);
 
   useEffect(() => {

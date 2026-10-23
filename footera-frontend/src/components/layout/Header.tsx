@@ -124,7 +124,7 @@ export const Header: React.FC = () => {
             >
               <Bell className="w-5 h-5 stroke-[2.2]" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#dc2626] text-white text-micro font-extrabold flex items-center justify-center ring-2 ring-white">
+                <span className="absolute top-2 right-2 min-w-45 h-4.5 px-1 rounded-full bg-[#dc2626] text-white text-micro font-extrabold flex items-center justify-center ring-2 ring-white">
                   {unreadNotificationsCount}
                 </span>
               )}

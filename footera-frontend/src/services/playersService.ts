@@ -1,8 +1,5 @@
-import { IS_MOCK_MODE } from '../config/dataMode';
-import { apiClient, mockDelay } from '../lib/api/client';
-import { mockStorage } from '../mocks/mockStorage';
-import { catalogsService } from './catalogsService';
-import { Player, Position, TeamInvitation } from '../types';
+import { apiClient } from '../lib/api/client';
+import type { Player, Position, TeamInvitation } from '../types';
 
 export interface PlayerOptions {
   positions: string[];
@@ -18,33 +15,11 @@ export interface PlayerFilters {
 }
 
 export const playersService = {
-  async options(): Promise<PlayerOptions> {
-    if (!IS_MOCK_MODE) return apiClient<PlayerOptions>('players/options');
-    const options = await catalogsService.getOptions();
-    return { positions: options.playerPositions, levels: options.playerLevels };
+  options(): Promise<PlayerOptions> {
+    return apiClient<PlayerOptions>('players/options');
   },
 
   async list(filters?: PlayerFilters): Promise<Player[]> {
-    if (IS_MOCK_MODE) {
-      let players = mockStorage.getPlayers();
-      if (filters?.query) {
-        const q = filters.query.toLowerCase();
-        players = players.filter((p) => p.name.toLowerCase().includes(q) || p.city.toLowerCase().includes(q));
-      }
-      if (filters?.position && filters.position !== 'Toutes') {
-        players = players.filter((p) => p.primaryPosition === filters.position || p.secondaryPosition === filters.position);
-      }
-      if (filters?.city && filters.city !== 'Toutes') {
-        players = players.filter((p) => p.city.toLowerCase() === filters.city?.toLowerCase());
-      }
-      if (filters?.level && filters.level !== 'Tous') {
-        players = players.filter((p) => p.level === filters.level);
-      }
-      if (filters?.transferOnly) {
-        players = players.filter((p) => p.isAvailableForTransfer);
-      }
-      return mockDelay(players, 250);
-    }
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
     if (filters?.position && filters.position !== 'Toutes') params.set('position', filters.position);
@@ -54,22 +29,11 @@ export const playersService = {
     return apiClient<Player[]>(`players?${params.toString()}`);
   },
 
-  async getById(id: string): Promise<Player> {
-    if (IS_MOCK_MODE) {
-      const player = mockStorage.getPlayerById(id);
-      if (!player) throw new Error('Joueur introuvable');
-      return mockDelay(player, 150);
-    }
-    return apiClient<Player>(`players/${id}`);
+  getById(id: string): Promise<Player> {
+    return apiClient<Player>(`players/${encodeURIComponent(id)}`);
   },
 
-  async invite(id: string, message: string): Promise<{ success: boolean; invitation: TeamInvitation; message: string }> {
-    if (IS_MOCK_MODE) {
-      return mockDelay(mockStorage.invitePlayer(id, message), 250);
-    }
-    return apiClient(`players/${encodeURIComponent(id)}/invite`, {
-      method: 'POST',
-      body: JSON.stringify({ message }),
-    });
+  invite(id: string, message: string): Promise<{ success: boolean; invitation: TeamInvitation; message: string }> {
+    return apiClient(`players/${encodeURIComponent(id)}/invite`, { method: 'POST', body: JSON.stringify({ message }) });
   },
 };

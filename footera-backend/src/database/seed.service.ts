@@ -13,6 +13,7 @@ export class SeedService implements OnModuleInit {
   }
 
   resetDemo() {
-    return seedDatabase(this.prisma, { reset: true });
+    // Synchronize canonical demo records without deleting users or records created in the database.
+    return seedDatabase(this.prisma);
   }
 }

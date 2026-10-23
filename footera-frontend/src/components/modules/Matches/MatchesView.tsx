@@ -233,7 +233,7 @@ export const MatchesView: React.FC = () => {
                     {standings.map((r) => (
                       <tr key={r.teamId} className="hover:bg-slate-50">
                         <td className="py-2.5 font-bold text-slate-500">{r.position}</td>
-                        <td className="py-2.5 font-bold truncate max-w-[130px] text-pitch-ink">
+                        <td className="py-2.5 font-bold truncate max-w-32.5 text-pitch-ink">
                           <EntityLink section="teams" id={r.teamId}>{r.teamName}</EntityLink>
                         </td>
                         <td className="py-2.5 text-center text-slate-500">{r.played}</td>
