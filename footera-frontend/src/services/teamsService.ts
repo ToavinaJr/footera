@@ -1,7 +1,7 @@
 import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
-import { Team, TeamDetail, Club } from '../types';
+import { Team, TeamDetail, Club, TeamInvitation } from '../types';
 
 export const teamsService = {
   async list(filters?: { query?: string; category?: string; city?: string }): Promise<Team[]> {
@@ -62,6 +62,11 @@ export const teamsService = {
       return mockDelay(mockStorage.getMyTeam(), 120);
     }
     return apiClient<Team>('teams/my-team');
+  },
+
+  async listMyTeamInvitations(): Promise<TeamInvitation[]> {
+    if (IS_MOCK_MODE) return mockDelay(mockStorage.getMyTeamInvitations(), 120);
+    return apiClient<TeamInvitation[]>('teams/my-team/invitations');
   },
 
   async listClubs(): Promise<Club[]> {

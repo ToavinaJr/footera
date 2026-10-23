@@ -21,7 +21,16 @@ export class NotificationsService {
     await Promise.all(items.map((item: any) => this.records.save('notifications', item.id, { ...item, isRead: true })));
   }
 
-  async add(item: { title: string; message: string; type: string; targetSection: string; targetId?: string }) {
+  async add(item: {
+    title: string;
+    message: string;
+    type: string;
+    targetSection: string;
+    targetId?: string;
+    recipientId?: string;
+    invitationId?: string;
+    invitationStatus?: string;
+  }) {
     const notification = { ...item, id: `notif_${randomUUID()}`, time: 'À l’instant', createdAt: new Date().toISOString(), isRead: false };
     await this.records.create('notifications', notification.id, notification);
     return notification;

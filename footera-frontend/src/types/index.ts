@@ -364,6 +364,25 @@ export interface NotificationItem {
   type: 'match' | 'booking' | 'recruitment' | 'team' | 'marketplace' | 'system';
   targetSection: string;
   targetId?: string;
+  recipientId?: string;
+  invitationId?: string;
+  invitationStatus?: TeamInvitationStatus;
+}
+
+export type TeamInvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+
+export interface TeamInvitation {
+  id: string;
+  teamId: string;
+  teamName: string;
+  playerId: string;
+  playerName: string;
+  senderId?: string;
+  senderName?: string;
+  message: string;
+  status: TeamInvitationStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ActivityFeedItem {

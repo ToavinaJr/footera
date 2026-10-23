@@ -22,6 +22,7 @@ export interface AppContextType {
   updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<boolean>;
   toggleFavoriteTeam: (teamId: string) => Promise<boolean>;
   notifications: NotificationItem[];
+  refreshNotifications: () => Promise<void>;
   unreadNotificationsCount: number;
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;

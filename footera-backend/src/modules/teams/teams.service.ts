@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
@@ -66,6 +67,53 @@ export class TeamsService {
     const user: any = await this.accounts.profile();
     const teams: any[] = await this.list();
     return teams.find((team) => team.name === user?.sportsCv?.currentTeam) || teams[0] || null;
+  }
+
+  async invitePlayer(playerId: string, message: string) {
+    const [team, player, user]: [any, any, any] = await Promise.all([
+      this.myTeam(),
+      this.records.find<any>('players', playerId),
+      this.accounts.profile(),
+    ]);
+    if (!team) throw new NotFoundException('Votre équipe est introuvable.');
+    if (!player) throw new NotFoundException('Joueur introuvable.');
+    if (team.members?.some((member: any) => member.playerId === playerId)) {
+      throw new ConflictException('Ce joueur fait déjà partie de votre équipe.');
+    }
+    const trimmedMessage = message?.trim();
+    if (!trimmedMessage || trimmedMessage.length > 500) {
+      throw new BadRequestException('Le message doit contenir entre 1 et 500 caractères.');
+    }
+
+    const invitations = await this.records.list<any>('teamInvitations');
+    if (invitations.some((invitation) =>
+      invitation.teamId === team.id && invitation.playerId === playerId && invitation.status === 'PENDING')) {
+      throw new ConflictException('Une invitation est déjà en attente pour ce joueur.');
+    }
+
+    const id = `team_invite_${randomUUID()}`;
+    const createdAt = new Date().toISOString();
+    const invitation = {
+      id, teamId: team.id, teamName: team.name, playerId, playerName: player.name,
+      senderId: user?.id, senderName: user?.name, message: trimmedMessage,
+      status: 'PENDING' as const, createdAt, updatedAt: createdAt,
+    };
+    await this.records.create('teamInvitations', id, invitation);
+    await this.notifications.add({
+      title: `Invitation de ${team.name}`,
+      message: `${team.name} vous propose de rejoindre son équipe. ${trimmedMessage}`,
+      type: 'team', targetSection: 'teams', targetId: team.id,
+      recipientId: playerId, invitationId: id, invitationStatus: invitation.status,
+    });
+    return { success: true, invitation, message: `Invitation envoyée à ${player.name}.` };
+  }
+
+  async listMyTeamInvitations() {
+    const team = await this.myTeam();
+    if (!team) return [];
+    const invitations = await this.records.list<any>('teamInvitations');
+    return invitations.filter((invitation) => invitation.teamId === team.id)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }
 
   async join(id: string, message: string) {

@@ -14,6 +14,7 @@ export const RECORD_MODELS = {
   applications: 'applicationRecord',
   marketplace: 'marketplaceRecord',
   notifications: 'notificationRecord',
+  teamInvitations: 'teamInvitationRecord',
   standings: 'leagueStandingRecord',
   activity: 'activityFeedRecord',
   catalogs: 'catalogRecord',

@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Shield, Trophy, UserPlus, Star, Heart } from 'lucide-react';
 import { playersService, PlayerFilters } from '../../../services/playersService';
-import { Player } from '../../../types';
+import { Player, TeamInvitationStatus } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
+import { teamsService } from '../../../services/teamsService';
 
 export const PlayersView: React.FC = () => {
-  const { showToast, navigateToResource } = useApp();
+  const { showToast, navigateToResource, refreshNotifications } = useApp();
   const playerModal = useRouteModal('/players');
   const [players, setPlayers] = useState<Player[]>([]);
   const [positions, setPositions] = useState<string[]>([]);
@@ -34,6 +35,7 @@ export const PlayersView: React.FC = () => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
   const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
+  const [invitationStatuses, setInvitationStatuses] = useState<Record<string, TeamInvitationStatus>>({});
 
   useEffect(() => {
     playersService.options()
@@ -42,6 +44,18 @@ export const PlayersView: React.FC = () => {
         setLevels(options.levels);
       })
       .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les postes et niveaux.', 'error'));
+  }, [showToast]);
+
+  useEffect(() => {
+    teamsService.listMyTeamInvitations()
+      .then((invitations) => setInvitationStatuses(invitations.reduce<Record<string, TeamInvitationStatus>>(
+        (statuses, invitation) => {
+          statuses[invitation.playerId] ??= invitation.status;
+          return statuses;
+        },
+        {},
+      )))
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les invitations.', 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -80,11 +94,18 @@ export const PlayersView: React.FC = () => {
   const handleSendInvite = async () => {
     if (!selectedPlayer) return;
     setIsSubmittingInvite(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setIsSubmittingInvite(false);
-    setIsInviteOpen(false);
-    setInviteMessage('');
-    showToast(`Invitation officielle transmise à ${selectedPlayer.name} !`);
+    try {
+      const result = await playersService.invite(selectedPlayer.id, inviteMessage);
+      setInvitationStatuses((current) => ({ ...current, [selectedPlayer.id]: result.invitation.status }));
+      await refreshNotifications();
+      setIsInviteOpen(false);
+      setInviteMessage('');
+      showToast(result.message);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Impossible d’envoyer cette invitation.', 'error');
+    } finally {
+      setIsSubmittingInvite(false);
+    }
   };
 
   const positionsList = ['Toutes', ...positions];
@@ -180,6 +201,14 @@ export const PlayersView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {players.map((player) => {
             const isFav = favorites.includes(player.id);
+            const invitationStatus = invitationStatuses[player.id];
+            const invitationButtonLabel = invitationStatus === 'PENDING'
+              ? 'Invitation en attente'
+              : invitationStatus === 'ACCEPTED'
+                ? 'Invitation acceptée'
+                : invitationStatus === 'DECLINED'
+                  ? 'Invitation refusée'
+                  : 'Inviter dans mon équipe';
             return (
               <div
                 key={player.id}
@@ -264,13 +293,15 @@ export const PlayersView: React.FC = () => {
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
+                      if (invitationStatus === 'PENDING') return;
                       setSelectedPlayer(player);
                       setIsInviteOpen(true);
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
+                    disabled={invitationStatus === 'PENDING'}
+                    className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <UserPlus className="w-4 h-4" />
-                    <span>Inviter dans mon équipe</span>
+                    <span>{invitationButtonLabel}</span>
                   </button>
                 </div>
               </div>
@@ -302,13 +333,15 @@ export const PlayersView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
+                  if (invitationStatuses[profilePlayer.id] === 'PENDING') return;
                   playerModal.close();
                   setSelectedPlayer(profilePlayer);
                   setIsInviteOpen(true);
                 }}
-                className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white"
+                disabled={invitationStatuses[profilePlayer.id] === 'PENDING'}
+                className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Inviter dans mon équipe
+                {invitationStatuses[profilePlayer.id] === 'PENDING' ? 'Invitation en attente' : 'Inviter dans mon équipe'}
               </button>
             </div>
           </div>

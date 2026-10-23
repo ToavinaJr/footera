@@ -191,6 +191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSportsCv,
         toggleFavoriteTeam,
         notifications,
+        refreshNotifications: fetchNotifications,
         unreadNotificationsCount,
         markNotificationRead,
         markAllNotificationsRead,

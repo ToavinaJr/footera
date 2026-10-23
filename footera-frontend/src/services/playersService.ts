@@ -2,7 +2,7 @@ import { IS_MOCK_MODE } from '../config/dataMode';
 import { apiClient, mockDelay } from '../lib/api/client';
 import { mockStorage } from '../mocks/mockStorage';
 import { catalogsService } from './catalogsService';
-import { Player, Position } from '../types';
+import { Player, Position, TeamInvitation } from '../types';
 
 export interface PlayerOptions {
   positions: string[];
@@ -61,5 +61,15 @@ export const playersService = {
       return mockDelay(player, 150);
     }
     return apiClient<Player>(`players/${id}`);
+  },
+
+  async invite(id: string, message: string): Promise<{ success: boolean; invitation: TeamInvitation; message: string }> {
+    if (IS_MOCK_MODE) {
+      return mockDelay(mockStorage.invitePlayer(id, message), 250);
+    }
+    return apiClient(`players/${encodeURIComponent(id)}/invite`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
   },
 };

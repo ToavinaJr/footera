@@ -1,10 +1,13 @@
 import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
 import { PlayersService } from '../modules/players/players.service.js';
-import { NotificationsService } from '../modules/notifications/notifications.service.js';
+import { TeamsService } from '../modules/teams/teams.service.js';
 
 @Controller('players')
 export class PlayersController {
-  constructor(private readonly players: PlayersService, private readonly notifications: NotificationsService) {}
+  constructor(
+    private readonly players: PlayersService,
+    private readonly teams: TeamsService,
+  ) {}
 
   @Get('options')
   options() {
@@ -36,16 +39,7 @@ export class PlayersController {
   }
 
   @Post(':id/invite')
-  async invite(@Param('id') id: string, @Body('message') message?: string) {
-    const player = await this.players.getById(id);
-    if (!player) throw new NotFoundException('Joueur introuvable');
-    await this.notifications.add({
-      title: 'Invitation reçue',
-      message: message || `Une équipe souhaite vous inviter à un essai.`,
-      type: 'team',
-      targetSection: 'teams',
-      targetId: id,
-    });
-    return { success: true, message: `Invitation transmise à ${player.name} !` };
+  invite(@Param('id') id: string, @Body('message') message?: string) {
+    return this.teams.invitePlayer(id, message || 'Invitation à rejoindre notre équipe.');
   }
 }

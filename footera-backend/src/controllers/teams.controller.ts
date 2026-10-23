@@ -15,6 +15,11 @@ export class TeamsController {
     return this.teams.myTeam();
   }
 
+  @Get('my-team/invitations')
+  listMyTeamInvitations() {
+    return this.teams.listMyTeamInvitations();
+  }
+
   @Get(':id/detail')
   async getDetail(@Param('id') id: string) {
     const team = await this.teams.getDetail(id);

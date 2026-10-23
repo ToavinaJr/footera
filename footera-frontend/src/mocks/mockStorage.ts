@@ -14,6 +14,7 @@ import {
   LeagueStandingRow,
   ActivityFeedItem,
   PitchReview,
+  TeamInvitation,
 } from '../types';
 import { normalizeDateKey } from '../utils/date';
 
@@ -47,6 +48,7 @@ const STORAGE_KEYS = {
   APPLICATIONS: 'footera_mock_applications_v2',
   MARKETPLACE: 'footera_mock_marketplace_v2',
   NOTIFICATIONS: 'footera_mock_notifications_v2',
+  TEAM_INVITATIONS: 'footera_mock_team_invitations_v1',
 };
 
 type Listener = () => void;
@@ -89,6 +91,7 @@ class MockStorageRepository {
   private applications: Application[];
   private marketplace: MarketplaceListing[];
   private notifications: NotificationItem[];
+  private teamInvitations: TeamInvitation[];
   private standings: LeagueStandingRow[];
   private activityFeed: ActivityFeedItem[];
 
@@ -105,6 +108,7 @@ class MockStorageRepository {
     this.applications = loadFromStorage(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
     this.marketplace = loadFromStorage(STORAGE_KEYS.MARKETPLACE, INITIAL_MARKETPLACE);
     this.notifications = loadFromStorage(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    this.teamInvitations = loadFromStorage(STORAGE_KEYS.TEAM_INVITATIONS, []);
     this.standings = INITIAL_LEAGUE_STANDINGS;
     this.activityFeed = INITIAL_ACTIVITY_FEED;
   }
@@ -147,6 +151,48 @@ class MockStorageRepository {
 
   getPlayerById(id: string): Player | undefined {
     return this.players.find((p) => p.id === id);
+  }
+
+  invitePlayer(playerId: string, message: string): { success: boolean; invitation: TeamInvitation; message: string } {
+    const player = this.getPlayerById(playerId);
+    const team = this.getMyTeam();
+    if (!player || !team) throw new Error('Joueur ou équipe introuvable.');
+    if (team.members.some((member) => member.playerId === playerId)) throw new Error('Ce joueur fait déjà partie de votre équipe.');
+    if (this.teamInvitations.some((invitation) => invitation.playerId === playerId && invitation.teamId === team.id && invitation.status === 'PENDING')) {
+      throw new Error('Une invitation est déjà en attente pour ce joueur.');
+    }
+    const createdAt = new Date().toISOString();
+    const invitation: TeamInvitation = {
+      id: `team_invite_${Date.now()}`,
+      teamId: team.id,
+      teamName: team.name,
+      playerId,
+      playerName: player.name,
+      senderId: this.profile.id,
+      senderName: this.profile.name,
+      message: message.trim(),
+      status: 'PENDING',
+      createdAt,
+      updatedAt: createdAt,
+    };
+    this.teamInvitations.unshift(invitation);
+    saveToStorage(STORAGE_KEYS.TEAM_INVITATIONS, this.teamInvitations);
+    this.addNotification({
+      title: `Invitation de ${team.name}`,
+      message: `${team.name} vous propose de rejoindre son équipe. ${invitation.message}`,
+      type: 'team',
+      targetSection: 'teams',
+      targetId: team.id,
+      recipientId: playerId,
+      invitationId: invitation.id,
+      invitationStatus: invitation.status,
+    });
+    return { success: true, invitation: structuredClone(invitation), message: `Invitation envoyée à ${player.name}.` };
+  }
+
+  getMyTeamInvitations(): TeamInvitation[] {
+    const team = this.getMyTeam();
+    return structuredClone(this.teamInvitations.filter((invitation) => invitation.teamId === team?.id));
   }
 
   // Teams & Clubs
