@@ -240,7 +240,7 @@ export const PlayersView: React.FC = () => {
                     <img
                       src={player.avatarUrl}
                       alt={player.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center"
                       referrerPolicy="no-referrer"
                     />
                     {/* Star Rating bottom left */}
@@ -331,7 +331,7 @@ export const PlayersView: React.FC = () => {
         >
           <div className="space-y-5">
             <div className="flex items-center gap-4">
-              <img src={profilePlayer.avatarUrl} alt={profilePlayer.name} className="h-20 w-20 rounded-2xl object-cover" />
+              <img src={profilePlayer.avatarUrl} alt={profilePlayer.name} className="h-20 w-20 rounded-2xl object-cover object-center" />
               <div>
                 <p className="font-bold text-pitch-ink">{profilePlayer.currentTeam || 'Sans club'}</p>
                 <p className="text-sm text-slate-500">{profilePlayer.level} · {profilePlayer.strongFoot} · {profilePlayer.height} cm</p>
