@@ -325,12 +325,12 @@ export const MatchesView: React.FC = () => {
                       <div className={`min-w-0 space-y-1 ${isAwayEvent ? 'text-right' : 'text-left'}`}>
                         <div className={`flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ${isAwayEvent ? 'justify-end' : 'justify-start'}`}>
                           <span>{ev.type === 'goal' || ev.type === 'penalty' ? '⚽ But' : '🟨 Carton'}</span>
-                          <strong className="break-words text-pitch-ink">{ev.player}</strong>
+                          <strong className="wrap-break-word text-pitch-ink">{ev.player}</strong>
                           {ev.assist && (
                             <span className="text-slate-500 text-caption">(Passe de {ev.assist})</span>
                           )}
                         </div>
-                        {ev.description && <span className="block break-words text-slate-500 text-caption">{ev.description}</span>}
+                        {ev.description && <span className="block wrap-break-word text-slate-500 text-caption">{ev.description}</span>}
                       </div>
                     );
 
