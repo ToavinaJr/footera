@@ -677,8 +677,8 @@ export const SEED_PITCHES = [
     dimensions: '105m x 68m (Homologué)',
     imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=800&h=450&q=80',
     hourlyRate: 85,
-    rating: 4.8,
-    reviewsCount: 42,
+    rating: 0,
+    reviewsCount: 0,
     amenities: ['Vestiaires chauffés', 'Éclairage nocturne LED', 'Parking gratuit', 'Tribunes 500 places', 'Buvette'],
     availableSlots: [
       { id: 's1', time: '14:00 - 15:30', price: 125, isAvailable: true },
@@ -696,8 +696,8 @@ export const SEED_PITCHES = [
     dimensions: '32m x 19m avec palissades',
     imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&h=450&q=80',
     hourlyRate: 70,
-    rating: 4.9,
-    reviewsCount: 88,
+    rating: 0,
+    reviewsCount: 0,
     amenities: ['Pelouse Five sans remplissage', 'Caméras vidéo HD replay', 'Club-House'],
     availableSlots: [
       { id: 's2_1', time: '18:00 - 19:00', price: 70, isAvailable: true },
@@ -709,6 +709,7 @@ export const SEED_PITCHES = [
 export const SEED_BOOKINGS = [
   {
     id: 'bkg_01',
+    userId: 'usr_me',
     pitchId: 'pitch_01',
     pitchName: 'Terrain d Honneur 11x11 Synthétique',
     complexName: 'Complexe Sportif Municipal',
@@ -763,6 +764,7 @@ export const SEED_RECRUITMENT_ADS = [
 export const SEED_APPLICATIONS = [
   {
     id: 'app_01',
+    userId: 'usr_me',
     adId: 'rec_01',
     adTitle: 'Défenseur Central R2 — Betsileo FC',
     teamName: 'Betsileo FC',

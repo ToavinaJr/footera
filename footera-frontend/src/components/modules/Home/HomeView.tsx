@@ -283,14 +283,14 @@ export const HomeView: React.FC = () => {
                       <span className="font-extrabold text-pitch-primary shrink-0">🎯 {player.goals} buts</span>
                     </div>
 
-                    <button
+                    {myTeam && <button
                       onClick={() => {
                         showToast(`Invitation transmise à ${player.name} !`);
                       }}
                       className="w-full py-2.5 rounded-xl bg-pitch-primary hover:bg-pitch-hover text-white font-bold text-xs transition-colors cursor-pointer"
                     >
                       Inviter dans mon équipe
-                    </button>
+                    </button>}
                   </div>
                 </div>
               ))}

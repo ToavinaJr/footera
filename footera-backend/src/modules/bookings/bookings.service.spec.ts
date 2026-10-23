@@ -46,6 +46,10 @@ describe('BookingsService bookings and ratings', () => {
   const pitchRecord: any = {
     id: 'pitch-test', name: 'Terrain test', complexName: 'Complexe test', surface: 'Indoor Five',
     rating: 4.8, reviewsCount: 2,
+    reviews: [
+      { userId: 'user-2', rating: 5, comment: '', createdAt: '2026-01-01T00:00:00.000Z' },
+      { userId: 'user-3', rating: 4, comment: '', createdAt: '2026-01-01T00:00:00.000Z' },
+    ],
     availableSlots: [
       { id: 's1', time: '09:00 - 10:30', price: 50, isAvailable: true },
       { id: 's2', time: '18:00 - 19:30', price: 65, isAvailable: true },
@@ -97,10 +101,28 @@ describe('BookingsService bookings and ratings', () => {
     await service.ratePitch('pitch-test', { rating: 4, comment: 'Très bien' });
     const updated = await service.ratePitch('pitch-test', { rating: 2, comment: 'Après visite' });
     expect(records.save).toHaveBeenCalledTimes(2);
-    expect(getPitch().reviews).toHaveLength(1);
+    expect(getPitch().reviews).toHaveLength(3);
     expect(updated.reviewsCount).toBe(3);
-    expect(updated.rating).toBe(3.87);
+    expect(updated.rating).toBe(3.67);
     expect(updated.myRating).toBe(2);
     await expect(service.getPitch('pitch-test')).resolves.toMatchObject({ myRating: 2, myReview: { comment: 'Après visite' } });
+  });
+
+  it('does not include seed aggregate ratings without real reviews', async () => {
+    const { service, records } = makeBookingService();
+    records.find.mockResolvedValue({ ...pitchRecord, reviews: [] } as any);
+    // The persisted legacy aggregate is ignored; only review records determine the score.
+    await expect(service.getPitch('pitch-test')).resolves.toMatchObject({ rating: 0, reviewsCount: 0, reviews: [] });
+  });
+
+  it('lists only bookings owned by the authenticated account and prevents cross-account cancellation', async () => {
+    const { service, records, created } = makeBookingService();
+    created.push(
+      { id: 'mine', userId: 'user-1', createdAt: '2026-10-20T00:00:00.000Z', status: 'CONFIRMED' },
+      { id: 'other', userId: 'user-2', createdAt: '2026-10-21T00:00:00.000Z', status: 'CONFIRMED' },
+    );
+    await expect(service.listBookings()).resolves.toEqual([expect.objectContaining({ id: 'mine' })]);
+    records.find.mockImplementation(async (collection: string, id: string) => collection === 'bookings' ? created.find((booking) => booking.id === id) : null);
+    await expect(service.cancelBooking('other')).resolves.toBe(false);
   });
 });

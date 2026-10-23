@@ -293,6 +293,7 @@ export type BookingStatus = 'CONFIRMED' | 'PENDING' | 'CANCELLED';
 
 export interface Booking {
   id: string;
+  userId?: string;
   pitchId: string;
   pitchName: string;
   complexName: string;
@@ -327,6 +328,7 @@ export interface RecruitmentAd {
 
 export interface Application {
   id: string;
+  userId?: string;
   adId: string;
   adTitle: string;
   teamName: string;

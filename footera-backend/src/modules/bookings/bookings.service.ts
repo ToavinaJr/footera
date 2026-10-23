@@ -26,23 +26,46 @@ export class BookingsService {
   }
 
   async listPitches(filters: { city?: string; surface?: string; date?: string } = {}) {
-    const pitches: any[] = await this.records.list('pitches');
+    const [pitches, user]: [any[], any] = await Promise.all([
+      this.records.list('pitches'),
+      this.accounts.profile(),
+    ]);
     const bookings = filters.date ? await this.records.list<any>('bookings') : [];
     return pitches
       .filter((pitch) => (!filters.city || filters.city === 'Toutes' || pitch.city?.toLowerCase().includes(filters.city.toLowerCase()))
         && (!filters.surface || filters.surface === 'Toutes' || pitch.surface === filters.surface))
-      .map((pitch) => this.withDateAvailability(pitch, bookings, filters.date));
+      .map((pitch) => this.withDateAvailability(this.withReviewStats(pitch, user?.id), bookings, filters.date));
   }
   async getPitch(id: string, date?: string) {
     const pitch: any = await this.records.find('pitches', id);
     if (!pitch) return pitch;
     const user: any = await this.accounts.profile();
-    const reviews = Array.isArray(pitch.reviews) ? pitch.reviews : [];
-    const myReview = reviews.find((review: any) => review.userId === user?.id);
-    const pitchWithReview = { ...pitch, reviews, myRating: myReview?.rating, myReview };
+    const pitchWithReview = this.withReviewStats(pitch, user?.id);
     if (!date) return pitchWithReview;
     const bookings = await this.records.list<any>('bookings');
     return this.withDateAvailability(pitchWithReview, bookings, date);
+  }
+
+  private withReviewStats(pitch: any, userId?: string) {
+    const reviews = Array.isArray(pitch.reviews)
+      ? pitch.reviews.filter((review: any) => Number.isInteger(review.rating) && review.rating >= 1 && review.rating <= 5 && typeof review.userId === 'string')
+      : [];
+    const latestByUser = new Map<string, any>();
+    for (const review of reviews) {
+      const previous = latestByUser.get(review.userId);
+      if (!previous || String(review.createdAt || '') >= String(previous.createdAt || '')) latestByUser.set(review.userId, review);
+    }
+    const uniqueReviews = [...latestByUser.values()];
+    const total = uniqueReviews.reduce((sum, review) => sum + review.rating, 0);
+    const myReview = uniqueReviews.find((review) => review.userId === userId);
+    return {
+      ...pitch,
+      reviews: uniqueReviews,
+      rating: uniqueReviews.length ? Number((total / uniqueReviews.length).toFixed(2)) : 0,
+      reviewsCount: uniqueReviews.length,
+      myRating: myReview?.rating,
+      myReview,
+    };
   }
   private withDateAvailability(pitch: any, bookings: any[], date?: string) {
     if (!date) return pitch;
@@ -107,7 +130,7 @@ export class BookingsService {
       if (!slot) throw new ConflictException(`Le créneau ${selection.time} n’est plus disponible.`);
       const id = `bkg_${randomUUID()}`;
       return {
-        id, pitchId: input.pitchId, pitchName: pitch.name || 'Terrain réservé',
+        id, userId: user.id, pitchId: input.pitchId, pitchName: pitch.name || 'Terrain réservé',
         complexName: pitch.complexName || 'Complexe Footera', surface: pitch.surface || 'Synthétique',
         date: selection.date, time: selection.time, durationMinutes: 90, totalPrice: Number(slot.price),
         bookerName: user?.name || 'Joueur Footera', bookerPhone: user?.phone || '',
@@ -154,19 +177,7 @@ export class BookingsService {
     if (existingIndex >= 0) updatedReviews[existingIndex] = review;
     else updatedReviews.push(review);
 
-    const baseRating = Number(pitch.ratingBase ?? pitch.rating ?? 0);
-    const baseCount = Number(pitch.reviewsCountBase ?? pitch.reviewsCount ?? 0);
-    const totalRatings = baseCount + updatedReviews.length;
-    const updatedPitch = {
-      ...pitch,
-      ratingBase: baseRating,
-      reviewsCountBase: baseCount,
-      reviews: updatedReviews,
-      rating: totalRatings ? Number(((baseRating * baseCount + updatedReviews.reduce((sum: number, item: any) => sum + item.rating, 0)) / totalRatings).toFixed(2)) : 0,
-      reviewsCount: totalRatings,
-      myRating: review.rating,
-      myReview: review,
-    };
+    const updatedPitch = this.withReviewStats({ ...pitch, reviews: updatedReviews }, user.id);
     if (previous?.rating === rating && previous?.comment === comment) return updatedPitch;
     return this.records.save('pitches', pitchId, updatedPitch);
   }
@@ -200,7 +211,12 @@ export class BookingsService {
     await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: 'booking', targetSection: 'pitches', targetId: id });
     return pitch;
   }
-  async listBookings() { return (await this.records.list<any>('bookings')).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); }
+  async listBookings() {
+    const user: any = await this.accounts.profile();
+    return (await this.records.list<any>('bookings'))
+      .filter((booking) => booking.userId === user?.id)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
   async createBooking(input: any) {
     const [booking] = await this.createBookings({
       pitchId: input.pitchId,
@@ -211,7 +227,8 @@ export class BookingsService {
   }
   async cancelBooking(id: string) {
     const booking: any = await this.records.find('bookings', id);
-    if (!booking) return false;
+    const user: any = await this.accounts.profile();
+    if (!booking || booking.userId !== user?.id) return false;
     if (booking.status === 'CANCELLED') return true;
     await this.records.save('bookings', id, { ...booking, status: 'CANCELLED' });
     try {

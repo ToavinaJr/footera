@@ -206,7 +206,7 @@ class MockStorageRepository {
 
   getMyTeam(): Team | undefined {
     const teamName = this.profile.sportsCv.currentTeam;
-    return this.teams.find((t) => t.name === teamName) || this.teams[0];
+    return this.teams.find((t) => t.name === teamName);
   }
 
   getClubs(): Club[] {
@@ -355,11 +355,27 @@ class MockStorageRepository {
 
   // Pitches & Bookings
   getPitches(): Pitch[] {
-    return structuredClone(this.pitches);
+    return structuredClone(this.pitches.map((pitch) => this.withReviewStats(pitch)));
   }
 
   getPitchById(id: string): Pitch | undefined {
-    return this.pitches.find((p) => p.id === id);
+    const pitch = this.pitches.find((p) => p.id === id);
+    return pitch ? this.withReviewStats(pitch) : undefined;
+  }
+
+  private withReviewStats(pitch: Pitch): Pitch {
+    const reviews = (pitch.reviews ?? []).filter((review) => Number.isInteger(review.rating) && review.rating >= 1 && review.rating <= 5);
+    const latestByUser = new Map<string, PitchReview>();
+    for (const review of reviews) {
+      const previous = latestByUser.get(review.userId);
+      if (!previous || review.createdAt >= previous.createdAt) latestByUser.set(review.userId, review);
+    }
+    const uniqueReviews = [...latestByUser.values()];
+    const rating = uniqueReviews.length
+      ? Number((uniqueReviews.reduce((sum, review) => sum + review.rating, 0) / uniqueReviews.length).toFixed(2))
+      : 0;
+    const myReview = uniqueReviews.find((review) => review.userId === this.profile.id);
+    return { ...pitch, reviews: uniqueReviews, rating, reviewsCount: uniqueReviews.length, myReview, myRating: myReview?.rating };
   }
 
   ratePitch(id: string, rating: number, comment = ''): Pitch {
@@ -380,19 +396,7 @@ class MockStorageRepository {
     const updatedReviews = [...reviews];
     if (existingIndex >= 0) updatedReviews[existingIndex] = updatedReview;
     else updatedReviews.push(updatedReview);
-    const ratingBase = pitch.ratingBase ?? pitch.rating;
-    const countBase = pitch.reviewsCountBase ?? pitch.reviewsCount;
-    const count = countBase + updatedReviews.length;
-    const updatedPitch = {
-      ...pitch,
-      ratingBase,
-      reviewsCountBase: countBase,
-      reviews: updatedReviews,
-      rating: count ? Number(((ratingBase * countBase + updatedReviews.reduce((sum, review) => sum + review.rating, 0)) / count).toFixed(2)) : 0,
-      reviewsCount: count,
-      myRating: rating,
-      myReview: updatedReview,
-    };
+    const updatedPitch = this.withReviewStats({ ...pitch, reviews: updatedReviews });
     this.pitches = this.pitches.map((item) => item.id === id ? updatedPitch : item);
     saveToStorage(STORAGE_KEYS.PITCHES, this.pitches);
     emitChange();
@@ -444,7 +448,7 @@ class MockStorageRepository {
   }
 
   getBookings(): Booking[] {
-    return structuredClone(this.bookings);
+    return structuredClone(this.bookings.filter((booking) => booking.userId === this.profile.id));
   }
 
   createBooking(input: {
@@ -463,6 +467,7 @@ class MockStorageRepository {
     }
     const newBooking: Booking = {
       id: `bkg_${Date.now()}`,
+      userId: this.profile.id,
       pitchId: input.pitchId,
       pitchName: pitch ? pitch.name : 'Terrain réservé',
       complexName: pitch ? pitch.complexName : 'Complexe Footera',
@@ -521,7 +526,7 @@ class MockStorageRepository {
   }
 
   getApplications(): Application[] {
-    return structuredClone(this.applications);
+    return structuredClone(this.applications.filter((application) => application.userId === this.profile.id));
   }
 
   applyToRecruitment(adId: string, applicant: { message: string; phone: string }): Application {
@@ -530,6 +535,7 @@ class MockStorageRepository {
 
     const newApp: Application = {
       id: `app_${Date.now()}`,
+      userId: this.profile.id,
       adId,
       adTitle: ad ? `${ad.positionSought} — ${ad.teamName}` : 'Candidature Footera',
       teamName: ad ? ad.teamName : 'Équipe Footera',

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Shield, Trophy, UserPlus, Star, Heart } from 'lucide-react';
 import { playersService, PlayerFilters } from '../../../services/playersService';
-import { Player, TeamInvitationStatus } from '../../../types';
+import { Player, Team, TeamInvitationStatus } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -17,6 +17,8 @@ export const PlayersView: React.FC = () => {
   const [positions, setPositions] = useState<string[]>([]);
   const [levels, setLevels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [myTeam, setMyTeam] = useState<Team | null>(null);
+  const [isLoadingMyTeam, setIsLoadingMyTeam] = useState(true);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,15 +49,22 @@ export const PlayersView: React.FC = () => {
   }, [showToast]);
 
   useEffect(() => {
-    teamsService.listMyTeamInvitations()
-      .then((invitations) => setInvitationStatuses(invitations.reduce<Record<string, TeamInvitationStatus>>(
-        (statuses, invitation) => {
-          statuses[invitation.playerId] ??= invitation.status;
-          return statuses;
-        },
-        {},
-      )))
-      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les invitations.', 'error'));
+    Promise.all([teamsService.getMyTeam(), teamsService.listMyTeamInvitations()])
+      .then(([team, invitations]) => {
+        setMyTeam(team ?? null);
+        setInvitationStatuses(invitations.reduce<Record<string, TeamInvitationStatus>>(
+          (statuses, invitation) => {
+            statuses[invitation.playerId] ??= invitation.status;
+            return statuses;
+          },
+          {},
+        ));
+      })
+      .catch((error: unknown) => {
+        setMyTeam(null);
+        showToast(error instanceof Error ? error.message : 'Impossible de charger les informations de votre équipe.', 'error');
+      })
+      .finally(() => setIsLoadingMyTeam(false));
   }, [showToast]);
 
   useEffect(() => {
@@ -289,7 +298,7 @@ export const PlayersView: React.FC = () => {
                 </div>
 
                 {/* Primary Button matching Screenshot 2: Inviter dans mon équipe */}
-                <div className="p-5 pt-0">
+                {myTeam && !isLoadingMyTeam && <div className="p-5 pt-0">
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
@@ -303,7 +312,7 @@ export const PlayersView: React.FC = () => {
                     <UserPlus className="w-4 h-4" />
                     <span>{invitationButtonLabel}</span>
                   </button>
-                </div>
+                </div>}
               </div>
             );
           })}
@@ -329,7 +338,7 @@ export const PlayersView: React.FC = () => {
               </div>
             </div>
             <p className="text-sm leading-relaxed text-slate-600">{profilePlayer.bio}</p>
-            <div className="flex justify-end">
+            {myTeam && !isLoadingMyTeam && <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -343,7 +352,7 @@ export const PlayersView: React.FC = () => {
               >
                 {invitationStatuses[profilePlayer.id] === 'PENDING' ? 'Invitation en attente' : 'Inviter dans mon équipe'}
               </button>
-            </div>
+            </div>}
           </div>
         </Modal>
       )}
