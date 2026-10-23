@@ -41,3 +41,43 @@ describe('TeamsService player invitations', () => {
     expect(records.create).not.toHaveBeenCalled();
   });
 });
+
+describe('TeamsService public roster statistics', () => {
+  it('returns per-competition goal and assist totals for the team roster', async () => {
+    const team = { id: 'team-1', name: 'FC Test', competitionId: 'cup-1', members: [
+      { playerId: 'player-1', name: 'Buteur', position: 'Avant-centre' },
+      { playerId: 'player-2', name: 'Passeur', position: 'Milieu' },
+    ] };
+    const opponent = { id: 'team-2', name: 'FC Adverse', participantTeamIds: ['team-1', 'team-2'] };
+    const tournament = { id: 'cup-1', title: 'Coupe Test', participantTeamIds: ['team-1', 'team-2'] };
+    const players = [
+      { id: 'player-1', name: 'Buteur', currentTeamId: 'team-1' },
+      { id: 'player-2', name: 'Passeur', currentTeamId: 'team-1' },
+    ];
+    const match = {
+      id: 'match-1', tournamentId: 'cup-1', status: 'FINISHED',
+      homeTeam: { id: 'team-1', name: 'FC Test', score: 1 },
+      awayTeam: { id: 'team-2', name: 'FC Adverse', score: 0 },
+      events: [{ type: 'goal', teamId: 'team-1', playerId: 'player-1', player: 'Buteur', assistPlayerId: 'player-2', assist: 'Passeur', minute: 20 }],
+    };
+    const records = {
+      find: vi.fn(async (collection: string) => collection === 'teams' ? team : null),
+      list: vi.fn(async (collection: string) => ({
+        teams: [team, opponent], matches: [match], tournaments: [tournament], players, users: [],
+      }[collection] ?? [])),
+    };
+    const service = new TeamsService(records as any, {} as any, {} as any);
+
+    const detail = await service.getDetail('team-1');
+
+    expect(detail?.competitions).toEqual([{ id: 'cup-1', title: 'Coupe Test' }]);
+    expect(detail?.members.find((member: any) => member.playerId === 'player-1')).toMatchObject({
+      goals: 1, assists: 0, minutesPlayed: null,
+      competitionStats: [{ competitionId: 'cup-1', goals: 1, assists: 0, minutesPlayed: null }],
+    });
+    expect(detail?.members.find((member: any) => member.playerId === 'player-2')).toMatchObject({
+      goals: 0, assists: 1,
+      competitionStats: [{ competitionId: 'cup-1', goals: 0, assists: 1 }],
+    });
+  });
+});

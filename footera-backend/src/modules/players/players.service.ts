@@ -13,16 +13,31 @@ export class PlayersService {
   }
 
   async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
-    const [players, matches, users, tournaments]: [any[], any[], any[], any[]] = await Promise.all([
-      this.records.list('players'), this.records.list('matches'), this.records.list('users'), this.records.list('tournaments'),
+    const [players, matches, users, tournaments, teams]: [any[], any[], any[], any[], any[]] = await Promise.all([
+      this.records.list('players'), this.records.list('matches'), this.records.list('users'), this.records.list('tournaments'), this.records.list('teams'),
     ]);
     const matchStats = aggregatePlayerMatchStats(players, matches, undefined, tournaments);
     const enrichedPlayers = players.map((player) => {
       const stats = matchStats.get(player.id);
       const user = users.find((record) => record.id === player.userId);
+      const sportsCv = user?.sportsCv;
+      const currentTeam = typeof sportsCv?.currentTeam === 'string' ? sportsCv.currentTeam : player.currentTeam;
+      const matchingTeam = teams.find((team) => team.name?.toLowerCase() === currentTeam?.toLowerCase()
+        || team.clubName?.toLowerCase() === currentTeam?.toLowerCase());
       const age = user ? this.ageFromDateOfBirth(user.dateOfBirth) : player.age;
       return {
         ...player,
+        ...(sportsCv ? {
+          primaryPosition: sportsCv.primaryPosition || player.primaryPosition,
+          secondaryPosition: sportsCv.secondaryPosition || player.secondaryPosition,
+          strongFoot: sportsCv.strongFoot || player.strongFoot,
+          height: sportsCv.height || player.height,
+          weight: sportsCv.weight || player.weight,
+          experienceYears: sportsCv.experienceYears,
+          currentTeam,
+          currentTeamId: matchingTeam?.id ?? '',
+          bio: sportsCv.bio || player.bio,
+        } : {}),
         ...(user?.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
         ...(Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
         goals: stats?.goals ?? 0,

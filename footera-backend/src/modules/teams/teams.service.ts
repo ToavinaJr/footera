@@ -59,8 +59,17 @@ export class TeamsService {
     ]);
     if (!team) return null;
     const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
-    const competitionMatches = this.matchesForTeamCompetition(team, matches);
-    const playerStats = aggregatePlayerMatchStats(players, competitionMatches, team.competitionId, tournaments);
+    const competitions = tournaments.filter((tournament) =>
+      tournament.participantTeamIds?.includes(id) || tournament.id === team.competitionId)
+      .map((tournament) => ({ id: tournament.id, title: tournament.title }));
+    const teamCompetitionIds = new Set(competitions.map((competition) => competition.id));
+    const teamCompetitionMatches = matches.filter((match) => teamCompetitionIds.has(match.tournamentId));
+    const primaryCompetitionMatches = this.matchesForTeamCompetition(team, matches);
+    const playerStats = aggregatePlayerMatchStats(players, teamCompetitionMatches, undefined, competitions.length ? tournaments : []);
+    const statsByCompetition = new Map(competitions.map((competition) => [
+      competition.id,
+      aggregatePlayerMatchStats(players, teamCompetitionMatches, competition.id, tournaments),
+    ]));
     const teamMembers: any[] = team.members || [];
     const membersByPlayerId = new Map<string, any>();
     for (const player of players) {
@@ -71,6 +80,18 @@ export class TeamsService {
       const user = users.find((candidate: any) => candidate.id === player.userId);
       const memberId = player.id;
       const stats = playerStats.get(memberId);
+      const competitionStats = competitions.map((competition) => {
+        const competitionTotals = statsByCompetition.get(competition.id)?.get(memberId);
+        return {
+          competitionId: competition.id,
+          appearances: competitionTotals?.appearances ?? 0,
+          goals: competitionTotals?.goals ?? 0,
+          assists: competitionTotals?.assists ?? 0,
+          yellowCards: competitionTotals?.yellowCards ?? 0,
+          redCards: competitionTotals?.redCards ?? 0,
+          minutesPlayed: null,
+        };
+      });
       membersByPlayerId.set(memberId, {
         ...rosterEntry,
         playerId: memberId,
@@ -85,6 +106,8 @@ export class TeamsService {
         assists: stats?.assists ?? 0,
         yellowCards: stats?.yellowCards ?? 0,
         redCards: stats?.redCards ?? 0,
+        minutesPlayed: null,
+        competitionStats,
       });
     }
     // Keep legacy roster entries that do not yet have a Player record.
@@ -98,6 +121,16 @@ export class TeamsService {
           assists: stats?.assists ?? 0,
           yellowCards: stats?.yellowCards ?? 0,
           redCards: stats?.redCards ?? 0,
+          minutesPlayed: null,
+          competitionStats: competitions.map((competition) => ({
+            competitionId: competition.id,
+            appearances: 0,
+            goals: 0,
+            assists: 0,
+            yellowCards: 0,
+            redCards: 0,
+            minutesPlayed: null,
+          })),
         });
       }
     }
@@ -110,7 +143,8 @@ export class TeamsService {
     return {
       ...publicTeam,
       members,
-      ...buildTeamMatchSummary(id, competitionMatches),
+      competitions,
+      ...buildTeamMatchSummary(id, primaryCompetitionMatches),
       topScorers,
       stats: this.getComputedTeamStats(team, teams, matches, tournaments),
     };

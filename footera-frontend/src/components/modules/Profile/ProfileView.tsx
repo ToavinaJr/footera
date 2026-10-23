@@ -379,7 +379,9 @@ export const ProfileView: React.FC = () => {
                 <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner
                     ? `${user!.sportsCv.experienceYears} ans`
-                    : publicPlayer!.age ? `${publicPlayer!.age} ans` : 'Non renseigné'}
+                    : Number.isInteger(publicPlayer!.experienceYears) && publicPlayer!.experienceYears! > 0
+                      ? `${publicPlayer!.experienceYears} ans`
+                      : 'Non renseigné'}
                 </strong>
               </div>
             </div>

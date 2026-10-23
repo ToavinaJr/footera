@@ -46,6 +46,7 @@ export const teamsService = {
       return mockDelay({
         ...team,
         recentForm: team.recentForm,
+        competitions: [],
         recentMatches,
         upcomingMatches: matches.filter((match) => match.status === 'SCHEDULED').map(decorate),
         topScorers: [...team.members]

@@ -26,6 +26,7 @@ export interface Player {
   id: string;
   name: string;
   age?: number;
+  experienceYears?: number;
   city: string;
   avatarUrl: string;
   primaryPosition: Position;
@@ -65,8 +66,21 @@ export interface TeamMember {
   avatarUrl: string;
   age?: number;
   matchesPlayed?: number;
+  appearances?: number;
   goals?: number;
   assists?: number;
+  yellowCards?: number;
+  redCards?: number;
+  minutesPlayed?: number | null;
+  competitionStats?: Array<{
+    competitionId: string;
+    appearances: number;
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards: number;
+    minutesPlayed: number | null;
+  }>;
 }
 
 export interface NextMatchInfo {
@@ -180,6 +194,7 @@ export interface TeamMatch extends Match {
 }
 
 export interface TeamDetail extends Team {
+  competitions: Array<{ id: string; title: string }>;
   recentMatches: TeamMatch[];
   upcomingMatches: TeamMatch[];
   topScorers: Array<{ playerId: string; playerName: string; goals: number }>;
