@@ -4,7 +4,7 @@ import { validateSportsCvPayload } from './sports-cv.validation.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { UserContext } from '../auth/user-context.js';
-import type { PlayerRecord, UserRecord } from '../../database/domain-records.js';
+import type { PlayerRecord, UserRecord } from '../../types/records.js';
 import { calculateAge } from './calculate-age.js';
 
 @Injectable()

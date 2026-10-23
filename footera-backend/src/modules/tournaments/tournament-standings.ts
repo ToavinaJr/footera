@@ -1,4 +1,4 @@
-import type { TeamRecord, TournamentRecord } from '../../database/domain-records.js';
+import type { TeamRecord, TournamentRecord } from '../../types/records.js';
 
 export interface StandingMatch {
   id: string;

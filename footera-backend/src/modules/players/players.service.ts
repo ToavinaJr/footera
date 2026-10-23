@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { aggregatePlayerMatchStats } from './player-match-stats.js';
-import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
+import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
 import { calculateAge } from '../accounts/calculate-age.js';
 
 @Injectable()

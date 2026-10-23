@@ -5,7 +5,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
-import type { BookingRecord, PitchRecord, PitchReviewRecord } from '../../database/domain-records.js';
+import type { BookingRecord, PitchRecord, PitchReviewRecord } from '../../types/records.js';
 
 export interface BookingSelection { date: string; time: string }
 export interface BookingBatchInput { pitchId: string; selections: BookingSelection[]; teamName?: string }

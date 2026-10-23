@@ -4,7 +4,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTournamentStandings } from './tournament-standings.js';
 import { UserContext } from '../auth/user-context.js';
-import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord } from '../../database/domain-records.js';
+import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord } from '../../types/records.js';
 
 export interface CreateTournamentInput {
   title: string;

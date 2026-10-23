@@ -6,7 +6,7 @@ export interface PlayerMatchStats {
   redCards: number;
 }
 
-import type { MatchEventRecord, MatchRecord, PlayerRecord, TournamentRecord } from '../../database/domain-records.js';
+import type { MatchEventRecord, MatchRecord, PlayerRecord, TournamentRecord } from '../../types/records.js';
 
 export function aggregatePlayerMatchStats(
   players: PlayerRecord[],

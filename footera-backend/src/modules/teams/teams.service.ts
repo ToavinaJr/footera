@@ -6,7 +6,7 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { buildTeamMatchSummary } from './team-match-summary.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import { aggregatePlayerMatchStats } from '../players/player-match-stats.js';
-import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
+import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
 
 export interface EnrichedTeamMember extends TeamMemberRecord {
   appearances: number;

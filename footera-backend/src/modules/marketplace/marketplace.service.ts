@@ -5,7 +5,7 @@ import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
-import type { MarketplaceRecord } from '../../database/domain-records.js';
+import type { MarketplaceRecord } from '../../types/records.js';
 
 export interface CreateMarketplaceInput {
   title: string;

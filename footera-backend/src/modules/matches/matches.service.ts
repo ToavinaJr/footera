@@ -4,7 +4,7 @@ import { AccountsService } from '../accounts/accounts.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import { UserContext } from '../auth/user-context.js';
-import type { MatchEventRecord, MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UpdateMatchInput } from '../../database/domain-records.js';
+import type { MatchEventRecord, MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UpdateMatchInput } from '../../types/records.js';
 
 @Injectable()
 export class MatchesService {

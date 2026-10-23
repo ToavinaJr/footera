@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { AccountsService } from '../accounts/accounts.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
-import type { ClubRecord, TeamRecord } from '../../database/domain-records.js';
+import type { ClubRecord, TeamRecord } from '../../types/records.js';
 
 @Injectable()
 export class ClubsService {

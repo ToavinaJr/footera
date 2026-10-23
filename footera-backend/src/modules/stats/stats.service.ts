@@ -3,7 +3,7 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { PlayersService } from '../players/players.service.js';
 import { TeamsService } from '../teams/teams.service.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
-import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord } from '../../database/domain-records.js';
+import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord } from '../../types/records.js';
 
 const FALLBACK_LOGO = 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80';
 

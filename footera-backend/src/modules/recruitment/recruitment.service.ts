@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
-import type { ApplicationRecord, RecruitmentAdRecord } from '../../database/domain-records.js';
+import type { ApplicationRecord, RecruitmentAdRecord } from '../../types/records.js';
 
 @Injectable()
 export class RecruitmentService {
