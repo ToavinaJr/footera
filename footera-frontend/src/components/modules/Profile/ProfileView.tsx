@@ -264,13 +264,13 @@ export const ProfileView: React.FC = () => {
                   <span className="block text-caption font-semibold text-slate-500">Ville</span>
                   <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><MapPin className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.city : publicPlayer!.city}</span>
                 </div>}
-                {isOwner && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                {(isOwner || publicPlayer!.email) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
                   <span className="block text-caption font-semibold text-slate-500">Adresse e-mail</span>
-                  <span className="mt-1 flex min-w-0 items-start gap-2 break-all text-sm font-semibold text-pitch-ink"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-pitch-primary" />{user!.email}</span>
+                  <span className="mt-1 flex min-w-0 items-start gap-2 break-all text-sm font-semibold text-pitch-ink"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.email : publicPlayer!.email}</span>
                 </div>}
-                {isOwner && user!.phone?.trim() && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
+                {(isOwner ? user!.phone?.trim() : publicPlayer!.phone?.trim()) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
                   <span className="block text-caption font-semibold text-slate-500">Téléphone</span>
-                  <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{user!.phone}</span>
+                  <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.phone : publicPlayer!.phone}</span>
                 </div>}
                 {displayedAge !== undefined && displayedAge > 0 && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
                   <span className="block text-caption font-semibold text-slate-500">Âge</span>

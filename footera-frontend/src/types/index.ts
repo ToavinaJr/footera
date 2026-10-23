@@ -25,6 +25,8 @@ export type UserRole =
 export interface Player {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   age?: number;
   experienceYears?: number;
   city: string;

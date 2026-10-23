@@ -12,6 +12,7 @@ describe('PlayersService linked profile fields', () => {
     };
     const service = new PlayersService({
       list: vi.fn((collection: string) => Promise.resolve(collections[collection] ?? [])),
+      find: vi.fn(async (collection: string, id: string) => collections[collection]?.find((item) => typeof item === 'object' && item !== null && 'id' in item && item.id === id) ?? null),
     } as unknown as never, {} as unknown as never);
 
     await expect(service.getById('player-1')).resolves.toMatchObject({ age: expectedAge, avatarUrl: '/profile.png' });
@@ -26,9 +27,29 @@ describe('PlayersService linked profile fields', () => {
     };
     const service = new PlayersService({
       list: vi.fn((collection: string) => Promise.resolve(collections[collection] ?? [])),
+      find: vi.fn(async (collection: string, id: string) => collections[collection]?.find((item) => typeof item === 'object' && item !== null && 'id' in item && item.id === id) ?? null),
     } as unknown as never, {} as unknown as never);
 
     const player = await service.getById('player-1');
     expect(player?.age).toBeUndefined();
+  });
+
+  it('returns linked contact details only on the individual public profile', async () => {
+    const collections: Record<string, unknown[]> = {
+      players: [{ id: 'player-1', userId: 'user-1', name: 'Player' }],
+      matches: [],
+      users: [{ id: 'user-1', name: 'Player', email: 'player@example.com', phone: '+261 34 00 000 00' }],
+      tournaments: [],
+      teams: [],
+    };
+    const service = new PlayersService({
+      list: vi.fn((collection: string) => Promise.resolve(collections[collection] ?? [])),
+      find: vi.fn(async (collection: string, id: string) => collections[collection]?.find((item) => typeof item === 'object' && item !== null && 'id' in item && item.id === id) ?? null),
+    } as unknown as never, {} as unknown as never);
+
+    const directory = await service.list();
+    expect(directory[0]).not.toHaveProperty('email');
+    expect(directory[0]).not.toHaveProperty('phone');
+    await expect(service.getById('player-1')).resolves.toMatchObject({ email: 'player@example.com', phone: '+261 34 00 000 00' });
   });
 });

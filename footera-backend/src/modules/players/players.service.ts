@@ -65,7 +65,15 @@ export class PlayersService {
 
   async getById(id: string) {
     const players = await this.list();
-    return players.find((player) => player.id === id) ?? null;
+    const player = players.find((item) => item.id === id);
+    if (!player) return null;
+    const source = await this.records.find<PlayerRecord>('players', id);
+    const user = source?.userId ? await this.records.find<UserRecord>('users', source.userId) : null;
+    return {
+      ...player,
+      ...(user?.email ? { email: user.email } : {}),
+      ...(user?.phone?.trim() ? { phone: user.phone } : {}),
+    };
   }
 
 }
