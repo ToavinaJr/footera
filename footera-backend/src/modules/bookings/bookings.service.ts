@@ -5,6 +5,22 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
+import type { BookingRecord, PitchRecord, PitchReviewRecord } from '../../database/domain-records.js';
+
+export interface BookingSelection { date: string; time: string }
+export interface BookingBatchInput { pitchId: string; selections: BookingSelection[]; teamName?: string }
+export interface CreateBookingInput { pitchId: string; date: string; time: string; teamName?: string }
+export interface CreatePitchInput {
+  name: string;
+  complexName: string;
+  city: string;
+  address: string;
+  surface: string;
+  dimensions: string;
+  imageUrl: string;
+  hourlyRate: number;
+  amenities: string[];
+}
 
 const normalizeDateKey = (value: string) => {
   const normalized = value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR');
@@ -26,31 +42,31 @@ export class BookingsService {
   }
 
   async listPitches(filters: { city?: string; surface?: string; date?: string } = {}) {
-    const [pitches, user]: [any[], any] = await Promise.all([
-      this.records.list('pitches'),
+    const [pitches, user] = await Promise.all([
+      this.records.list<PitchRecord>('pitches'),
       this.accounts.profile(),
     ]);
-    const bookings = filters.date ? await this.records.list<any>('bookings') : [];
+    const bookings = filters.date ? await this.records.list<BookingRecord>('bookings') : [];
     return pitches
       .filter((pitch) => (!filters.city || filters.city === 'Toutes' || pitch.city?.toLowerCase().includes(filters.city.toLowerCase()))
         && (!filters.surface || filters.surface === 'Toutes' || pitch.surface === filters.surface))
       .map((pitch) => this.withDateAvailability(this.withReviewStats(pitch, user?.id), bookings, filters.date));
   }
   async getPitch(id: string, date?: string) {
-    const pitch: any = await this.records.find('pitches', id);
+    const pitch = await this.records.find<PitchRecord>('pitches', id);
     if (!pitch) return pitch;
-    const user: any = await this.accounts.profile();
+    const user = await this.accounts.profile();
     const pitchWithReview = this.withReviewStats(pitch, user?.id);
     if (!date) return pitchWithReview;
-    const bookings = await this.records.list<any>('bookings');
+    const bookings = await this.records.list<BookingRecord>('bookings');
     return this.withDateAvailability(pitchWithReview, bookings, date);
   }
 
-  private withReviewStats(pitch: any, userId?: string) {
+  private withReviewStats(pitch: PitchRecord, userId?: string): PitchRecord {
     const reviews = Array.isArray(pitch.reviews)
-      ? pitch.reviews.filter((review: any) => Number.isInteger(review.rating) && review.rating >= 1 && review.rating <= 5 && typeof review.userId === 'string')
+      ? pitch.reviews.filter((review) => Number.isInteger(review.rating) && review.rating >= 1 && review.rating <= 5)
       : [];
-    const latestByUser = new Map<string, any>();
+    const latestByUser = new Map<string, PitchReviewRecord>();
     for (const review of reviews) {
       const previous = latestByUser.get(review.userId);
       if (!previous || String(review.createdAt || '') >= String(previous.createdAt || '')) latestByUser.set(review.userId, review);
@@ -67,14 +83,14 @@ export class BookingsService {
       myReview,
     };
   }
-  private withDateAvailability(pitch: any, bookings: any[], date?: string) {
+  private withDateAvailability(pitch: PitchRecord, bookings: BookingRecord[], date?: string): PitchRecord {
     if (!date) return pitch;
     const bookedTimes = new Set(bookings
       .filter((booking) => booking.pitchId === pitch.id && normalizeDateKey(booking.date) === normalizeDateKey(date) && booking.status !== 'CANCELLED')
       .map((booking) => booking.time));
     return {
       ...pitch,
-      availableSlots: (pitch.availableSlots || []).map((slot: any) => ({
+      availableSlots: (pitch.availableSlots || []).map((slot) => ({
         ...slot,
         isAvailable: Boolean(slot.isAvailable) && !bookedTimes.has(slot.time),
       })),
@@ -84,9 +100,9 @@ export class BookingsService {
     if (!input?.pitchId || !Array.isArray(input.selections) || input.selections.length === 0 || input.selections.length > 30) {
       throw new BadRequestException('Sélection de créneaux invalide.');
     }
-    const pitch: any = await this.records.find('pitches', input.pitchId);
+    const pitch = await this.records.find<PitchRecord>('pitches', input.pitchId);
     if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
-    const bookings: any[] = await this.records.list('bookings');
+    const bookings = await this.records.list<BookingRecord>('bookings');
     const perDate: Record<string, number> = {};
     const seen = new Set<string>();
     for (const selection of input.selections) {
@@ -97,7 +113,7 @@ export class BookingsService {
       const key = `${selection.date}:${selection.time}`;
       if (seen.has(key)) throw new ConflictException('Un créneau est sélectionné plusieurs fois.');
       seen.add(key);
-      const slot = pitch.availableSlots?.find((candidate: any) => candidate.time === selection.time && candidate.isAvailable);
+      const slot = pitch.availableSlots?.find((candidate) => candidate.time === selection.time && candidate.isAvailable);
       const alreadyBooked = bookings.some((booking) => booking.pitchId === input.pitchId
         && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
       if (!slot || alreadyBooked) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} n’est plus disponible.`);
@@ -108,25 +124,26 @@ export class BookingsService {
     return { total: Object.values(perDate).reduce((total, price) => total + price, 0), perDate };
   }
 
-  async createBookings(input: { pitchId: string; selections: Array<{ date: string; time: string }>; teamName?: string }) {
+  async createBookings(input: BookingBatchInput) {
     // Recompute and revalidate on the server; never trust the displayed quote or client-submitted prices.
     await this.quoteBookings(input);
-    const [pitch, user, currentBookings]: any[] = await Promise.all([
-      this.records.find('pitches', input.pitchId),
+    const [pitch, user, currentBookings] = await Promise.all([
+      this.records.find<PitchRecord>('pitches', input.pitchId),
       this.accounts.profile(),
-      this.records.list('bookings'),
+      this.records.list<BookingRecord>('bookings'),
     ]);
     if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
+    if (!user?.id) throw new ForbiddenException('Connectez-vous pour réserver ce terrain.');
 
     const selections = input.selections;
     for (const selection of selections) {
-      const reserved = currentBookings.some((booking: any) => booking.pitchId === input.pitchId
+      const reserved = currentBookings.some((booking) => booking.pitchId === input.pitchId
         && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
       if (reserved) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} vient d’être réservé.`);
     }
 
     const bookings = selections.map((selection) => {
-      const slot = pitch.availableSlots.find((candidate: any) => candidate.time === selection.time && candidate.isAvailable);
+      const slot = pitch.availableSlots.find((candidate) => candidate.time === selection.time && candidate.isAvailable);
       if (!slot) throw new ConflictException(`Le créneau ${selection.time} n’est plus disponible.`);
       const id = `bkg_${randomUUID()}`;
       return {
@@ -156,15 +173,15 @@ export class BookingsService {
     if (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.length > 500) {
       throw new BadRequestException('La note doit être comprise entre 1 et 5 et le commentaire ne doit pas dépasser 500 caractères.');
     }
-    const [pitch, user]: any[] = await Promise.all([
-      this.records.find('pitches', pitchId),
+    const [pitch, user] = await Promise.all([
+      this.records.find<PitchRecord>('pitches', pitchId),
       this.accounts.profile(),
     ]);
     if (!pitch) throw new ConflictException('Ce terrain n’est plus disponible.');
     if (!user?.id) throw new ForbiddenException('Connectez-vous pour noter ce terrain.');
 
-    const reviews = Array.isArray(pitch.reviews) ? pitch.reviews : [];
-    const existingIndex = reviews.findIndex((review: any) => review.userId === user.id);
+    const reviews = pitch.reviews ?? [];
+    const existingIndex = reviews.findIndex((review) => review.userId === user.id);
     const previous = existingIndex >= 0 ? reviews[existingIndex] : undefined;
     const review = {
       userId: user.id,
@@ -181,8 +198,8 @@ export class BookingsService {
     if (previous?.rating === rating && previous?.comment === comment) return updatedPitch;
     return this.records.save('pitches', pitchId, updatedPitch);
   }
-  async createPitch(input: any) {
-    const user: any = await this.accounts.profile();
+  async createPitch(input: CreatePitchInput) {
+    const user = await this.accounts.profile();
     if (!user?.roles?.includes('Gestionnaire Terrain')) {
       throw new ForbiddenException('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
     }
@@ -212,12 +229,12 @@ export class BookingsService {
     return pitch;
   }
   async listBookings() {
-    const user: any = await this.accounts.profile();
-    return (await this.records.list<any>('bookings'))
+    const user = await this.accounts.profile();
+    return (await this.records.list<BookingRecord>('bookings'))
       .filter((booking) => booking.userId === user?.id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
-  async createBooking(input: any) {
+  async createBooking(input: CreateBookingInput) {
     const [booking] = await this.createBookings({
       pitchId: input.pitchId,
       selections: [{ date: input.date, time: input.time }],
@@ -226,8 +243,8 @@ export class BookingsService {
     return booking;
   }
   async cancelBooking(id: string) {
-    const booking: any = await this.records.find('bookings', id);
-    const user: any = await this.accounts.profile();
+    const booking = await this.records.find<BookingRecord>('bookings', id);
+    const user = await this.accounts.profile();
     if (!booking || booking.userId !== user?.id) return false;
     if (booking.status === 'CANCELLED') return true;
     await this.records.save('bookings', id, { ...booking, status: 'CANCELLED' });

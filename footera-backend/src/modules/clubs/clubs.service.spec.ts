@@ -10,7 +10,7 @@ function makeService(activeRole = 'Entraîneur', currentTeam = 'Betsileo FC', ro
     save: vi.fn(async (_table, _id, payload) => payload),
   };
   const accounts = { profile: vi.fn(async () => ({ activeRole, roles, sportsCv: { currentTeam } })) };
-  return { service: new ClubsService(repository as any, accounts as any), repository };
+  return { service: new ClubsService(repository as unknown as never, accounts as unknown as never), repository };
 }
 
 describe('ClubsService logo security', () => {

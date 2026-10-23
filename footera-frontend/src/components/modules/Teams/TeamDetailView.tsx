@@ -74,7 +74,10 @@ export const TeamDetailView: React.FC = () => {
   useEffect(() => {
     let active = true;
     setIsLoading(true);
-    teamsService.getDetail(teamId).then((teamData) => {
+    teamsService.getDetail(teamId, {
+      competitionId: competitionFilter,
+      sortBy: rosterSort,
+    }).then((teamData) => {
       if (!active) return;
       setTeam(teamData);
     }).catch((error: unknown) => {
@@ -83,17 +86,10 @@ export const TeamDetailView: React.FC = () => {
       if (active) setIsLoading(false);
     });
     return () => { active = false; };
-  }, [teamId, showToast]);
+  }, [teamId, showToast, competitionFilter, rosterSort]);
 
   if (isLoading) return <div className="space-y-4"><CardSkeleton /><CardSkeleton /></div>;
   if (!team) return <EmptyState icon={Trophy} title="Équipe introuvable" description="Cette équipe n’existe pas ou n’est plus disponible." actionLabel="Retour aux équipes" onAction={() => navigate('/teams')} />;
-
-  const roster = team.members.map((member) => {
-    const selectedStats = competitionFilter === 'all'
-      ? member
-      : member.competitionStats?.find((stats) => stats.competitionId === competitionFilter);
-    return { ...member, ...(selectedStats || {}) };
-  }).sort((left, right) => (right[rosterSort] ?? 0) - (left[rosterSort] ?? 0));
 
   return (
     <div className="space-y-6 pb-16">
@@ -156,17 +152,16 @@ export const TeamDetailView: React.FC = () => {
                     <option value="appearances">Matchs joués*</option>
                     <option value="yellowCards">Cartons jaunes</option>
                     <option value="redCards">Cartons rouges</option>
-                    <option value="minutesPlayed" disabled>Minutes jouées (à venir)</option>
                   </select>
                 </label>
               </div>
               <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-xs">
+                <table className="w-full min-w-160 text-left text-xs">
                   <thead className="border-b border-pitch-line text-slate-500">
                     <tr><th className="py-3 pr-3">Joueur</th><th className="px-3 py-3 text-center">Matchs*</th><th className="px-3 py-3 text-center">Buts</th><th className="px-3 py-3 text-center">Passes D</th><th className="px-3 py-3 text-center">Jaunes</th><th className="px-3 py-3 text-center">Rouges</th><th className="px-3 py-3 text-center">Minutes</th></tr>
                   </thead>
                   <tbody className="divide-y divide-pitch-separator">
-                    {roster.map((member) => (
+                    {team.members.map((member) => (
                       <tr key={member.playerId}>
                         <td className="py-3 pr-3"><div className="flex items-center gap-2"><img src={member.avatarUrl || team.logoUrl} alt="" className="h-9 w-9 rounded-full object-cover" /><div className="min-w-0"><EntityLink section="players" id={member.playerId} className="block max-w-48 truncate font-bold text-pitch-ink" title={member.name}>{member.name}</EntityLink><span className="text-slate-500">{member.position}</span></div></div></td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.appearances ?? 0}</td>
@@ -174,7 +169,7 @@ export const TeamDetailView: React.FC = () => {
                         <td className="px-3 py-3 text-center tabular-nums">{member.assists ?? 0}</td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.yellowCards ?? 0}</td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.redCards ?? 0}</td>
-                        <td className="px-3 py-3 text-center text-slate-400">{member.minutesPlayed ?? '—'}</td>
+                        <td className="px-3 py-3 text-center text-slate-400">—</td>
                       </tr>
                     ))}
                   </tbody>

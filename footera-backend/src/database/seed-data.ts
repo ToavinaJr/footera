@@ -5,7 +5,7 @@ import {
   SEED_TEAMS, SEED_TOURNAMENTS, SEED_USER, SEED_CATALOGS,
 } from './seeds.js';
 import { PrismaService } from './prisma.service.js';
-import { RECORD_MODELS, RecordCollection } from './record.repository.js';
+import { asJson, RECORD_MODELS, RecordCollection, type RecordDelegate } from './record.repository.js';
 import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
 
 function derivePasswordKey(password: string, salt: Buffer): Promise<Buffer> {
@@ -34,70 +34,88 @@ const collections: Array<[RecordCollection, string, unknown[]]> = [
   ['catalogs', 'id', SEED_CATALOGS],
 ];
 
+function asObject(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asObjectArray(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value) ? value.map(asObject) : [];
+}
+
+function delegateFor(prisma: PrismaService, collection: RecordCollection): RecordDelegate {
+  return (prisma as unknown as Record<string, RecordDelegate>)[RECORD_MODELS[collection]];
+}
+
 export async function seedDatabase(prisma: PrismaService, { reset = false } = {}) {
   if (reset) {
-    for (const [, model] of Object.entries(RECORD_MODELS)) {
-      await (prisma as any)[model].deleteMany();
+    for (const collection of Object.keys(RECORD_MODELS) as RecordCollection[]) {
+      await delegateFor(prisma, collection).deleteMany();
     }
   }
 
   for (const [collection, key, records] of collections) {
-    const delegate = (prisma as any)[RECORD_MODELS[collection]];
-    for (const payload of records as Array<Record<string, any>>) {
-      const id = String(payload[key] ?? `${collection}_${records.indexOf(payload) + 1}`);
+    const delegate = delegateFor(prisma, collection);
+    for (const [index, rawPayload] of records.entries()) {
+      const payload = asObject(rawPayload);
+      const id = String(payload[key] ?? `${collection}_${index + 1}`);
       const existing = await delegate.findUnique({ where: { id } });
       if (existing) {
-        if (collection === 'notifications' && !existing.payload.createdAt) {
-          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, createdAt: new Date().toISOString() } } });
+        const current = asObject(existing.payload);
+        if (collection === 'notifications' && !current.createdAt) {
+          await delegate.update({ where: { id }, data: { payload: { ...current, createdAt: new Date().toISOString() } } });
         }
-        if (collection === 'players' && payload.userId && !existing.payload.userId) {
-          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, userId: payload.userId } } });
+        if (collection === 'players' && payload.userId && !current.userId) {
+          await delegate.update({ where: { id }, data: { payload: { ...current, userId: payload.userId } } });
         }
-        if (collection === 'teams' && payload.ownerId && !existing.payload.ownerId) {
-          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, ownerId: payload.ownerId } } });
+        if (collection === 'teams' && payload.ownerId && !current.ownerId) {
+          await delegate.update({ where: { id }, data: { payload: { ...current, ownerId: payload.ownerId } } });
         }
-        if (collection === 'teams' && payload.competitionId && !existing.payload.competitionId) {
-          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, competitionId: payload.competitionId } } });
+        if (collection === 'teams' && payload.competitionId && !current.competitionId) {
+          await delegate.update({ where: { id }, data: { payload: { ...current, competitionId: payload.competitionId } } });
         }
-        if (collection === 'matches' && payload.tournamentId && !existing.payload.tournamentId) {
-          const seededEvents = Array.isArray(payload.events) ? payload.events : [];
-          const storedEvents = Array.isArray(existing.payload.events) ? existing.payload.events : [];
-          const events = storedEvents.map((event: Record<string, any>, index: number) => {
-            const seededEvent = seededEvents[index];
+        if (collection === 'matches' && payload.tournamentId && !current.tournamentId) {
+          const seededEvents = asObjectArray(payload.events);
+          const storedEvents = asObjectArray(current.events);
+          const events = storedEvents.map((event, eventIndex) => {
+            const seededEvent = seededEvents[eventIndex];
             if (!seededEvent || event.playerId || !seededEvent.playerId) return event;
             return { ...event, playerId: seededEvent.playerId,
               ...(seededEvent.assistPlayerId && !event.assistPlayerId ? { assistPlayerId: seededEvent.assistPlayerId } : {}),
               ...(seededEvent.assist && !event.assist ? { assist: seededEvent.assist } : {}),
             };
           });
-          await delegate.update({ where: { id }, data: { payload: { ...existing.payload, tournamentId: payload.tournamentId, events } } });
+          await delegate.update({ where: { id }, data: { payload: asJson({ ...current, tournamentId: payload.tournamentId, events }) } });
         }
         continue;
       }
       const seedPayload = collection === 'notifications' && !payload.createdAt
         ? { ...payload, createdAt: new Date().toISOString() }
         : payload;
-      await delegate.create({ data: { id, payload: seedPayload } });
+      await delegate.create({ data: { id, payload: asJson(seedPayload) } });
     }
   }
 
-  const notificationDelegate = (prisma as any)[RECORD_MODELS.notifications];
+  const notificationDelegate = delegateFor(prisma, 'notifications');
   const legacyNotifications = await notificationDelegate.findMany();
   for (const record of legacyNotifications) {
-    if (record.payload?.recipientId) continue;
+    const payload = asObject(record.payload);
+    if (payload.recipientId) continue;
     await notificationDelegate.update({
       where: { id: record.id },
-      data: { payload: { ...record.payload, recipientId: SEED_USER.id } },
+      data: { payload: asJson({ ...payload, recipientId: SEED_USER.id }) },
     });
   }
 
   const seedPassword = process.env.SEED_USER_PASSWORD;
-  if (seedPassword && !await (prisma as any).authCredentialRecord.findUnique({ where: { id: SEED_USER.email.toLowerCase() } })) {
+  const credentials = delegateFor(prisma, 'authCredentials');
+  if (seedPassword && !await credentials.findUnique({ where: { id: SEED_USER.email.toLowerCase() } })) {
     if (seedPassword.length < 12) throw new Error('SEED_USER_PASSWORD must contain at least 12 characters.');
     const salt = randomBytes(16);
     const hash = await derivePasswordKey(seedPassword, salt);
     const passwordHash = `scrypt$16384$8$1$${salt.toString('base64url')}$${hash.toString('base64url')}`;
-    await (prisma as any).authCredentialRecord.create({
+    await credentials.create({
       data: { id: SEED_USER.email.toLowerCase(), payload: { userId: SEED_USER.id, passwordHash } },
     });
   }

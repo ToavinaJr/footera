@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Shield, Trophy, UserPlus, Star, Heart } from 'lucide-react';
 import { playersService, PlayerFilters } from '../../../services/playersService';
-import { Player, Team, TeamInvitationStatus } from '../../../types';
+import { Player, Position, Team, TeamInvitationStatus } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -73,14 +73,14 @@ export const PlayersView: React.FC = () => {
       try {
         const filters: PlayerFilters = {
           query: searchQuery,
-          position: selectedPosition as any,
-          level: selectedLevel as any,
+          position: selectedPosition as Position,
+          level: selectedLevel,
           transferOnly: onlyTransfer,
         };
         const data = await playersService.list(filters);
         setPlayers(data);
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des joueurs', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des joueurs', 'error');
       } finally {
         setIsLoading(false);
       }
@@ -245,7 +245,7 @@ export const PlayersView: React.FC = () => {
                     {/* Star Rating bottom left */}
                     <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-xl text-white text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
                       <Star className="w-3.5 h-3.5 fill-lime-volt text-lime-volt" />
-                      <span>{player.rating || 7.8}</span>
+                      <span>{player.rating && player.rating > 0 ? player.rating : '—'}</span>
                     </div>
 
                     {/* Heart button top right */}

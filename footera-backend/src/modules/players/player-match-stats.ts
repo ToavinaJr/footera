@@ -6,7 +6,9 @@ export interface PlayerMatchStats {
   redCards: number;
 }
 
-export function aggregatePlayerMatchStats(players: any[], matches: any[], tournamentId?: string, tournaments: any[] = []) {
+import type { MatchEventRecord, MatchRecord, PlayerRecord, TournamentRecord } from '../../database/domain-records.js';
+
+export function aggregatePlayerMatchStats(players: PlayerRecord[], matches: MatchRecord[], tournamentId?: string, tournaments: TournamentRecord[] = []) {
   const totals = new Map<string, PlayerMatchStats>();
   const competitions = new Map(tournaments.map((tournament) => [tournament.id, new Set<string>(tournament.participantTeamIds ?? [])]));
   const finishedMatches = matches.filter((match) => match.status === 'FINISHED'
@@ -15,7 +17,7 @@ export function aggregatePlayerMatchStats(players: any[], matches: any[], tourna
     && (!tournaments.length || (competitions.get(match.tournamentId)?.has(match.homeTeam?.id)
       && competitions.get(match.tournamentId)?.has(match.awayTeam?.id))));
 
-  const resolvePlayer = (event: any, teamId: string, field: 'player' | 'assist', idField: 'playerId' | 'assistPlayerId') => {
+  const resolvePlayer = (event: MatchEventRecord, teamId: string, field: 'player' | 'assist', idField: 'playerId' | 'assistPlayerId') => {
     const id = event[idField];
     if (typeof id === 'string') return players.find((player) => player.id === id);
     const name = event[field];

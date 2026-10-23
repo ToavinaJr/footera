@@ -9,7 +9,7 @@ describe('TournamentsService registration', () => {
       list: vi.fn((collection: string) => Promise.resolve(collection === 'teams' ? [] : [])),
       save: vi.fn(),
     };
-    const service = new TournamentsService(records as any, { add: vi.fn() } as any);
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never);
 
     await expect(service.register('cup', 'team-1')).rejects.toBeInstanceOf(ConflictException);
     expect(records.save).not.toHaveBeenCalled();

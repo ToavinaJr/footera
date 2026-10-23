@@ -75,8 +75,8 @@ export const StatsView: React.FC = () => {
         setTournaments(tournList);
         setTeams(teamList);
         setPositionOptions(catalogOptions.playerPositions);
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des options', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des options', 'error');
       }
     }
     loadOptions();
@@ -101,7 +101,7 @@ export const StatsView: React.FC = () => {
           }),
           statsService.getPlayersStats({
             teamId: selectedTeamId,
-            position: playerPositionFilter as any,
+            position: playerPositionFilter as import('../../../types').Position,
             searchQuery: playerSearchQuery,
           }),
         ]);
@@ -110,8 +110,8 @@ export const StatsView: React.FC = () => {
         setAssisters(assistersData);
         setTeamStats(teamStatsData);
         setPlayerStats(playersData);
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des statistiques', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques', 'error');
       } finally {
         setIsLoading(false);
       }

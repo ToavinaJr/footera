@@ -1,3 +1,5 @@
+import type { TeamRecord, TournamentRecord } from '../../database/domain-records.js';
+
 export interface StandingMatch {
   id: string;
   tournamentId?: string;
@@ -6,9 +8,25 @@ export interface StandingMatch {
   awayTeam?: { id: string; score: number };
 }
 
-export function buildTournamentStandings(tournament: any, teams: any[], matches: StandingMatch[]) {
+interface StandingRow {
+  position: number;
+  teamId: string;
+  teamName: string;
+  logoUrl?: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+  form: Array<'V' | 'N' | 'D'>;
+}
+
+export function buildTournamentStandings(tournament: TournamentRecord, teams: TeamRecord[], matches: StandingMatch[]) {
   const participantIds = new Set<string>(tournament?.participantTeamIds ?? []);
-  const rows = new Map<string, any>();
+  const rows = new Map<string, StandingRow>();
   for (const team of teams) {
     if (!participantIds.has(team.id)) continue;
     rows.set(team.id, {

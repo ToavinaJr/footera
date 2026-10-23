@@ -79,8 +79,8 @@ export const TournamentsView: React.FC = () => {
           const match = data.find((t) => t.id === resourceId);
           if (match) setSelectedTournament(match);
         }
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des tournois', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des tournois', 'error');
       } finally {
         setIsLoading(false);
       }
@@ -170,8 +170,8 @@ export const TournamentsView: React.FC = () => {
       const allUpdated = await tournamentsService.list();
       setTournaments(allUpdated);
       tournamentModal.openDetail(created.id, true);
-    } catch (err: any) {
-      showToast(err.message || 'Erreur lors de la création du tournoi', 'error');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Erreur lors de la création du tournoi', 'error');
     } finally {
       setIsCreating(false);
     }

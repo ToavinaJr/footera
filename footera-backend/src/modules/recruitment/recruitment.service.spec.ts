@@ -11,7 +11,7 @@ describe('RecruitmentService applications', () => {
       ]),
     };
     const accounts = { profile: vi.fn(async () => ({ id: 'user-1' })) };
-    const service = new RecruitmentService(records as any, accounts as any, {} as any);
+    const service = new RecruitmentService(records as unknown as never, accounts as unknown as never, {} as unknown as never);
 
     await expect(service.listApplications()).resolves.toEqual([
       expect.objectContaining({ id: 'mine', userId: 'user-1' }),
@@ -22,13 +22,13 @@ describe('RecruitmentService applications', () => {
     const ad = { id: 'ad-1', positionSought: 'Gardien', teamName: 'FC Test', candidatesCount: 0 };
     const records = {
       find: vi.fn(async () => ad),
-      create: vi.fn(async (_collection: string, _id: string, payload: any) => payload),
-      save: vi.fn(async (_collection: string, _id: string, payload: any) => payload),
+      create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
     const user = { id: 'user-1', name: 'Joueur', phone: '123', sportsCv: { primaryPosition: 'Gardien' } };
     const accounts = { profile: vi.fn(async () => user) };
     const notifications = { add: vi.fn(async () => undefined) };
-    const service = new RecruitmentService(records as any, accounts as any, notifications as any);
+    const service = new RecruitmentService(records as unknown as never, accounts as unknown as never, notifications as unknown as never);
 
     const application = await service.apply('ad-1', { message: 'Disponible', phone: '' });
 

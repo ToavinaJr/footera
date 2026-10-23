@@ -116,7 +116,7 @@ export const ProfileView: React.FC = () => {
         setBookings(b);
         setApplications(a);
         setTeams(teamsData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         // eslint-disable-next-line no-console
         console.error('Failed to load profile sub-data:', err);
       } finally {
@@ -556,7 +556,7 @@ export const ProfileView: React.FC = () => {
               </label>
               <select
                 value={cvPosition}
-                onChange={(e) => setCvPosition(e.target.value as any)}
+                onChange={(e) => setCvPosition(e.target.value as Position)}
                 required
                 disabled={!positionOptions.length}
                 className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
@@ -599,7 +599,7 @@ export const ProfileView: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Pied fort</label>
                 <select
                   value={cvFoot}
-                  onChange={(e) => setCvFoot(e.target.value as any)}
+                  onChange={(e) => setCvFoot(e.target.value as StrongFoot)}
                   required
                   disabled={!strongFootOptions.length}
                   className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"

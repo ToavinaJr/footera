@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { BookingsService } from '../modules/bookings/bookings.service.js';
+import type { CreateBookingInput } from '../modules/bookings/bookings.service.js';
 
 @Controller('bookings')
 export class BookingsController {
@@ -21,7 +22,7 @@ export class BookingsController {
   }
 
   @Post()
-  create(@Body() body: any) {
+  create(@Body() body: CreateBookingInput) {
     return this.bookings.createBooking(body);
   }
 

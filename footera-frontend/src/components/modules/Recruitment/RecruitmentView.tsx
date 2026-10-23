@@ -52,8 +52,8 @@ export const RecruitmentView: React.FC = () => {
         setAds(adsData);
         setMyApplications(appsData);
 
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement du Mercato', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement du Mercato', 'error');
       } finally {
         setIsLoading(false);
       }

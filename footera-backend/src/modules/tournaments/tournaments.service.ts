@@ -3,27 +3,42 @@ import { randomUUID } from 'node:crypto';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTournamentStandings } from './tournament-standings.js';
+import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord } from '../../database/domain-records.js';
+
+export interface CreateTournamentInput {
+  title: string;
+  format: string;
+  city: string;
+  venue: string;
+  startDate: string;
+  endDate: string;
+  maxTeams: number;
+  entryFee: number;
+  prizePool: number;
+  bannerUrl: string;
+  organizer: string;
+}
 
 @Injectable()
 export class TournamentsService {
   constructor(private readonly records: RecordRepository, private readonly notifications: NotificationsService) {}
 
   async list() {
-    const [tournaments, teams, matches, pitches]: [any[], any[], any[], any[]] = await Promise.all([
-      this.records.list('tournaments'), this.records.list('teams'), this.records.list('matches'), this.records.list('pitches'),
+    const [tournaments, teams, matches, pitches] = await Promise.all([
+      this.records.list<TournamentRecord>('tournaments'), this.records.list<TeamRecord>('teams'), this.records.list<MatchRecord>('matches'), this.records.list<PitchRecord>('pitches'),
     ]);
     return tournaments.map((tournament) => this.withComputedDetails(tournament, teams, matches, pitches));
   }
 
   async getById(id: string) {
-    const [tournament, teams, matches, pitches]: [any, any[], any[], any[]] = await Promise.all([
-      this.records.find('tournaments', id), this.records.list('teams'), this.records.list('matches'), this.records.list('pitches'),
+    const [tournament, teams, matches, pitches] = await Promise.all([
+      this.records.find<TournamentRecord>('tournaments', id), this.records.list<TeamRecord>('teams'), this.records.list<MatchRecord>('matches'), this.records.list<PitchRecord>('pitches'),
     ]);
     if (!tournament) return null;
     return this.withComputedDetails(tournament, teams, matches, pitches);
   }
 
-  private withComputedDetails(tournament: any, teams: any[], matches: any[], pitches: any[]) {
+  private withComputedDetails(tournament: TournamentRecord, teams: TeamRecord[], matches: MatchRecord[], pitches: PitchRecord[]) {
     const participantTeamIds: string[] = tournament.participantTeamIds ?? [];
     const participatingTeams = participantTeamIds.flatMap((teamId) => {
       const team = teams.find((item) => item.id === teamId);
@@ -73,7 +88,7 @@ export class TournamentsService {
     };
   }
 
-  async create(input: any) {
+  async create(input: CreateTournamentInput) {
     const id = `tourn_${randomUUID()}`;
     const tournament = { ...input, id, registeredTeams: 0, participantTeamIds: [], status: 'INSCRIPTIONS_OUVERTES', standings: [], fixtures: [] };
     await this.records.create('tournaments', id, tournament);
@@ -83,13 +98,13 @@ export class TournamentsService {
 
   async register(id: string, teamId: string) {
     if (!teamId?.trim()) throw new BadRequestException('Une équipe doit être sélectionnée.');
-    const tournament: any = await this.getById(id);
+    const tournament = await this.getById(id);
     if (!tournament) throw new NotFoundException('Tournoi introuvable.');
     if (tournament.status !== 'INSCRIPTIONS_OUVERTES' || this.hasStarted(tournament.startDate)) {
       throw new ConflictException('Les inscriptions sont fermées car ce tournoi a commencé.');
     }
-    if (tournament.registeredTeams >= tournament.maxTeams) throw new ConflictException('Ce tournoi est complet.');
-    const team: any = await this.records.find('teams', teamId);
+    if (tournament.maxTeams !== undefined && tournament.registeredTeams >= tournament.maxTeams) throw new ConflictException('Ce tournoi est complet.');
+    const team = await this.records.find<TeamRecord>('teams', teamId);
     if (!team) throw new NotFoundException('Équipe introuvable.');
     const participantTeamIds: string[] = tournament.participantTeamIds ?? [];
     if (participantTeamIds.includes(teamId)) throw new ConflictException('Cette équipe participe déjà au tournoi.');

@@ -37,8 +37,8 @@ export const MatchesView: React.FC = () => {
         setMatches(data);
         setStandings(stand);
 
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des matchs', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des matchs', 'error');
       } finally {
         setIsLoading(false);
       }
@@ -80,7 +80,7 @@ export const MatchesView: React.FC = () => {
           ].map((tab) => (
             <button
               key={tab.value}
-              onClick={() => setStatusFilter(tab.value as any)}
+              onClick={() => setStatusFilter(tab.value as typeof statusFilter)}
               className={`px-4 py-2 min-h-11 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer ${
                 statusFilter === tab.value
                   ? 'bg-pitch-primary text-white shadow-xs'

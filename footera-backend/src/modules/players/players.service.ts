@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { aggregatePlayerMatchStats } from './player-match-stats.js';
+import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
 
 @Injectable()
 export class PlayersService {
@@ -13,8 +14,12 @@ export class PlayersService {
   }
 
   async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
-    const [players, matches, users, tournaments, teams]: [any[], any[], any[], any[], any[]] = await Promise.all([
-      this.records.list('players'), this.records.list('matches'), this.records.list('users'), this.records.list('tournaments'), this.records.list('teams'),
+    const [players, matches, users, tournaments, teams] = await Promise.all([
+      this.records.list<PlayerRecord>('players'),
+      this.records.list<MatchRecord>('matches'),
+      this.records.list<UserRecord>('users'),
+      this.records.list<TournamentRecord>('tournaments'),
+      this.records.list<TeamRecord>('teams'),
     ]);
     const matchStats = aggregatePlayerMatchStats(players, matches, undefined, tournaments);
     const enrichedPlayers = players.map((player) => {
@@ -39,7 +44,7 @@ export class PlayersService {
           bio: sportsCv.bio || player.bio,
         } : {}),
         ...(user?.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
-        ...(Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
+        ...(age !== undefined && Number.isInteger(age) && age > 0 ? { age } : { age: undefined }),
         goals: stats?.goals ?? 0,
         assists: stats?.assists ?? 0,
         yellowCards: stats?.yellowCards ?? 0,

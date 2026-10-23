@@ -12,7 +12,7 @@ describe('NotificationsService recipients', () => {
       ]),
     };
     const context = new UserContext();
-    const service = new NotificationsService(records as any, context);
+    const service = new NotificationsService(records as unknown as never, context);
 
     await expect(context.run('user-1', () => service.list())).resolves.toEqual([
       { id: 'mine', recipientId: 'user-1', createdAt: '2026-01-02' },
@@ -22,7 +22,7 @@ describe('NotificationsService recipients', () => {
   it('assigns notifications to the authenticated user by default', async () => {
     const records = { create: vi.fn().mockResolvedValue(undefined) };
     const context = new UserContext();
-    const service = new NotificationsService(records as any, context);
+    const service = new NotificationsService(records as unknown as never, context);
 
     const notification = await context.run('user-1', () => service.add({
       title: 'Test', message: 'Message', type: 'team', targetSection: 'teams',

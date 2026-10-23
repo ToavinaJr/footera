@@ -6,6 +6,17 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { buildTeamMatchSummary } from './team-match-summary.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import { aggregatePlayerMatchStats } from '../players/player-match-stats.js';
+import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
+
+export interface EnrichedTeamMember extends TeamMemberRecord {
+  appearances: number;
+  goals: number;
+  assists: number;
+  yellowCards: number;
+  redCards: number;
+  minutesPlayed: null;
+  competitionStats: Array<{ competitionId: string; appearances: number; goals: number; assists: number; yellowCards: number; redCards: number; minutesPlayed: null }>;
+}
 
 @Injectable()
 export class TeamsService {
@@ -17,16 +28,16 @@ export class TeamsService {
 
   async list(filters: { query?: string; category?: string; city?: string } = {}) {
     const [teams, matches, tournaments] = await Promise.all([
-      this.records.list<any>('teams'),
-      this.records.list<any>('matches'),
-      this.records.list<any>('tournaments'),
+      this.records.list<TeamRecord>('teams'),
+      this.records.list<MatchRecord>('matches'),
+      this.records.list<TournamentRecord>('tournaments'),
     ]);
     return teams.filter((team) => {
       const query = filters.query?.toLowerCase();
       const city = filters.city?.toLowerCase();
       return (!query || `${team.name} ${team.city}`.toLowerCase().includes(query))
         && (!filters.category || filters.category === 'Toutes' || team.category === filters.category)
-        && (!city || city === 'toutes' || team.city.toLowerCase().includes(city));
+        && (!city || city === 'toutes' || (team.city ?? '').toLowerCase().includes(city));
     }).map((team) => {
       const { recentForm } = buildTeamMatchSummary(team.id, this.matchesForTeamCompetition(team, matches));
       const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
@@ -40,22 +51,22 @@ export class TeamsService {
   }
 
   async getById(id: string) {
-    const [team, teams, matches, tournaments]: [any, any[], any[], any[]] = await Promise.all([
-      this.records.find('teams', id), this.records.list('teams'), this.records.list('matches'), this.records.list('tournaments'),
+    const [team, teams, matches, tournaments] = await Promise.all([
+      this.records.find<TeamRecord>('teams', id), this.records.list<TeamRecord>('teams'), this.records.list<MatchRecord>('matches'), this.records.list<TournamentRecord>('tournaments'),
     ]);
     if (!team) return null;
     const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
     return { ...publicTeam, stats: this.getComputedTeamStats(team, teams, matches, tournaments) };
   }
 
-  async getDetail(id: string) {
+  async getDetail(id: string, filters: { competitionId?: string; sortBy?: 'goals' | 'assists' | 'appearances' | 'yellowCards' | 'redCards' } = {}) {
     const [team, teams, matches, tournaments, players, users] = await Promise.all([
-      this.records.find<any>('teams', id),
-      this.records.list<any>('teams'),
-      this.records.list<any>('matches'),
-      this.records.list<any>('tournaments'),
-      this.records.list<any>('players'),
-      this.records.list<any>('users'),
+      this.records.find<TeamRecord>('teams', id),
+      this.records.list<TeamRecord>('teams'),
+      this.records.list<MatchRecord>('matches'),
+      this.records.list<TournamentRecord>('tournaments'),
+      this.records.list<PlayerRecord>('players'),
+      this.records.list<UserRecord>('users'),
     ]);
     if (!team) return null;
     const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
@@ -63,21 +74,21 @@ export class TeamsService {
       tournament.participantTeamIds?.includes(id) || tournament.id === team.competitionId)
       .map((tournament) => ({ id: tournament.id, title: tournament.title }));
     const teamCompetitionIds = new Set(competitions.map((competition) => competition.id));
-    const teamCompetitionMatches = matches.filter((match) => teamCompetitionIds.has(match.tournamentId));
+    const teamCompetitionMatches = matches.filter((match) => match.tournamentId !== undefined && teamCompetitionIds.has(match.tournamentId));
     const primaryCompetitionMatches = this.matchesForTeamCompetition(team, matches);
     const playerStats = aggregatePlayerMatchStats(players, teamCompetitionMatches, undefined, competitions.length ? tournaments : []);
     const statsByCompetition = new Map(competitions.map((competition) => [
       competition.id,
       aggregatePlayerMatchStats(players, teamCompetitionMatches, competition.id, tournaments),
     ]));
-    const teamMembers: any[] = team.members || [];
-    const membersByPlayerId = new Map<string, any>();
+    const teamMembers: TeamMemberRecord[] = team.members || [];
+    const membersByPlayerId = new Map<string, EnrichedTeamMember>();
     for (const player of players) {
       const rosterEntry = teamMembers.find((member) =>
         member.playerId === player.id || (player.userId && member.playerId === player.userId));
       if (!rosterEntry && player.currentTeamId !== id) continue;
 
-      const user = users.find((candidate: any) => candidate.id === player.userId);
+      const user = users.find((candidate) => candidate.id === player.userId);
       const memberId = player.id;
       const stats = playerStats.get(memberId);
       const competitionStats = competitions.map((competition) => {
@@ -108,7 +119,7 @@ export class TeamsService {
         redCards: stats?.redCards ?? 0,
         minutesPlayed: null,
         competitionStats,
-      });
+      } as EnrichedTeamMember);
     }
     // Keep legacy roster entries that do not yet have a Player record.
     for (const member of teamMembers) {
@@ -131,15 +142,23 @@ export class TeamsService {
             redCards: 0,
             minutesPlayed: null,
           })),
-        });
+        } as EnrichedTeamMember);
       }
     }
-    const members = [...membersByPlayerId.values()];
+    const members = [...membersByPlayerId.values()].map((member) => {
+      const selectedStats = filters.competitionId && filters.competitionId !== 'all'
+        ? member.competitionStats.find((stats) => stats.competitionId === filters.competitionId)
+        : undefined;
+      return selectedStats ? { ...member, ...selectedStats } : member;
+    }).sort((left, right) => {
+      const sortBy = filters.sortBy ?? 'goals';
+      return (right[sortBy] ?? 0) - (left[sortBy] ?? 0);
+    });
     const topScorers = members
-      .filter((member: any) => member.goals > 0)
-      .sort((left: any, right: any) => right.goals - left.goals)
+      .filter((member) => member.goals > 0)
+      .sort((left, right) => right.goals - left.goals)
       .slice(0, 3)
-      .map((member: any) => ({ playerId: member.playerId, playerName: member.name, goals: member.goals }));
+      .map((member) => ({ playerId: member.playerId, playerName: member.name, goals: member.goals }));
     return {
       ...publicTeam,
       members,
@@ -150,13 +169,13 @@ export class TeamsService {
     };
   }
 
-  private matchesForTeamCompetition(team: any, matches: any[]) {
+  private matchesForTeamCompetition(team: TeamRecord, matches: MatchRecord[]) {
     return team.competitionId
       ? matches.filter((match) => match.tournamentId === team.competitionId)
       : matches.filter((match) => !match.tournamentId);
   }
 
-  private getComputedTeamStats(team: any, teams: any[], matches: any[], tournaments: any[]) {
+  private getComputedTeamStats(team: TeamRecord, teams: TeamRecord[], matches: MatchRecord[], tournaments: TournamentRecord[]) {
     const competition = tournaments.find((item) => item.id === team.competitionId)
       ?? tournaments.find((item) => item.title?.toLowerCase().includes('championnat')
         && item.participantTeamIds?.includes(team.id));
@@ -174,6 +193,7 @@ export class TeamsService {
       losses: standing?.lost ?? 0,
       goalsFor,
       goalsAgainst,
+      goalDifference: goalsFor - goalsAgainst,
       goalsPerMatch: standing?.played ? Number((goalsFor / standing.played).toFixed(2)) : 0,
       points: standing?.points ?? 0,
       position: standing?.position ?? 0,
@@ -183,15 +203,15 @@ export class TeamsService {
   }
 
   async myTeam() {
-    const user: any = await this.accounts.profile();
-    const teams: any[] = await this.records.list('teams');
-    return teams.find((team) => team.ownerId === user?.id || team.managerIds?.includes(user?.id)) || null;
+    const user = await this.accounts.profile();
+    const teams = await this.records.list<TeamRecord>('teams');
+    return teams.find((team) => team.ownerId === user?.id || (user?.id ? team.managerIds?.includes(user.id) : false)) || null;
   }
 
   async invitePlayer(playerId: string, message: string) {
-    const [team, player, user]: [any, any, any] = await Promise.all([
+    const [team, player, user] = await Promise.all([
       this.myTeam(),
-      this.records.find<any>('players', playerId),
+      this.records.find<PlayerRecord>('players', playerId),
       this.accounts.profile(),
     ]);
     if (!team) throw new NotFoundException('Votre équipe est introuvable.');
@@ -199,7 +219,7 @@ export class TeamsService {
       throw new ForbiddenException('Seul le staff de l’équipe peut inviter un joueur.');
     }
     if (!player) throw new NotFoundException('Joueur introuvable.');
-    if (team.members?.some((member: any) => member.playerId === playerId)) {
+    if (team.members?.some((member) => member.playerId === playerId)) {
       throw new ConflictException('Ce joueur fait déjà partie de votre équipe.');
     }
     const trimmedMessage = message?.trim();
@@ -207,7 +227,7 @@ export class TeamsService {
       throw new BadRequestException('Le message doit contenir entre 1 et 500 caractères.');
     }
 
-    const invitations = await this.records.list<any>('teamInvitations');
+    const invitations = await this.records.list<TeamInvitationRecord>('teamInvitations');
     if (invitations.some((invitation) =>
       invitation.teamId === team.id && invitation.playerId === playerId && invitation.status === 'PENDING')) {
       throw new ConflictException('Une invitation est déjà en attente pour ce joueur.');
@@ -233,18 +253,18 @@ export class TeamsService {
   async listMyTeamInvitations() {
     const team = await this.myTeam();
     if (!team) return [];
-    const invitations = await this.records.list<any>('teamInvitations');
+    const invitations = await this.records.list<TeamInvitationRecord>('teamInvitations');
     return invitations.filter((invitation) => invitation.teamId === team.id)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }
 
   async join(id: string, message: string) {
-    const team: any = await this.records.find('teams', id);
+    const team = await this.records.find<TeamRecord>('teams', id);
     if (!team) return { success: false, message: 'Équipe introuvable' };
-    const user: any = await this.accounts.profile();
+    const user = await this.accounts.profile();
     if (!user) return { success: false, message: 'Utilisateur non authentifié' };
     const members = team.members || [];
-    if (members.some((member: any) => member.playerId === user.id)) {
+    if (members.some((member) => member.playerId === user.id)) {
       return { success: false, message: 'Vous êtes déjà membre de cette équipe.' };
     }
     members.push({

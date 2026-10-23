@@ -18,6 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useApp } from '../../../context/useApp';
+import type { NavigationSection } from '../../../context/navigation';
 import { matchesService } from '../../../services/matchesService';
 import { recruitmentService } from '../../../services/recruitmentService';
 import { pitchesService } from '../../../services/pitchesService';
@@ -185,7 +186,7 @@ export const HomeView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column (2 cols wide on desktop) */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Active Application / Candidature active if any */}
+          {/* Active application / Candidature active */}
           {activeApplications.length > 0 && (
             <section aria-label="Candidatures actives" className="space-y-3">
               <div className="flex items-center justify-between">
@@ -261,7 +262,7 @@ export const HomeView: React.FC = () => {
                     />
                     <div className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white text-xs font-bold flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 fill-lime-volt text-lime-volt" />
-                      <span>{player.rating || 7.8}</span>
+                      <span>{player.rating && player.rating > 0 ? player.rating : '—'}</span>
                     </div>
                   </div>
 
@@ -308,7 +309,7 @@ export const HomeView: React.FC = () => {
               {activityFeed.map((act) => (
                 <div
                   key={act.id}
-                  onClick={() => navigateToResource(act.targetSection as any)}
+                  onClick={() => navigateToResource(act.targetSection as NavigationSection)}
                   className="p-4 rounded-2xl bg-white border border-pitch-line hover:border-pitch-primary/40 transition-all cursor-pointer shadow-2xs flex items-start gap-3.5"
                 >
                   <div className="w-8 h-8 rounded-xl bg-pitch-light flex items-center justify-center text-pitch-primary shrink-0 mt-0.5">

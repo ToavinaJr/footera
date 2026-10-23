@@ -32,30 +32,11 @@ export const teamsService = {
     return apiClient<Team>(`teams/${id}`);
   },
 
-  async getDetail(id: string): Promise<TeamDetail> {
-    if (IS_MOCK_MODE) {
-      const team = mockStorage.getTeamById(id);
-      if (!team) throw new Error('Équipe introuvable');
-      const matches = mockStorage.getMatches().filter((match) => match.homeTeam.id === id || match.awayTeam.id === id);
-      const decorate = (match: (typeof matches)[number]) => ({
-        ...match,
-        isHome: match.homeTeam.id === id,
-        goalScorers: match.events.filter((event) => event.type === 'goal'),
-      });
-      const recentMatches = matches.filter((match) => match.status === 'FINISHED').map(decorate);
-      return mockDelay({
-        ...team,
-        recentForm: team.recentForm,
-        competitions: [],
-        recentMatches,
-        upcomingMatches: matches.filter((match) => match.status === 'SCHEDULED').map(decorate),
-        topScorers: [...team.members]
-          .sort((left, right) => (right.goals ?? 0) - (left.goals ?? 0))
-          .slice(0, 3)
-          .map((member) => ({ playerId: member.playerId, playerName: member.name, goals: member.goals ?? 0 })),
-      }, 150);
-    }
-    return apiClient<TeamDetail>(`teams/${encodeURIComponent(id)}/detail`);
+  async getDetail(id: string, filters: { competitionId?: string; sortBy?: 'goals' | 'assists' | 'appearances' | 'yellowCards' | 'redCards' } = {}): Promise<TeamDetail> {
+    const params = new URLSearchParams();
+    if (filters.competitionId) params.set('competitionId', filters.competitionId);
+    if (filters.sortBy) params.set('sortBy', filters.sortBy);
+    return apiClient<TeamDetail>(`teams/${encodeURIComponent(id)}/detail?${params.toString()}`);
   },
 
   async getMyTeam(): Promise<Team | undefined> {

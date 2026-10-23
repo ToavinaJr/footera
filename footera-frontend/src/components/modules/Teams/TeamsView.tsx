@@ -56,8 +56,8 @@ export const TeamsView: React.FC = () => {
             setIsRosterModalOpen(true);
           }
         }
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des équipes', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des équipes', 'error');
       } finally {
         setIsLoading(false);
       }
@@ -86,8 +86,8 @@ export const TeamsView: React.FC = () => {
       } else {
         showToast(res.message, 'error');
       }
-    } catch (e: any) {
-      showToast(e.message || 'Impossible de rejoindre l’équipe', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Impossible de rejoindre l’équipe', 'error');
     } finally {
       setIsSubmittingJoin(false);
     }
@@ -484,7 +484,7 @@ export const TeamsView: React.FC = () => {
                       {selectedTeam.stats.goalsAgainst} concédés
                     </strong>
                     <span className="text-micro text-slate-500 block mt-0.5">
-                      Diff : {selectedTeam.stats.goalsFor - selectedTeam.stats.goalsAgainst > 0 ? `+${selectedTeam.stats.goalsFor - selectedTeam.stats.goalsAgainst}` : selectedTeam.stats.goalsFor - selectedTeam.stats.goalsAgainst}
+                      Diff : {selectedTeam.stats.goalDifference > 0 ? `+${selectedTeam.stats.goalDifference}` : selectedTeam.stats.goalDifference}
                     </span>
                   </div>
 

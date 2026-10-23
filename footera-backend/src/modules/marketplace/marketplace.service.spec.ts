@@ -18,9 +18,9 @@ function makeService(profile: { activeRole: string; roles: string[] }) {
   const notifications = { add: vi.fn(async () => undefined) };
   const catalogs = {
     options: vi.fn(async () => catalogOptions),
-    values: vi.fn(async (id: string) => (catalogOptions as any)[id]),
+    values: vi.fn(async (id: string) => catalogOptions[id as keyof typeof catalogOptions]),
   };
-  return { service: new MarketplaceService(records as any, accounts as any, notifications as any, catalogs as any), records };
+  return { service: new MarketplaceService(records as unknown as never, accounts as unknown as never, notifications as unknown as never, catalogs as unknown as never), records };
 }
 
 describe('MarketplaceService role and catalog validation', () => {

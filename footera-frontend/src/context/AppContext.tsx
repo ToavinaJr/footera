@@ -133,8 +133,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = await authService.switchRole(role);
       setUser(updated);
       showToast(`Rôle actif changé : ${role}`);
-    } catch (e: any) {
-      showToast(e.message || 'Erreur lors du changement de rôle', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur lors du changement de rôle', 'error');
     }
   };
 
@@ -144,8 +144,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUser(updated);
       showToast('Profil mis à jour avec succès');
       return true;
-    } catch (e: any) {
-      showToast(e.message || 'Erreur lors de la mise à jour', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur lors de la mise à jour', 'error');
       return false;
     }
   };
@@ -155,8 +155,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = await authService.updateSportsCv(cv);
       setUser(updated);
       showToast('CV Sportif enregistré');
-    } catch (e: any) {
-      showToast(e.message || 'Erreur de sauvegarde', 'error');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Erreur de sauvegarde', 'error');
       return false;
     }
     return true;

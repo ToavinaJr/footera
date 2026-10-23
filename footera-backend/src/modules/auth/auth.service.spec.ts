@@ -4,12 +4,12 @@ import { AuthService } from './auth.service.js';
 
 function makeService() {
   const records = {
-    find: vi.fn(async (_collection: string, _id: string) => null as any),
+    find: vi.fn(async (_collection: string, _id: string) => null as unknown as never),
     createUserAccount: vi.fn(async () => undefined),
     create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     consumeAuthSession: vi.fn(async () => true),
   };
-  return { auth: new AuthService(records as any), records };
+  return { auth: new AuthService(records as unknown as never), records };
 }
 
 describe('AuthService', () => {
@@ -36,7 +36,7 @@ describe('AuthService', () => {
       email: 'test@example.com',
       password: 'correct horse battery staple',
       role: 'Administrateur',
-    } as any);
+    } as unknown as never);
 
     const [, , user] = records.createUserAccount.mock.calls[0];
     expect(user.roles).toEqual(['Joueur']);
@@ -45,7 +45,7 @@ describe('AuthService', () => {
 
   it('rejects duplicate email addresses', async () => {
     const { auth, records } = makeService();
-    records.find.mockResolvedValueOnce({ userId: 'existing', passwordHash: 'stored' } as any);
+    records.find.mockResolvedValueOnce({ userId: 'existing', passwordHash: 'stored' } as unknown as never);
 
     await expect(auth.register({ name: 'Test User', email: 'test@example.com', password: 'correct horse battery staple' }))
       .rejects.toBeInstanceOf(ConflictException);
@@ -71,7 +71,7 @@ describe('AuthService', () => {
     const { auth, records } = makeService();
     const registration = await auth.register({ name: 'Test User', email: 'test@example.com', password: 'correct horse battery staple' });
     const [userId, , user] = records.createUserAccount.mock.calls[0];
-    const refreshToken = (registration as any).refreshToken as string;
+    const refreshToken = ('refreshToken' in registration ? registration.refreshToken : undefined) as string;
     records.find.mockImplementation(async (collection: string) => {
       if (collection === 'authSessions') return { userId, expiresAt: new Date(Date.now() + 60_000).toISOString() };
       if (collection === 'users') return user;

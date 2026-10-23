@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
 import { UserContext } from '../auth/user-context.js';
+import type { NotificationRecord } from '../../database/domain-records.js';
 
 @Injectable()
 export class NotificationsService {
@@ -10,7 +11,7 @@ export class NotificationsService {
   async list() {
     const userId = this.userContext.userId;
     if (!userId) return [];
-    const records: any[] = await this.records.list('notifications');
+    const records = await this.records.list<NotificationRecord>('notifications');
     return records.filter((notification) => notification.recipientId === userId)
       .sort((a, b) => String(b.createdAt || b.id).localeCompare(String(a.createdAt || a.id)));
   }
@@ -18,7 +19,7 @@ export class NotificationsService {
   async markRead(id: string) {
     const userId = this.userContext.userId;
     if (!userId) return;
-    const item = await this.records.find<any>('notifications', id);
+    const item = await this.records.find<NotificationRecord>('notifications', id);
     if (item && item.recipientId === userId) {
       await this.records.save('notifications', id, { ...item, isRead: true });
     }
@@ -26,7 +27,7 @@ export class NotificationsService {
 
   async markAllRead() {
     const items = await this.list();
-    await Promise.all(items.map((item: any) => this.records.save('notifications', item.id, { ...item, isRead: true })));
+    await Promise.all(items.map((item) => this.records.save('notifications', item.id, { ...item, isRead: true })));
   }
 
   async add(item: {

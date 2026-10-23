@@ -1,6 +1,15 @@
 import { API_BASE_URL } from '../../config/dataMode';
 import { AppApiError } from './errors';
 
+interface ApiErrorBody extends Record<string, unknown> {
+  message?: string;
+  code?: string;
+}
+
+function isApiErrorBody(value: unknown): value is ApiErrorBody {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 let refreshInFlight: Promise<boolean> | null = null;
 
 function refreshSession(): Promise<boolean> {
@@ -38,9 +47,10 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     }
 
     if (!response.ok) {
-      let errorData: any = {};
+      let errorData: ApiErrorBody = {};
       try {
-        errorData = await response.json();
+        const payload: unknown = await response.json();
+        if (isApiErrorBody(payload)) errorData = payload;
       } catch {
         errorData = { message: response.statusText };
       }
@@ -67,12 +77,12 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     }
 
     return await response.json();
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof AppApiError) {
       throw err;
     }
     throw new AppApiError(
-      err?.message || 'Impossible de joindre le serveur API Footera. Vérifiez votre connexion.',
+      err instanceof Error ? err.message : 'Impossible de joindre le serveur API Footera. Vérifiez votre connexion.',
       0,
       'NETWORK_OFFLINE'
     );

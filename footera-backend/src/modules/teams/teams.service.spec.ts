@@ -2,7 +2,7 @@ import { ConflictException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { TeamsService } from './teams.service.js';
 
-function makeService(existingInvitations: any[] = []) {
+function makeService(existingInvitations: unknown[] = []) {
   const team = { id: 'team-1', ownerId: 'usr_me', name: 'FC Test', city: 'Antananarivo', members: [] };
   const player = { id: 'player-1', name: 'Joueur Test' };
   const user = { id: 'usr_me', name: 'Responsable', roles: ['Entraîneur'] };
@@ -13,7 +13,7 @@ function makeService(existingInvitations: any[] = []) {
   };
   const accounts = { profile: vi.fn(async () => user) };
   const notifications = { add: vi.fn(async (payload: unknown) => payload) };
-  return { service: new TeamsService(records as any, accounts as any, notifications as any), records, notifications };
+  return { service: new TeamsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never), records, notifications };
 }
 
 describe('TeamsService player invitations', () => {
@@ -66,18 +66,22 @@ describe('TeamsService public roster statistics', () => {
         teams: [team, opponent], matches: [match], tournaments: [tournament], players, users: [],
       }[collection] ?? [])),
     };
-    const service = new TeamsService(records as any, {} as any, {} as any);
+    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never);
 
     const detail = await service.getDetail('team-1');
 
     expect(detail?.competitions).toEqual([{ id: 'cup-1', title: 'Coupe Test' }]);
-    expect(detail?.members.find((member: any) => member.playerId === 'player-1')).toMatchObject({
+    expect(detail?.members.find((member) => member.playerId === 'player-1')).toMatchObject({
       goals: 1, assists: 0, minutesPlayed: null,
       competitionStats: [{ competitionId: 'cup-1', goals: 1, assists: 0, minutesPlayed: null }],
     });
-    expect(detail?.members.find((member: any) => member.playerId === 'player-2')).toMatchObject({
+    expect(detail?.members.find((member) => member.playerId === 'player-2')).toMatchObject({
       goals: 0, assists: 1,
       competitionStats: [{ competitionId: 'cup-1', goals: 0, assists: 1 }],
     });
+
+    const filteredDetail = await service.getDetail('team-1', { competitionId: 'cup-1', sortBy: 'assists' });
+    expect(filteredDetail?.members[0]).toMatchObject({ playerId: 'player-2', assists: 1 });
+    expect(filteredDetail?.stats.goalDifference).toBe(1);
   });
 });

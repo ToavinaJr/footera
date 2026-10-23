@@ -78,8 +78,8 @@ export const MarketplaceView: React.FC = () => {
           category: categoryFilter,
         });
         setItems(data);
-      } catch (err: any) {
-        showToast(err.message || 'Erreur lors du chargement des équipements', 'error');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des équipements', 'error');
       } finally {
         setIsLoading(false);
       }

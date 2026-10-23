@@ -119,6 +119,7 @@ export interface Team {
     losses: number;
     goalsFor: number;
     goalsAgainst: number;
+    goalDifference: number;
     goalsPerMatch?: number;
     points: number;
     position: number;
