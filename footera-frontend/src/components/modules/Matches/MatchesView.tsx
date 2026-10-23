@@ -318,28 +318,41 @@ export const MatchesView: React.FC = () => {
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-pitch-ink">Temps forts</h4>
                 <div className="space-y-1.5">
-                  {selectedMatch.events.map((ev, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-2xl bg-pitch-panel border border-border-subtle flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-8 text-center font-extrabold text-pitch-primary tabular-nums">
-                          {ev.minute}&apos;
-                        </span>
-                        <span>{ev.type === 'goal' ? '⚽ But' : '🟨 Carton'}</span>
-                        <strong className="text-pitch-ink">{ev.player}</strong>
-                        {ev.assist && (
-                          <span className="text-slate-500 text-caption">(Passe de {ev.assist})</span>
+                  {selectedMatch.events.map((ev, idx) => {
+                    const isHomeEvent = ev.teamId === selectedMatch.homeTeam.id;
+                    const isAwayEvent = ev.teamId === selectedMatch.awayTeam.id;
+                    const eventDetails = (
+                      <div className={`min-w-0 space-y-1 ${isAwayEvent ? 'text-right' : 'text-left'}`}>
+                        <div className={`flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ${isAwayEvent ? 'justify-end' : 'justify-start'}`}>
+                          <span>{ev.type === 'goal' || ev.type === 'penalty' ? '⚽ But' : '🟨 Carton'}</span>
+                          <strong className="break-words text-pitch-ink">{ev.player}</strong>
+                          {ev.assist && (
+                            <span className="text-slate-500 text-caption">(Passe de {ev.assist})</span>
+                          )}
+                        </div>
+                        {ev.description && <span className="block break-words text-slate-500 text-caption">{ev.description}</span>}
+                      </div>
+                    );
+
+                    return (
+                      <div
+                        key={`${ev.teamId}-${ev.minute}-${idx}`}
+                        className="grid grid-cols-3 items-start gap-2 rounded-2xl border border-border-subtle bg-pitch-panel p-3 text-xs"
+                      >
+                        {isHomeEvent || isAwayEvent ? (
+                          <>
+                            <div className="min-w-0">{isHomeEvent ? eventDetails : null}</div>
+                            <span className="pt-0.5 text-center font-extrabold tabular-nums text-pitch-primary">
+                              {ev.minute}&apos;
+                            </span>
+                            <div className="min-w-0">{isAwayEvent ? eventDetails : null}</div>
+                          </>
+                        ) : (
+                          <div className="col-span-3 text-center">{eventDetails}</div>
                         )}
                       </div>
-                      {ev.description && (
-                        <span className="text-slate-500 text-caption hidden sm:inline">
-                          {ev.description}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
