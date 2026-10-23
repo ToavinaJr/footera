@@ -3,6 +3,7 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { aggregatePlayerMatchStats } from './player-match-stats.js';
 import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
+import { calculateAge } from '../accounts/calculate-age.js';
 
 @Injectable()
 export class PlayersService {
@@ -29,7 +30,7 @@ export class PlayersService {
       const currentTeam = typeof sportsCv?.currentTeam === 'string' ? sportsCv.currentTeam : player.currentTeam;
       const matchingTeam = teams.find((team) => team.name?.toLowerCase() === currentTeam?.toLowerCase()
         || team.clubName?.toLowerCase() === currentTeam?.toLowerCase());
-      const age = user ? this.ageFromDateOfBirth(user.dateOfBirth) : player.age;
+      const age = user ? calculateAge(user.dateOfBirth) : player.age;
       return {
         ...player,
         ...(sportsCv ? {
@@ -67,12 +68,4 @@ export class PlayersService {
     return players.find((player) => player.id === id) ?? null;
   }
 
-  private ageFromDateOfBirth(value?: unknown): number | undefined {
-    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
-    const [year, month, day] = value.split('-').map(Number);
-    const now = new Date();
-    let age = now.getFullYear() - year;
-    if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1;
-    return age >= 0 ? age : undefined;
-  }
 }

@@ -2,6 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException, BadRequestExcepti
 import { createHash, createHmac, randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
 import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
+import { calculateAge } from '../accounts/calculate-age.js';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -119,7 +120,7 @@ export class AuthService {
     const user = await this.records.find<UserRecord>('users', id);
     if (!user) return null;
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return { ...safeUser, age: calculateAge(user.dateOfBirth) };
   }
 
   verifyToken(token: string): { id: string; sessionId: string } {

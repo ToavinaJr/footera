@@ -56,6 +56,7 @@ export const ProfileView: React.FC = () => {
   const [positionOptions, setPositionOptions] = useState<string[]>([]);
   const [strongFootOptions, setStrongFootOptions] = useState<string[]>([]);
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
+  const [contactName, setContactName] = useState(user?.name ?? '');
   const [contactPhone, setContactPhone] = useState(user?.phone ?? '');
   const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth ?? '');
   const [personalInfoError, setPersonalInfoError] = useState('');
@@ -80,9 +81,10 @@ export const ProfileView: React.FC = () => {
   }, [showToast]);
 
   useEffect(() => {
+    setContactName(user?.name ?? '');
     setContactPhone(user?.phone ?? '');
     setDateOfBirth(user?.dateOfBirth ?? '');
-  }, [user?.phone, user?.dateOfBirth]);
+  }, [user?.name, user?.phone, user?.dateOfBirth]);
 
   useEffect(() => {
     if (!profileId) return;
@@ -155,6 +157,11 @@ export const ProfileView: React.FC = () => {
 
   const handleSavePersonalInfo = async (event: React.FormEvent) => {
     event.preventDefault();
+    const name = contactName.trim();
+    if (name.length < 2 || name.length > 80) {
+      setPersonalInfoError('Le nom doit contenir entre 2 et 80 caractères.');
+      return;
+    }
     const phone = contactPhone.trim();
     if (phone && !/^[+()\d.\-\s]{7,32}$/.test(phone)) {
       setPersonalInfoError('Saisissez un numéro de téléphone valide.');
@@ -170,7 +177,7 @@ export const ProfileView: React.FC = () => {
       }
     }
     setPersonalInfoError('');
-    const saved = await updateProfile({ phone, dateOfBirth });
+    const saved = await updateProfile({ name, phone, dateOfBirth });
     if (saved) setIsEditInfoOpen(false);
   };
 
@@ -203,7 +210,7 @@ export const ProfileView: React.FC = () => {
   const displayedAvatar = isOwner ? user!.avatarUrl : publicPlayer!.avatarUrl;
   const displayedTeam = isOwner ? user!.sportsCv.currentTeam : publicPlayer!.currentTeam;
 
-  const displayedAge = isOwner ? user!.age : displayedPlayer?.age;
+  const displayedAge = isOwner ? user!.age ?? myPlayer?.age : displayedPlayer?.age;
 
   return (
     <div className="space-y-8 pb-16">
@@ -242,6 +249,7 @@ export const ProfileView: React.FC = () => {
               {isOwner && <button
                 type="button"
                 onClick={() => {
+                  setContactName(user!.name);
                   setContactPhone(user!.phone ?? '');
                   setDateOfBirth(user!.dateOfBirth ?? '');
                   setPersonalInfoError('');
@@ -259,11 +267,7 @@ export const ProfileView: React.FC = () => {
                 {isOwner && <span className="inline-flex min-w-0 items-center gap-2"><Mail className="h-4 w-4 shrink-0 text-pitch-primary" /><span className="break-all">{user!.email}</span></span>}
                 {isOwner && user!.phone?.trim() && <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{user!.phone}</span>}
               </div>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
-                <span>{displayedPlayer?.primaryPosition || 'Poste non renseigné'}</span><span aria-hidden="true" className="text-pitch-line">·</span>
-                <span>{displayedAge ? `${displayedAge} ans` : 'Âge non renseigné'}</span><span aria-hidden="true" className="text-pitch-line">·</span>
-                <span>{displayedPlayer?.level || 'Niveau non renseigné'}</span>
-              </div>
+              {displayedAge !== undefined && displayedAge > 0 && <p className="text-sm font-semibold text-slate-600">{displayedAge} ans</p>}
               <p className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-pitch-panel px-3 py-2 text-sm text-slate-600">
                 <span>Équipe officielle :</span><strong className="text-pitch-ink">{displayedTeam || 'Sans équipe actuellement'}</strong>
               </p>
@@ -471,6 +475,19 @@ export const ProfileView: React.FC = () => {
         maxWidth="md"
       >
         <form onSubmit={handleSavePersonalInfo} className="space-y-4">
+          <label className="block text-xs font-bold text-slate-700">
+            Nom affiché
+            <input
+              type="text"
+              autoComplete="name"
+              minLength={2}
+              maxLength={80}
+              required
+              value={contactName}
+              onChange={(event) => setContactName(event.target.value)}
+              className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
+            />
+          </label>
           <label className="block text-xs font-bold text-slate-700">
             Numéro de téléphone
             <input
