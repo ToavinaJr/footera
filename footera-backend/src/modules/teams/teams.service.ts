@@ -49,21 +49,59 @@ export class TeamsService {
   }
 
   async getDetail(id: string) {
-    const [team, teams, matches, tournaments, players] = await Promise.all([
+    const [team, teams, matches, tournaments, players, users] = await Promise.all([
       this.records.find<any>('teams', id),
       this.records.list<any>('teams'),
       this.records.list<any>('matches'),
       this.records.list<any>('tournaments'),
       this.records.list<any>('players'),
+      this.records.list<any>('users'),
     ]);
     if (!team) return null;
     const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
     const competitionMatches = this.matchesForTeamCompetition(team, matches);
     const playerStats = aggregatePlayerMatchStats(players, competitionMatches, team.competitionId, tournaments);
-    const members = (team.members || []).map((member: any) => {
-      const stats = playerStats.get(member.playerId);
-      return { ...member, appearances: stats?.appearances ?? 0, goals: stats?.goals ?? 0, assists: stats?.assists ?? 0, yellowCards: stats?.yellowCards ?? 0, redCards: stats?.redCards ?? 0 };
-    });
+    const teamMembers: any[] = team.members || [];
+    const membersByPlayerId = new Map<string, any>();
+    for (const player of players) {
+      const rosterEntry = teamMembers.find((member) =>
+        member.playerId === player.id || (player.userId && member.playerId === player.userId));
+      if (!rosterEntry && player.currentTeamId !== id) continue;
+
+      const user = users.find((candidate: any) => candidate.id === player.userId);
+      const memberId = player.id;
+      const stats = playerStats.get(memberId);
+      membersByPlayerId.set(memberId, {
+        ...rosterEntry,
+        playerId: memberId,
+        name: player.name,
+        position: player.primaryPosition || rosterEntry?.position || 'Joueur',
+        jerseyNumber: rosterEntry?.jerseyNumber,
+        role: rosterEntry?.role || 'Joueur',
+        avatarUrl: user?.avatarUrl || player.avatarUrl || rosterEntry?.avatarUrl || '',
+        age: player.age,
+        appearances: stats?.appearances ?? 0,
+        goals: stats?.goals ?? 0,
+        assists: stats?.assists ?? 0,
+        yellowCards: stats?.yellowCards ?? 0,
+        redCards: stats?.redCards ?? 0,
+      });
+    }
+    // Keep legacy roster entries that do not yet have a Player record.
+    for (const member of teamMembers) {
+      if (!membersByPlayerId.has(member.playerId)) {
+        const stats = playerStats.get(member.playerId);
+        membersByPlayerId.set(member.playerId, {
+          ...member,
+          appearances: stats?.appearances ?? 0,
+          goals: stats?.goals ?? 0,
+          assists: stats?.assists ?? 0,
+          yellowCards: stats?.yellowCards ?? 0,
+          redCards: stats?.redCards ?? 0,
+        });
+      }
+    }
+    const members = [...membersByPlayerId.values()];
     const topScorers = members
       .filter((member: any) => member.goals > 0)
       .sort((left: any, right: any) => right.goals - left.goals)

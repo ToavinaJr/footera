@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, CalendarDays, MapPin, Trophy } from 'lucide-react';
+import { ArrowLeft, CalendarDays, MapPin, Shield, Trophy, Users } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { teamsService } from '../../../services/teamsService';
 import { TeamDetail, TeamMatch } from '../../../types';
@@ -109,6 +109,43 @@ export const TeamDetailView: React.FC = () => {
             <div className="mt-2 flex items-center gap-1">{team.recentForm.length ? team.recentForm.map((result, index) => <FormIndicator key={`${result}-${index}`} result={result} size="sm" />) : <span className="text-caption text-slate-400">Aucun résultat enregistré</span>}</div>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
+        <article className="rounded-2xl border border-pitch-line bg-white p-5 shadow-xs">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-pitch-primary" />
+            <h2 className="text-lg font-extrabold text-pitch-ink">Entraîneur</h2>
+          </div>
+          <p className="mt-4 text-base font-bold text-pitch-ink">{team.coachName?.trim() || 'Entraîneur non renseigné'}</p>
+          <p className="mt-1 text-sm text-slate-500">Staff de {team.name}</p>
+        </article>
+
+        <article className="rounded-2xl border border-pitch-line bg-white p-5 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-pitch-primary" />
+              <h2 className="text-lg font-extrabold text-pitch-ink">Effectif</h2>
+            </div>
+            <span className="text-sm text-slate-500">{team.members.length} joueur{team.members.length === 1 ? '' : 's'}</span>
+          </div>
+          {team.members.length ? (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {team.members.map((member) => (
+                <li key={member.playerId} className="flex min-w-0 items-center gap-3 rounded-xl border border-pitch-line bg-pitch-panel p-3">
+                  <img src={member.avatarUrl || team.logoUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <EntityLink section="players" id={member.playerId} className="block truncate font-bold text-pitch-ink" title={member.name}>{member.name}</EntityLink>
+                    <p className="truncate text-xs text-slate-500">{member.position}{member.jerseyNumber ? ` · N° ${member.jerseyNumber}` : ''}</p>
+                  </div>
+                  <span className="shrink-0 text-right text-xs text-slate-500">{member.goals ?? 0} but{member.goals === 1 ? '' : 's'}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 rounded-xl bg-pitch-panel p-4 text-sm text-slate-500">Aucun joueur n’est encore renseigné dans l’effectif.</p>
+          )}
+        </article>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
