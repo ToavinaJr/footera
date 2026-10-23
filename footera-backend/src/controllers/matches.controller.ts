@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Query, Post, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, Post, Put, NotFoundException } from '@nestjs/common';
 import { MatchesService } from '../modules/matches/matches.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
+import type { UpdateMatchInput } from '../database/domain-records.js';
 
 @Controller('matches')
 export class MatchesController {
@@ -18,12 +19,32 @@ export class MatchesController {
     return this.matches.standings(tournamentId);
   }
 
+  @Get('manageable')
+  manageable() {
+    return this.matches.manageableMatchIds();
+  }
+
   @Get(':id')
   @Public()
   async getById(@Param('id') id: string) {
     const match = await this.matches.getById(id);
     if (!match) throw new NotFoundException('Match introuvable');
     return match;
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() body: UpdateMatchInput) {
+    return this.matches.update(id, body);
+  }
+
+  @Post(':id/start')
+  start(@Param('id') id: string) {
+    return this.matches.start(id);
+  }
+
+  @Post(':id/finish')
+  finish(@Param('id') id: string) {
+    return this.matches.finish(id);
   }
 
   @Post(':id/follow')

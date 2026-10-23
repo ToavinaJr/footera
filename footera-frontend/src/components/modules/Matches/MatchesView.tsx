@@ -9,12 +9,14 @@ import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
+import { MatchManagementPanel } from './MatchManagementPanel';
 
 export const MatchesView: React.FC = () => {
-  const { showToast, selectedResourceId, navigateToResource } = useApp();
+  const { showToast, selectedResourceId, navigateToResource, user } = useApp();
   const matchModal = useRouteModal('/matches');
   const [matches, setMatches] = useState<Match[]>([]);
   const [standings, setStandings] = useState<LeagueStandingRow[]>([]);
+  const [manageableMatchIds, setManageableMatchIds] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'LIVE' | 'SCHEDULED' | 'FINISHED'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,12 +32,14 @@ export const MatchesView: React.FC = () => {
     async function loadMatches() {
       setIsLoading(true);
       try {
-        const [data, stand] = await Promise.all([
+        const [data, stand, manageableIds] = await Promise.all([
           matchesService.list(statusFilter),
           matchesService.getLeagueStandings(),
+          user ? matchesService.manageableIds().catch(() => [] as string[]) : Promise.resolve([] as string[]),
         ]);
         setMatches(data);
         setStandings(stand);
+        setManageableMatchIds(manageableIds);
 
       } catch (err: unknown) {
         showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des matchs', 'error');
@@ -44,7 +48,7 @@ export const MatchesView: React.FC = () => {
       }
     }
     loadMatches();
-  }, [statusFilter, selectedResourceId, showToast]);
+  }, [statusFilter, selectedResourceId, showToast, user?.id]);
 
   const handleToggleFollow = async () => {
     if (!selectedMatch) return;
@@ -258,6 +262,12 @@ export const MatchesView: React.FC = () => {
           maxWidth="xl"
         >
           <div className="space-y-6">
+            {manageableMatchIds.includes(selectedMatch.id) && selectedMatch.status !== 'FINISHED' && (
+              <MatchManagementPanel
+                match={selectedMatch}
+                onMatchUpdated={(updatedMatch) => setMatches((current) => current.map((match) => match.id === updatedMatch.id ? updatedMatch : match))}
+              />
+            )}
             {/* Scoreboard */}
             <div className="p-5 rounded-3xl bg-pitch-panel border border-pitch-line text-center space-y-3">
               <div className="flex items-center justify-center gap-2 text-xs">
@@ -325,9 +335,16 @@ export const MatchesView: React.FC = () => {
                       <div className={`min-w-0 space-y-1 ${isAwayEvent ? 'text-right' : 'text-left'}`}>
                         <div className={`flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ${isAwayEvent ? 'justify-end' : 'justify-start'}`}>
                           <span>{ev.type === 'goal' || ev.type === 'penalty' ? '⚽ But' : '🟨 Carton'}</span>
-                          <strong className="wrap-break-word text-pitch-ink">{ev.player}</strong>
+                          <EntityLink section="players" id={ev.playerId} className="wrap-break-word font-extrabold text-pitch-ink">
+                            {ev.player}
+                          </EntityLink>
                           {ev.assist && (
-                            <span className="text-slate-500 text-caption">(Passe de {ev.assist})</span>
+                            <span className="text-slate-500 text-caption">
+                              (Passe de{' '}
+                              <EntityLink section="players" id={ev.assistPlayerId} className="font-semibold">
+                                {ev.assist}
+                              </EntityLink>)
+                            </span>
                           )}
                         </div>
                         {ev.description && <span className="block wrap-break-word text-slate-500 text-caption">{ev.description}</span>}

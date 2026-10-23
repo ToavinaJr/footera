@@ -1,8 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTournamentStandings } from './tournament-standings.js';
+import { UserContext } from '../auth/user-context.js';
 import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord } from '../../database/domain-records.js';
 
 export interface CreateTournamentInput {
@@ -21,7 +22,11 @@ export interface CreateTournamentInput {
 
 @Injectable()
 export class TournamentsService {
-  constructor(private readonly records: RecordRepository, private readonly notifications: NotificationsService) {}
+  constructor(
+    private readonly records: RecordRepository,
+    private readonly notifications: NotificationsService,
+    private readonly userContext: UserContext,
+  ) {}
 
   async list() {
     const [tournaments, teams, matches, pitches] = await Promise.all([
@@ -39,6 +44,7 @@ export class TournamentsService {
   }
 
   private withComputedDetails(tournament: TournamentRecord, teams: TeamRecord[], matches: MatchRecord[], pitches: PitchRecord[]) {
+    const { organizerId: _organizerId, ...publicTournament } = tournament;
     const participantTeamIds: string[] = tournament.participantTeamIds ?? [];
     const participatingTeams = participantTeamIds.flatMap((teamId) => {
       const team = teams.find((item) => item.id === teamId);
@@ -77,7 +83,7 @@ export class TournamentsService {
         .map((name: string, index: number) => ({ id: `${tournament.id}_venue_${index}`, name, city: tournament.city }));
 
     return {
-      ...tournament,
+      ...publicTournament,
       participantTeamIds,
       registeredTeams: participantTeamIds.length,
       remainingTeams: Math.max(0, Number(tournament.maxTeams || 0) - participantTeamIds.length),
@@ -89,11 +95,14 @@ export class TournamentsService {
   }
 
   async create(input: CreateTournamentInput) {
+    const organizerId = this.userContext.userId;
+    if (!organizerId) throw new UnauthorizedException('Authentification requise pour créer un tournoi.');
     const id = `tourn_${randomUUID()}`;
-    const tournament = { ...input, id, registeredTeams: 0, participantTeamIds: [], status: 'INSCRIPTIONS_OUVERTES', standings: [], fixtures: [] };
+    const tournament = { ...input, id, organizerId, registeredTeams: 0, participantTeamIds: [], status: 'INSCRIPTIONS_OUVERTES', standings: [], fixtures: [] };
     await this.records.create('tournaments', id, tournament);
     await this.notifications.add({ title: 'Nouveau tournoi ouvert', message: `Le tournoi "${input.title}" est maintenant ouvert aux inscriptions !`, type: 'system', targetSection: 'tournaments', targetId: id });
-    return tournament;
+    const { organizerId: _organizerId, ...publicTournament } = tournament;
+    return publicTournament;
   }
 
   async register(id: string, teamId: string) {

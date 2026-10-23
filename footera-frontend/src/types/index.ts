@@ -146,7 +146,7 @@ export interface MatchEvent {
   minute: number;
   type: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'penalty';
   teamId: string;
-  playerId?: string;
+  playerId: string;
   player: string;
   assistPlayerId?: string;
   assist?: string;
@@ -189,6 +189,22 @@ export interface Match {
   minute?: number;
   events: MatchEvent[];
   stats?: MatchStats;
+}
+
+export interface MatchUpdateInput {
+  date: string;
+  time: string;
+  venue: string;
+  events: MatchEventInput[];
+}
+
+export interface MatchEventInput {
+  minute: number;
+  type: MatchEvent['type'];
+  teamId: string;
+  playerId: string;
+  assistPlayerId?: string;
+  description?: string;
 }
 
 export interface TeamMatch extends Match {

@@ -96,6 +96,7 @@ export interface MatchEventRecord {
   player: string;
   assistPlayerId?: string;
   assist?: string;
+  description?: string;
 }
 
 export interface MatchRecord {
@@ -106,6 +107,7 @@ export interface MatchRecord {
   scheduledAt?: string;
   date?: string;
   time?: string;
+  minute?: number;
   venue?: string;
   pitchId?: string;
   pitchName?: string;
@@ -116,6 +118,16 @@ export interface MatchRecord {
   events?: MatchEventRecord[];
   lineups?: Array<{ teamId: string; playerIds: string[] }>;
   [key: string]: unknown;
+}
+
+export interface UpdateMatchInput {
+  date?: string;
+  time?: string;
+  scheduledAt?: string;
+  venue?: string;
+  pitchId?: string;
+  city?: string;
+  events?: MatchEventRecord[];
 }
 
 export interface PitchRecord {
@@ -174,6 +186,7 @@ export interface BookingRecord {
 
 export interface TournamentRecord {
   id: string;
+  organizerId?: string;
   title?: string;
   status?: string;
   city?: string;

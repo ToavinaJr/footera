@@ -37,9 +37,11 @@ import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { formatFiniteNumber } from '../../../utils/numberFormat';
 import { catalogsService } from '../../../services/catalogsService';
+import { useTranslation } from '../../../i18n';
 
 export const StatsView: React.FC = () => {
   const { showToast, navigateToResource } = useApp();
+  const { t } = useTranslation();
   
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<'scorers' | 'assists' | 'teams' | 'players'>('scorers');
@@ -77,7 +79,7 @@ export const StatsView: React.FC = () => {
         setTeams(teamList);
         setPositionOptions(catalogOptions.playerPositions);
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des options', 'error');
+        showToast(err instanceof Error ? err.message : t('common.loadOptionsError'), 'error');
       }
     }
     loadOptions();
@@ -113,7 +115,7 @@ export const StatsView: React.FC = () => {
         setTeamStats(teamStatsData);
         setPlayerStats(playersData);
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques', 'error');
+        showToast(err instanceof Error ? err.message : t('common.loadStatsError'), 'error');
       } finally {
         setIsLoading(false);
       }
@@ -123,13 +125,13 @@ export const StatsView: React.FC = () => {
 
   const selectedTournamentName =
     selectedTournamentId === 'all'
-      ? 'Toutes les compétitions confondues'
-      : tournaments.find((t) => t.id === selectedTournamentId)?.title || 'Compétition';
+      ? t('stats.allCompetitions')
+      : tournaments.find((tournament) => tournament.id === selectedTournamentId)?.title || t('stats.competition');
 
   const selectedTeamName =
     selectedTeamId === 'all'
-      ? 'Toutes les équipes'
-      : teams.find((t) => t.id === selectedTeamId)?.name || 'Équipe';
+      ? t('stats.allTeams')
+      : teams.find((team) => team.id === selectedTeamId)?.name || t('stats.team');
 
   return (
     <div className="space-y-6 pb-16">
@@ -137,20 +139,20 @@ export const StatsView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight flex items-center gap-2.5">
-            <span>Statistiques & Classements</span>
+            <span>{t('stats.title')}</span>
             <span className="px-2.5 py-0.5 rounded-full bg-lime-volt text-pitch-ink text-xs font-black tracking-normal">
-              PRO
+              {t('stats.pro')}
             </span>
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Classement des meilleurs buteurs, passeurs et métriques approfondies de chaque club et joueur.
+            {t('stats.description')}
           </p>
         </div>
 
         {/* Global Context Indicators */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-pitch-line px-3.5 py-2 rounded-2xl shadow-2xs self-start md:self-auto">
           <Activity className="w-4 h-4 text-pitch-primary" />
-          <span>Saison 2026 en cours</span>
+          <span>{t('stats.season', { year: 2026 })}</span>
         </div>
       </div>
 
@@ -159,14 +161,14 @@ export const StatsView: React.FC = () => {
         <div>
           <label className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
             <Trophy className="w-3.5 h-3.5 text-pitch-primary" />
-            <span>Filtrer par Tournoi ou Compétition</span>
+            <span>{t('stats.filterTournament')}</span>
           </label>
           <SelectField
             value={selectedTournamentId}
             onChange={(e) => setSelectedTournamentId(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
           >
-            <option value="all">🏆 Toutes les compétitions & championnats</option>
+            <option value="all">🏆 {t('stats.allCompetitions')}</option>
             {tournaments.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.title} ({t.format})
@@ -178,14 +180,14 @@ export const StatsView: React.FC = () => {
         <div>
           <label className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-pitch-primary" />
-            <span>Filtrer par Équipe</span>
+            <span>{t('stats.filterTeam')}</span>
           </label>
           <SelectField
             value={selectedTeamId}
             onChange={(e) => setSelectedTeamId(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-2xl px-3.5 py-2.5 text-xs md:text-sm text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
           >
-            <option value="all">Toutes les équipes</option>
+            <option value="all">{t('stats.allTeams')}</option>
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name} ({t.city})
@@ -206,7 +208,7 @@ export const StatsView: React.FC = () => {
           }`}
         >
           <Target className="w-4 h-4" />
-          <span>Meilleurs Buteurs</span>
+          <span>{t('stats.scorers')}</span>
           <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {scorers.length}
           </span>
@@ -221,7 +223,7 @@ export const StatsView: React.FC = () => {
           }`}
         >
           <Sparkles className="w-4 h-4" />
-          <span>Meilleurs Passeurs</span>
+          <span>{t('stats.assisters')}</span>
           <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {assisters.length}
           </span>
@@ -236,7 +238,7 @@ export const StatsView: React.FC = () => {
           }`}
         >
           <BarChart3 className="w-4 h-4" />
-          <span>Stats des Équipes</span>
+          <span>{t('stats.teams')}</span>
           <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {teamStats.length}
           </span>
@@ -251,7 +253,7 @@ export const StatsView: React.FC = () => {
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Stats des Joueurs</span>
+          <span>{t('stats.players')}</span>
           <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-caption">
             {playerStats.length}
           </span>
@@ -271,9 +273,9 @@ export const StatsView: React.FC = () => {
             <div className="space-y-6">
               {/* Podium Top 3 */}
               {scorers.length >= 3 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 items-stretch gap-4 pt-4 sm:grid-cols-3 sm:items-end">
                   {/* Rank 2 (Silver) */}
-                  <div className="order-2 sm:order-1 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="relative order-2 flex min-h-64 flex-col justify-between rounded-3xl border border-pitch-line bg-white p-5 text-center shadow-xs sm:order-1">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center">
                       2
                     </div>
@@ -298,16 +300,16 @@ export const StatsView: React.FC = () => {
                         {scorers[1].goals}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
-                        buts en {scorers[1].matchesPlayed} matchs ({scorers[1].ratio} b/m)
+                        {t('stats.goalsInMatches', { goals: scorers[1].goals, matches: scorers[1].matchesPlayed, ratio: scorers[1].ratio })}
                       </span>
                     </div>
                   </div>
 
                   {/* Rank 1 (Gold) */}
-                  <div className="order-1 sm:order-2 p-6 rounded-3xl bg-linear-to-b from-[#f2faee] to-white border-2 border-pitch-primary relative shadow-sm flex flex-col justify-between text-center scale-102">
+                  <div className="relative order-1 flex min-h-80 flex-col justify-between rounded-3xl border-2 border-pitch-primary bg-linear-to-b from-[#f2faee] to-white p-6 text-center shadow-md sm:order-2">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-caption shadow-xs flex items-center gap-1">
                       <Flame className="w-3.5 h-3.5 fill-pitch-ink" />
-                      <span>MEILLEUR BUTEUR</span>
+                      <span>{t('stats.scorers').toUpperCase()}</span>
                     </div>
                     <div>
                       <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-slate-100 border-3 border-pitch-primary shadow-md mb-3 mt-2">
@@ -330,13 +332,13 @@ export const StatsView: React.FC = () => {
                         {scorers[0].goals}
                       </span>
                       <span className="text-xs font-bold text-pitch-ink block">
-                        buts en {scorers[0].matchesPlayed} matchs ({scorers[0].ratio} b/m)
+                        {t('stats.goalsInMatches', { goals: scorers[0].goals, matches: scorers[0].matchesPlayed, ratio: scorers[0].ratio })}
                       </span>
                     </div>
                   </div>
 
                   {/* Rank 3 (Bronze) */}
-                  <div className="order-3 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="relative order-3 flex min-h-60 flex-col justify-between rounded-3xl border border-pitch-line bg-white p-5 text-center shadow-xs">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-extrabold text-xs flex items-center justify-center">
                       3
                     </div>
@@ -361,7 +363,7 @@ export const StatsView: React.FC = () => {
                         {scorers[2].goals}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
-                        buts en {scorers[2].matchesPlayed} matchs ({scorers[2].ratio} b/m)
+                        {t('stats.goalsInMatches', { goals: scorers[2].goals, matches: scorers[2].matchesPlayed, ratio: scorers[2].ratio })}
                       </span>
                     </div>
                   </div>
@@ -373,14 +375,14 @@ export const StatsView: React.FC = () => {
                 <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-extrabold text-pitch-ink">
-                      Classement Officiel des Buteurs
+                      {t('stats.scorerRanking')}
                     </h2>
                     <p className="text-xs text-slate-500">
                       {selectedTournamentName} · {selectedTeamName}
                     </p>
                   </div>
                   <span className="text-xs font-bold text-pitch-primary">
-                    {scorers.length} buteurs répertoriés
+                    {t('stats.scorersListed', { count: scorers.length })}
                   </span>
                 </div>
 
@@ -389,14 +391,14 @@ export const StatsView: React.FC = () => {
                     <thead>
                       <tr className="bg-pitch-panel/60 text-slate-500 border-b border-pitch-separator font-bold">
                         <th className="py-3 px-4 w-12 text-center">#</th>
-                        <th className="py-3 px-4">Joueur</th>
-                        <th className="py-3 px-4">Équipe</th>
-                        <th className="py-3 px-3 text-center">Poste</th>
-                        <th className="py-3 px-3 text-center">MJ</th>
-                        <th className="py-3 px-3 text-center font-extrabold text-pitch-primary">Buts</th>
-                        <th className="py-3 px-3 text-center">Pén.</th>
-                        <th className="py-3 px-3 text-center">Ratio</th>
-                        <th className="py-3 px-4 text-center">Min / But</th>
+                        <th className="py-3 px-4">{t('stats.player')}</th>
+                        <th className="py-3 px-4">{t('stats.team')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.position')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.appearancesShort')}</th>
+                        <th className="py-3 px-3 text-center font-extrabold text-pitch-primary">{t('stats.goals')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.penaltiesShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.ratio')}</th>
+                        <th className="py-3 px-4 text-center">{t('stats.minutesPerGoal')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pitch-separator">
@@ -454,7 +456,7 @@ export const StatsView: React.FC = () => {
                             {item.ratio}
                           </td>
                           <td className="py-3 px-4 text-center text-slate-500 tabular-nums font-medium">
-                            {item.minutesPerGoal > 0 ? `${item.minutesPerGoal} min` : '-'}
+                            {item.minutesPerGoal > 0 ? `${item.minutesPerGoal} ${t('stats.minutes')}` : '-'}
                           </td>
                         </tr>
                       ))}
@@ -470,9 +472,9 @@ export const StatsView: React.FC = () => {
             <div className="space-y-6">
               {/* Podium Top 3 Assists */}
               {assisters.length >= 3 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 items-stretch gap-4 pt-4 sm:grid-cols-3 sm:items-end">
                   {/* Rank 2 */}
-                  <div className="order-2 sm:order-1 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="relative order-2 flex min-h-64 flex-col justify-between rounded-3xl border border-pitch-line bg-white p-5 text-center shadow-xs sm:order-1">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center">
                       2
                     </div>
@@ -497,16 +499,16 @@ export const StatsView: React.FC = () => {
                         {assisters[1].assists}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
-                        passes décs ({assisters[1].ratio} p/m)
+                        {t('stats.assistsInMatches', { assists: assisters[1].assists, matches: assisters[1].matchesPlayed, ratio: assisters[1].ratio })}
                       </span>
                     </div>
                   </div>
 
                   {/* Rank 1 */}
-                  <div className="order-1 sm:order-2 p-6 rounded-3xl bg-linears-to-b from-[#f2faee] to-white border-2 border-pitch-primary relative shadow-sm flex flex-col justify-between text-center scale-102">
+                  <div className="relative order-1 flex min-h-80 flex-col justify-between rounded-3xl border-2 border-pitch-primary bg-linear-to-b from-[#f2faee] to-white p-6 text-center shadow-md sm:order-2">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-caption shadow-xs flex items-center gap-1">
                       <Sparkles className="w-3.5 h-3.5 fill-pitch-ink" />
-                      <span>MEILLEUR PASSEUR</span>
+                      <span>{t('stats.assisters').toUpperCase()}</span>
                     </div>
                     <div>
                       <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-slate-100 border-3 border-pitch-primary shadow-md mb-3 mt-2">
@@ -529,13 +531,13 @@ export const StatsView: React.FC = () => {
                         {assisters[0].assists}
                       </span>
                       <span className="text-xs font-bold text-pitch-ink block">
-                        passes décs ({assisters[0].ratio} p/m) · {assisters[0].keyPasses} passes clés
+                        {t('stats.assistsInMatches', { assists: assisters[0].assists, matches: assisters[0].matchesPlayed, ratio: assisters[0].ratio })} · {t('stats.keyPasses', { count: assisters[0].keyPasses })}
                       </span>
                     </div>
                   </div>
 
                   {/* Rank 3 */}
-                  <div className="order-3 p-5 rounded-3xl bg-white border border-pitch-line relative shadow-xs flex flex-col justify-between text-center">
+                  <div className="relative order-3 flex min-h-60 flex-col justify-between rounded-3xl border border-pitch-line bg-white p-5 text-center shadow-xs">
                     <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-extrabold text-xs flex items-center justify-center">
                       3
                     </div>
@@ -560,7 +562,7 @@ export const StatsView: React.FC = () => {
                         {assisters[2].assists}
                       </span>
                       <span className="text-xs text-slate-500 block font-semibold">
-                        passes décs ({assisters[2].ratio} p/m)
+                        {t('stats.assistsInMatches', { assists: assisters[2].assists, matches: assisters[2].matchesPlayed, ratio: assisters[2].ratio })}
                       </span>
                     </div>
                   </div>
@@ -572,14 +574,14 @@ export const StatsView: React.FC = () => {
                 <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-extrabold text-pitch-ink">
-                      Classement Officiel des Passeurs
+                      {t('stats.assisterRanking')}
                     </h2>
                     <p className="text-xs text-slate-500">
                       {selectedTournamentName} · {selectedTeamName}
                     </p>
                   </div>
                   <span className="text-xs font-bold text-pitch-primary">
-                    {assisters.length} passeurs répertoriés
+                    {t('stats.assistersListed', { count: assisters.length })}
                   </span>
                 </div>
 
@@ -588,13 +590,13 @@ export const StatsView: React.FC = () => {
                     <thead>
                       <tr className="bg-pitch-panel/60 text-slate-500 border-b border-pitch-separator font-bold">
                         <th className="py-3 px-4 w-12 text-center">#</th>
-                        <th className="py-3 px-4">Passeur</th>
-                        <th className="py-3 px-4">Équipe</th>
-                        <th className="py-3 px-3 text-center">Poste</th>
-                        <th className="py-3 px-3 text-center">MJ</th>
-                        <th className="py-3 px-3 text-center font-extrabold text-pitch-primary">Passes Décs</th>
-                        <th className="py-3 px-3 text-center">Passes Clés</th>
-                        <th className="py-3 px-3 text-center">Ratio</th>
+                        <th className="py-3 px-4">{t('stats.assister')}</th>
+                        <th className="py-3 px-4">{t('stats.team')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.position')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.appearancesShort')}</th>
+                        <th className="py-3 px-3 text-center font-extrabold text-pitch-primary">{t('stats.assistsShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.keyPassesShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.ratio')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pitch-separator">
@@ -666,14 +668,14 @@ export const StatsView: React.FC = () => {
               {/* Highlight summary cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
-                  <span className="text-slate-400 text-xs font-semibold block">Meilleure Attaque</span>
+                  <span className="text-slate-400 text-xs font-semibold block">{t('stats.bestAttack')}</span>
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <strong className="text-sm font-extrabold text-pitch-ink block">
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
-                        {formatFiniteNumber(teamStats[0]?.goalsFor)} buts marqués ({formatFiniteNumber(teamStats[0]?.goalsPerMatch, 2)} / match)
+                        {t('stats.goalsFor', { count: formatFiniteNumber(teamStats[0]?.goalsFor), average: formatFiniteNumber(teamStats[0]?.goalsPerMatch, 2) })}
                       </span>
                     </div>
                     <Target className="w-8 h-8 text-pitch-primary opacity-80" />
@@ -681,14 +683,14 @@ export const StatsView: React.FC = () => {
                 </div>
 
                 <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
-                  <span className="text-slate-400 text-xs font-semibold block">Meilleure Défense</span>
+                  <span className="text-slate-400 text-xs font-semibold block">{t('stats.bestDefense')}</span>
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <strong className="text-sm font-extrabold text-pitch-ink block">
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs text-slate-500 font-medium">
-                        {teamStats[0]?.goalsAgainst} buts concédés · {teamStats[0]?.cleanSheets} clean sheets
+                        {t('stats.goalsAgainst', { count: teamStats[0]?.goalsAgainst ?? 0 })} · {t('stats.cleanSheets', { count: teamStats[0]?.cleanSheets ?? 0 })}
                       </span>
                     </div>
                     <Shield className="w-8 h-8 text-pitch-primary opacity-80" />
@@ -696,14 +698,14 @@ export const StatsView: React.FC = () => {
                 </div>
 
                 <div className="p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
-                  <span className="text-slate-400 text-xs font-semibold block">Leader Actuel</span>
+                  <span className="text-slate-400 text-xs font-semibold block">{t('stats.currentLeader')}</span>
                   <div className="flex items-center justify-between mt-2">
                     <div>
                       <strong className="text-sm font-extrabold text-pitch-ink block">
                         <EntityLink section="teams" id={teamStats[0]?.teamId}>{teamStats[0]?.teamName}</EntityLink>
                       </strong>
                       <span className="text-xs font-bold text-pitch-primary">
-                        {teamStats[0]?.points} pts · {teamStats[0]?.winRate}% victoires
+                        {t('stats.pointsWins', { points: teamStats[0]?.points ?? 0, rate: teamStats[0]?.winRate ?? 0 })}
                       </span>
                     </div>
                     <Trophy className="w-8 h-8 text-lime-volt fill-pitch-primary stroke-pitch-primary" />
@@ -716,14 +718,14 @@ export const StatsView: React.FC = () => {
                 <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-extrabold text-pitch-ink">
-                      Statistiques Comparatives Complètes des Clubs
+                      {t('stats.teamComparison')}
                     </h2>
                     <p className="text-xs text-slate-500">
-                      Attaque, solidité défensive, possession et discipline
+                      {t('stats.teamComparisonDescription')}
                     </p>
                   </div>
                   <span className="text-xs font-bold text-slate-500">
-                    Cliquez sur une équipe pour voir sa fiche
+                    {t('stats.clickTeamDetails')}
                   </span>
                 </div>
 
@@ -731,19 +733,19 @@ export const StatsView: React.FC = () => {
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="bg-pitch-panel/60 text-slate-500 border-b border-pitch-separator font-bold">
-                        <th className="py-3 px-4">Équipe</th>
-                        <th className="py-3 px-3 text-center">MJ</th>
-                        <th className="py-3 px-3 text-center">V</th>
-                        <th className="py-3 px-3 text-center">N</th>
-                        <th className="py-3 px-3 text-center">D</th>
-                        <th className="py-3 px-3 text-center font-bold text-pitch-primary">Pts</th>
-                        <th className="py-3 px-3 text-center">BP</th>
-                        <th className="py-3 px-3 text-center">BC</th>
-                        <th className="py-3 px-3 text-center">Diff</th>
-                        <th className="py-3 px-3 text-center">Poss.</th>
-                        <th className="py-3 px-4 text-center">Buteur Phare</th>
-                        <th className="py-3 px-4 text-center">Passeur Clé</th>
-                        <th className="py-3 px-4 text-center">Action</th>
+                        <th className="py-3 px-4">{t('stats.team')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.appearancesShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.winsShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.drawsShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.lossesShort')}</th>
+                        <th className="py-3 px-3 text-center font-bold text-pitch-primary">{t('stats.pointsShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.goalsForShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.goalsAgainstShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.differenceShort')}</th>
+                        <th className="py-3 px-3 text-center">{t('stats.possessionShort')}</th>
+                        <th className="py-3 px-4 text-center">{t('stats.featureScorer')}</th>
+                        <th className="py-3 px-4 text-center">{t('stats.featureAssister')}</th>
+                        <th className="py-3 px-4 text-center">{t('stats.action')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pitch-separator">
@@ -791,20 +793,20 @@ export const StatsView: React.FC = () => {
                             <span className="font-bold text-pitch-primary block truncate max-w-32.5">
                               <EntityLink section="players" id={team.topScorer.playerId}>{team.topScorer.name}</EntityLink>
                             </span>
-                            <span className="text-micro text-slate-400">({team.topScorer.goals} buts)</span>
+                            <span className="text-micro text-slate-400">({t('stats.goalsCount', { count: team.topScorer.goals })})</span>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className="font-bold text-pitch-ink block truncate max-w-32.5">
                               <EntityLink section="players" id={team.topAssister.playerId}>{team.topAssister.name}</EntityLink>
                             </span>
-                            <span className="text-micro text-slate-400">({team.topAssister.assists} passes)</span>
+                            <span className="text-micro text-slate-400">({t('stats.assistsCount', { count: team.topAssister.assists })})</span>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <button
                               type="button"
                               className="px-3 py-1 bg-white hover:bg-pitch-light text-pitch-primary border border-pitch-line rounded-xl font-bold text-xs shadow-2xs transition-colors"
                             >
-                              Fiche stats →
+                              {t('stats.viewStats')}
                             </button>
                           </td>
                         </tr>
@@ -827,7 +829,7 @@ export const StatsView: React.FC = () => {
                     type="text"
                     value={playerSearchQuery}
                     onChange={(e) => setPlayerSearchQuery(e.target.value)}
-                    placeholder="Rechercher un joueur ou club..."
+                    placeholder={t('stats.searchPlayerTeam')}
                     className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                   />
                 </div>
@@ -838,7 +840,7 @@ export const StatsView: React.FC = () => {
                     onChange={(e) => setPlayerPositionFilter(e.target.value)}
                     className="w-full sm:w-48 bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs text-pitch-ink font-semibold focus:border-pitch-primary outline-hidden"
                   >
-                    <option value="Tous">Tous les postes</option>
+                    <option value="Tous">{t('stats.allPositions')}</option>
                     {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
                   </SelectField>
                 </div>
@@ -878,19 +880,19 @@ export const StatsView: React.FC = () => {
 
                       <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-pitch-separator text-center text-xs">
                         <div className="p-2 rounded-xl bg-pitch-panel">
-                          <span className="text-micro text-slate-400 block font-medium">Matchs</span>
+                          <span className="text-micro text-slate-400 block font-medium">{t('stats.matches')}</span>
                           <strong className="text-xs font-black text-pitch-ink tabular-nums">
                             {player.appearances}
                           </strong>
                         </div>
                         <div className="p-2 rounded-xl bg-[#e8f5e6]">
-                          <span className="text-micro text-pitch-primary block font-semibold">Buts</span>
+                          <span className="text-micro text-pitch-primary block font-semibold">{t('stats.goals')}</span>
                           <strong className="text-xs font-black text-pitch-primary tabular-nums">
                             {player.goals}
                           </strong>
                         </div>
                         <div className="p-2 rounded-xl bg-pitch-panel">
-                          <span className="text-micro text-slate-400 block font-medium">Passes</span>
+                          <span className="text-micro text-slate-400 block font-medium">{t('stats.passes')}</span>
                           <strong className="text-xs font-black text-pitch-ink tabular-nums">
                             {player.assists}
                           </strong>
@@ -901,7 +903,7 @@ export const StatsView: React.FC = () => {
                     <div className="mt-4 pt-3 border-t border-pitch-separator flex items-center justify-between text-xs text-slate-500">
                       <span>{player.position} · {player.strongFoot}</span>
                       <span className="font-bold text-pitch-primary group-hover:translate-x-0.5 transition-transform">
-                        Détails →
+                        {t('stats.details')}
                       </span>
                     </div>
                   </div>
@@ -918,7 +920,7 @@ export const StatsView: React.FC = () => {
           isOpen={!!selectedTeamModal}
           onClose={() => setSelectedTeamModal(null)}
           title={selectedTeamModal.teamName}
-          subtitle={`Fiche Statistique Saisonnière · ${selectedTeamModal.division} (${selectedTeamModal.city})`}
+          subtitle={`${t('stats.seasonProfile')} · ${selectedTeamModal.division} (${selectedTeamModal.city})`}
           maxWidth="lg"
         >
           <div className="space-y-6">
@@ -934,14 +936,14 @@ export const StatsView: React.FC = () => {
                     <EntityLink section="teams" id={selectedTeamModal.teamId}>{selectedTeamModal.teamName}</EntityLink>
                   </h3>
                   <span className="text-sm font-black text-pitch-primary">
-                    {selectedTeamModal.points} Points
+                    {selectedTeamModal.points} {t('stats.points')}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {selectedTeamModal.matchesPlayed} matchs joués : {selectedTeamModal.wins} Victoires · {selectedTeamModal.draws} Nuls · {selectedTeamModal.losses} Défaites ({selectedTeamModal.winRate}% de succès)
+                  {t('stats.matchSummary', { played: selectedTeamModal.matchesPlayed, wins: selectedTeamModal.wins, draws: selectedTeamModal.draws, losses: selectedTeamModal.losses, rate: selectedTeamModal.winRate })}
                 </p>
                 <div className="flex items-center gap-1.5 mt-2">
-                  <span className="text-caption text-slate-400 font-semibold mr-1">Forme :</span>
+                  <span className="text-caption text-slate-400 font-semibold mr-1">{t('stats.form')}</span>
                   {selectedTeamModal.recentForm.map((res, i) => (
                     <FormIndicator key={i} result={res} size="sm" />
                   ))}
@@ -952,40 +954,40 @@ export const StatsView: React.FC = () => {
             {/* Metrics Breakdown Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-caption text-slate-500 block font-medium">Buts Marqués</span>
+                <span className="text-caption text-slate-500 block font-medium">{t('stats.goalsScored')}</span>
                 <strong className="text-base font-black text-pitch-primary tabular-nums">
                   {selectedTeamModal.goalsFor}
                 </strong>
                 <span className="text-micro text-slate-400 block mt-0.5">
-                  ({formatFiniteNumber(selectedTeamModal.goalsPerMatch, 2)} / match)
+                  ({formatFiniteNumber(selectedTeamModal.goalsPerMatch, 2)} / {t('stats.matches').toLowerCase()})
                 </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-caption text-slate-500 block font-medium">Buts Encaissés</span>
+                <span className="text-caption text-slate-500 block font-medium">{t('stats.goalsConceded')}</span>
                 <strong className="text-base font-black text-rose-600 tabular-nums">
                   {selectedTeamModal.goalsAgainst}
                 </strong>
                 <span className="text-micro text-slate-400 block mt-0.5">
-                  ({formatFiniteNumber(selectedTeamModal.goalsAgainstPerMatch, 2)} / match)
+                  ({formatFiniteNumber(selectedTeamModal.goalsAgainstPerMatch, 2)} / {t('stats.matches').toLowerCase()})
                 </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-caption text-slate-500 block font-medium">Clean Sheets</span>
+                <span className="text-caption text-slate-500 block font-medium">{t('stats.cleanSheetsLabel')}</span>
                 <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedTeamModal.cleanSheets}
                 </strong>
-                <span className="text-micro text-slate-400 block mt-0.5">matchs invaincus</span>
+                <span className="text-micro text-slate-400 block mt-0.5">{t('stats.cleanSheetMatches')}</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-caption text-slate-500 block font-medium">Possession Moy.</span>
+                <span className="text-caption text-slate-500 block font-medium">{t('stats.averagePossession')}</span>
                 <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedTeamModal.possessionAvg}%
                 </strong>
                 <span className="text-micro text-slate-400 block mt-0.5">
-                  Précision : {selectedTeamModal.passAccuracy}%
+                  {t('stats.accuracy', { value: selectedTeamModal.passAccuracy })}
                 </span>
               </div>
             </div>
@@ -993,7 +995,7 @@ export const StatsView: React.FC = () => {
             {/* Key Players in Team */}
             <div className="p-4 rounded-2xl bg-pitch-panel border border-border-subtle space-y-3">
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Leaders de l&apos;effectif
+                {t('stats.squadLeaders')}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-pitch-line">
@@ -1001,12 +1003,12 @@ export const StatsView: React.FC = () => {
                     🎯
                   </div>
                   <div>
-                    <span className="text-micro text-slate-400 block">Meilleur Buteur</span>
+                    <span className="text-micro text-slate-400 block">{t('stats.bestScorer')}</span>
                     <strong className="font-extrabold text-pitch-ink">
                       <EntityLink section="players" id={selectedTeamModal.topScorer.playerId}>{selectedTeamModal.topScorer.name}</EntityLink>
                     </strong>
                     <span className="text-slate-500 block">
-                      {selectedTeamModal.topScorer.goals} buts inscrits
+                      {t('stats.goalsScoredCount', { count: selectedTeamModal.topScorer.goals })}
                     </span>
                   </div>
                 </div>
@@ -1016,12 +1018,12 @@ export const StatsView: React.FC = () => {
                     👟
                   </div>
                   <div>
-                    <span className="text-micro text-slate-400 block">Meilleur Passeur</span>
+                    <span className="text-micro text-slate-400 block">{t('stats.bestAssister')}</span>
                     <strong className="font-extrabold text-pitch-ink">
                       <EntityLink section="players" id={selectedTeamModal.topAssister.playerId}>{selectedTeamModal.topAssister.name}</EntityLink>
                     </strong>
                     <span className="text-slate-500 block">
-                      {selectedTeamModal.topAssister.assists} passes décisives
+                      {t('stats.assistsCount', { count: selectedTeamModal.topAssister.assists })}
                     </span>
                   </div>
                 </div>
@@ -1030,7 +1032,7 @@ export const StatsView: React.FC = () => {
 
             <div className="flex items-center justify-between pt-2">
               <span className="text-xs text-slate-500">
-                Discipline : {selectedTeamModal.yellowCards} cartons jaunes · {selectedTeamModal.redCards} cartons rouges
+                {t('stats.discipline', { yellow: selectedTeamModal.yellowCards, red: selectedTeamModal.redCards })}
               </span>
               <button
                 onClick={() => {
@@ -1039,7 +1041,7 @@ export const StatsView: React.FC = () => {
                 }}
                 className="px-4 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs cursor-pointer shadow-xs"
               >
-                Voir la page du club
+                {t('stats.viewTeamPage')}
               </button>
             </div>
           </div>
@@ -1072,34 +1074,34 @@ export const StatsView: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {selectedPlayerModal.age ? `${selectedPlayerModal.age} ans` : 'Âge non renseigné'} · {selectedPlayerModal.strongFoot} · {selectedPlayerModal.teamName}
+                  {selectedPlayerModal.age ? t('stats.yearsOld', { age: selectedPlayerModal.age }) : t('stats.ageUnknown')} · {selectedPlayerModal.strongFoot} · {selectedPlayerModal.teamName}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-micro text-slate-500 block">Matchs</span>
+                <span className="text-micro text-slate-500 block">{t('stats.matches')}</span>
                 <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedPlayerModal.appearances}
                 </strong>
                 <span className="text-micro text-slate-400 block mt-0.5">
-                  {selectedPlayerModal.minutesPlayed} min
+                  {selectedPlayerModal.minutesPlayed} {t('stats.minutes')}
                 </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-[#e8f5e6] border border-[#d4e7d4]">
-                <span className="text-micro text-pitch-primary block font-semibold">Buts</span>
+                <span className="text-micro text-pitch-primary block font-semibold">{t('stats.goals')}</span>
                 <strong className="text-base font-black text-pitch-primary tabular-nums">
                   {selectedPlayerModal.goals}
                 </strong>
                 <span className="text-micro text-slate-500 block mt-0.5">
-                  {selectedPlayerModal.shotsOnTarget} tirs cadrés
+                  {t('stats.shotsOnTarget', { count: selectedPlayerModal.shotsOnTarget })}
                 </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-micro text-slate-500 block">Passes Décs</span>
+                <span className="text-micro text-slate-500 block">{t('stats.assistsShort')}</span>
                 <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedPlayerModal.assists}
                 </strong>
@@ -1109,7 +1111,7 @@ export const StatsView: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-micro text-slate-500 block">Cartons</span>
+                <span className="text-micro text-slate-500 block">{t('stats.cards')}</span>
                 <strong className="text-base font-black text-amber-700 tabular-nums">
                   {selectedPlayerModal.yellowCards} J
                 </strong>
@@ -1126,7 +1128,7 @@ export const StatsView: React.FC = () => {
               }}
               className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
             >
-              <span>Consulter le profil sportif complet</span>
+              <span>{t('stats.playerProfile')}</span>
             </button>
           </div>
         </Modal>
