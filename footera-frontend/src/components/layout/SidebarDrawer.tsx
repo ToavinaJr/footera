@@ -52,7 +52,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, onClose })
       <div className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" />
 
       {/* Drawer content: Pitch tactical grid green background from user reference */}
-      <div className="relative w-72 max-w-[85vw] h-full pitch-tactical-grid border-r border-[#155a36] shadow-2xl flex flex-col justify-between p-5 text-white animate-in slide-in-from-left duration-200">
+      <div className="sidebar-drawer-panel relative h-dvh max-h-dvh min-h-0 w-72 max-w-[85vw] shrink-0 overflow-y-auto overscroll-contain pitch-tactical-grid border-r border-[#155a36] shadow-2xl flex flex-col justify-between p-5 text-white animate-in slide-in-from-left duration-200">
         <div>
           {/* Header with Footera Brand and Close Button */}
           <div className="flex items-center justify-between pb-6 border-b border-[#144f2f]">

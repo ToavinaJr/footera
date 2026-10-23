@@ -89,3 +89,8 @@ h1, h2, h3, .font-display {
 .btn-tactical:active {
   transform: scale(0.97);
 }
+
+.sidebar-drawer-panel {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  scrollbar-width: thin;
+}
