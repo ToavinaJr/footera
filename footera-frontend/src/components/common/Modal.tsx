@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -8,6 +9,7 @@ interface ModalProps {
   subtitle?: string;
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  overlayClassName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -17,6 +19,7 @@ export const Modal: React.FC<ModalProps> = ({
   subtitle,
   children,
   maxWidth = 'lg',
+  overlayClassName = 'bg-black/60 backdrop-blur-xs',
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,9 +41,10 @@ export const Modal: React.FC<ModalProps> = ({
     '2xl': 'max-w-2xl',
   }[maxWidth];
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity"
+      className={`fixed left-0 top-0 z-[100] flex items-center justify-center p-4 transition-opacity ${overlayClassName}`}
+      style={{ width: '100vw', height: '100vh' }}
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
@@ -66,5 +70,5 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-4 text-[#12281e]">{children}</div>
       </div>
     </div>
-  );
+  , document.body);
 };

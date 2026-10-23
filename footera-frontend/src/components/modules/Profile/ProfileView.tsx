@@ -214,7 +214,7 @@ export const ProfileView: React.FC = () => {
   const displayedAge = isOwner ? user!.age ?? myPlayer?.age : displayedPlayer?.age;
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="page-enter space-y-8 pb-16">
       {/* Profile Header */}
       <section className="relative isolate overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-2 bg-pitch-primary" />

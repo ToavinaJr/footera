@@ -9,7 +9,7 @@ const features = [
 ];
 
 export const LandingView: React.FC = () => (
-  <main className="min-h-screen overflow-hidden bg-canvas-bg text-pitch-ink">
+  <main className="page-enter min-h-screen overflow-hidden bg-canvas-bg text-pitch-ink">
     <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
       <Link to="/" className="flex items-center gap-2.5" aria-label="Footera — accueil">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-pitch-primary font-display text-xl font-extrabold text-lime-volt">F</span>
@@ -44,7 +44,7 @@ export const LandingView: React.FC = () => (
       </div>
 
       <div className="relative mx-auto w-full max-w-lg">
-        <div className="absolute -inset-8 rounded-[3rem] bg-lime-volt/20 blur-3xl" aria-hidden="true" />
+        <div className="float-soft absolute -inset-8 rounded-[3rem] bg-lime-volt/20 blur-3xl" aria-hidden="true" />
         <div className="pitch-tactical-grid relative overflow-hidden rounded-[2rem] border border-pitch-primary/20 p-6 text-white shadow-2xl sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -77,7 +77,7 @@ export const LandingView: React.FC = () => (
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {features.map(({ icon: Icon, title, description }) => (
-          <article key={title} className="rounded-2xl border border-pitch-line bg-white p-5 shadow-sm transition-transform duration-200 hover:-translate-y-1 sm:p-6">
+          <article key={title} className="hover-lift rounded-2xl border border-pitch-line bg-white p-5 shadow-sm sm:p-6">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-pitch-light text-pitch-primary">
               <Icon className="h-5 w-5" aria-hidden="true" />
             </span>

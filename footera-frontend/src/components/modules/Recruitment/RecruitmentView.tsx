@@ -31,10 +31,28 @@ export const RecruitmentView: React.FC = () => {
     : selectedResourceId
       ? ads.find((ad) => ad.id === selectedResourceId) ?? null
       : null;
+  const [applicationAdId, setApplicationAdId] = useState<string | null>(null);
+  const applicationAd = applicationAdId
+    ? ads.find((ad) => ad.id === applicationAdId) ?? null
+    : null;
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState('');
   const [applicantPhone, setApplicantPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const openApplication = (ad: RecruitmentAd) => {
+    // A candidate form is its own modal; leave the route-backed ad detail first.
+    adModal.close();
+    setApplicationAdId(ad.id);
+    setApplicantPhone(user?.phone || '');
+    setApplyMessage('');
+    setIsApplyModalOpen(true);
+  };
+
+  const closeApplication = () => {
+    setIsApplyModalOpen(false);
+    setApplicationAdId(null);
+  };
 
   useEffect(() => {
     catalogsService.getOptions()
@@ -63,19 +81,18 @@ export const RecruitmentView: React.FC = () => {
   }, [searchQuery, positionFilter, selectedResourceId, showToast]);
 
   const handleApply = async () => {
-    if (!activeAd || !applyMessage.trim() || !applicantPhone.trim()) return;
+    if (!applicationAd || !applyMessage.trim() || !applicantPhone.trim()) return;
     setIsSubmitting(true);
     try {
-      const application = await recruitmentService.apply(activeAd.id, {
+      const application = await recruitmentService.apply(applicationAd.id, {
         message: applyMessage,
         phone: applicantPhone,
       });
-      showToast(`Candidature transmise à ${activeAd.teamName} !`);
-      setIsApplyModalOpen(false);
+      showToast(`Candidature transmise à ${applicationAd.teamName} !`);
+      closeApplication();
       setApplyMessage('');
-      adModal.close();
       setMyApplications((current) => [application, ...current.filter((item) => item.id !== application.id)]);
-      setAds((current) => current.map((ad) => ad.id === activeAd.id
+      setAds((current) => current.map((ad) => ad.id === applicationAd.id
         ? { ...ad, candidatesCount: ad.candidatesCount + 1 }
         : ad));
       setActiveTab('my-applications');
@@ -87,7 +104,7 @@ export const RecruitmentView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="page-enter space-y-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
@@ -195,10 +212,7 @@ export const RecruitmentView: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        adModal.openDetail(ad.id);
-                        setApplicantPhone(user?.phone || '');
-                        setApplyMessage('');
-                        setIsApplyModalOpen(true);
+                        openApplication(ad);
                       }}
                       className="px-5 py-2.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
                     >
@@ -274,11 +288,7 @@ export const RecruitmentView: React.FC = () => {
             </p>
 
             <button
-              onClick={() => {
-                setApplicantPhone(user?.phone || '');
-                setApplyMessage('');
-                setIsApplyModalOpen(true);
-              }}
+              onClick={() => openApplication(activeAd)}
               className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <Send className="w-4 h-4" />
@@ -289,12 +299,12 @@ export const RecruitmentView: React.FC = () => {
       )}
 
       {/* Apply Modal */}
-      {isApplyModalOpen && activeAd && (
+      {isApplyModalOpen && applicationAd && (
         <Modal
           isOpen={isApplyModalOpen}
-          onClose={() => setIsApplyModalOpen(false)}
-          title={`Candidater — ${activeAd.positionSought}`}
-          subtitle={activeAd.teamName}
+          onClose={closeApplication}
+          title={`Candidater — ${applicationAd.positionSought}`}
+          subtitle={applicationAd.teamName}
           maxWidth="md"
         >
           <div className="space-y-4">
@@ -323,7 +333,7 @@ export const RecruitmentView: React.FC = () => {
             </div>
             <div className="flex items-center justify-end gap-3 pt-3">
               <button
-                onClick={() => setIsApplyModalOpen(false)}
+                onClick={closeApplication}
                 className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
                 Annuler

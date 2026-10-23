@@ -93,7 +93,7 @@ export const HomeView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="page-enter space-y-8 pb-16">
       {/* Hero: Prochain match de mon équipe & Relance d'effectif */}
       {myTeam && (
         <section aria-label="Espace Mon Équipe" className="rounded-3xl bg-white border border-pitch-line shadow-sm overflow-hidden">

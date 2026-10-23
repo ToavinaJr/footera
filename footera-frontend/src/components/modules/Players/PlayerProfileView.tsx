@@ -39,7 +39,7 @@ export const PlayerProfileView: React.FC = () => {
   if (loadError || !player) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-600">Ce profil joueur est introuvable ou indisponible.</div>;
 
   return (
-    <main className="space-y-6 pb-16">
+    <main className="page-enter space-y-6 pb-16">
       <header className="flex flex-col gap-5 rounded-3xl border border-pitch-line bg-white p-6 shadow-xs sm:flex-row sm:items-center md:p-8">
         <img src={player.avatarUrl} alt={player.name} className="h-24 w-24 rounded-2xl border-2 border-pitch-primary object-cover" />
         <div className="min-w-0 flex-1">

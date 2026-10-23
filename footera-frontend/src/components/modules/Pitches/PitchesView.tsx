@@ -292,7 +292,7 @@ export const PitchesView: React.FC = () => {
     }
 
     return (
-      <div className="space-y-6 pb-16">
+      <div className="page-enter space-y-6 pb-16">
         <button type="button" onClick={() => navigate('/pitches')} className="text-sm font-bold text-pitch-primary hover:underline">← Retour aux terrains</button>
         <section className="overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
           <div className="relative h-64 sm:h-80 lg:h-105">
@@ -366,7 +366,7 @@ export const PitchesView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="page-enter space-y-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">

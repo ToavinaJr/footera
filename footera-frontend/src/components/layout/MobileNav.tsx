@@ -16,7 +16,7 @@ export const MobileNav: React.FC = () => {
   return (
     <nav
       aria-label="Navigation mobile"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border-subtle shadow-lg"
+      className="header-glass lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle shadow-lg"
     >
       <div className="grid grid-cols-4 h-16 max-w-md mx-auto items-center">
         {tabs.map((tab) => {

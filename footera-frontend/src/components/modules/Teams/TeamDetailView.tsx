@@ -93,7 +93,7 @@ export const TeamDetailView: React.FC = () => {
   if (!team) return <EmptyState icon={Trophy} title="Équipe introuvable" description="Cette équipe n’existe pas ou n’est plus disponible." actionLabel="Retour aux équipes" onAction={() => navigate('/teams')} />;
 
   return (
-    <div className="min-w-0 space-y-6 overflow-x-clip pb-16">
+    <div className="page-enter min-w-0 space-y-6 overflow-x-clip pb-16">
       <button type="button" onClick={() => navigate('/teams')} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-bold text-pitch-primary hover:bg-pitch-light">
         <ArrowLeft className="h-4 w-4" /> Retour aux équipes
       </button>

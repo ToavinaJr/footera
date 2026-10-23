@@ -151,7 +151,7 @@ export const MarketplaceView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="page-enter space-y-6 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">

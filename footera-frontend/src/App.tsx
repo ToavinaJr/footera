@@ -45,7 +45,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-pitch-ink">
+    <div className="app-shell min-h-full flex flex-col bg-canvas-bg text-pitch-ink font-sans selection:bg-lime-volt selection:text-pitch-ink">
       {/* Discreet Demo / Data Mode Banner */}
       <DemoBanner />
 

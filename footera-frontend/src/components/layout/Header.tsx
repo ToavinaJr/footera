@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e5ece2] shadow-xs">
+      <header className="header-glass sticky top-0 z-40 border-b border-[#e5ece2]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-6">
           {/* Left: Hamburger menu + Brand (Desktop) */}
           <div className="flex items-center gap-3">
