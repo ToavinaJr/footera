@@ -4,17 +4,17 @@ import { Menu, Search, Bell, User, X, BarChart3, LogOut } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
 import { NotificationsDrawer } from './NotificationsDrawer';
-import { SidebarDrawer } from './SidebarDrawer';
 import { Modal } from '../common/Modal';
 import { LanguageSwitcher, useTranslation } from '../../i18n';
 
-export const Header: React.FC = () => {
+interface HeaderProps { onMenuClick: () => void }
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { t } = useTranslation();
   const { activeSection, setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const isNotifOpen = location.pathname === '/notifications';
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
 
@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
           {/* Left: Hamburger menu + Brand (Desktop) */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsSidebarOpen(true)}
+              onClick={onMenuClick}
               aria-label={t('nav.open')}
               className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer"
             >
@@ -161,9 +161,6 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </header>
-
-      {/* Side Tactical Grid Drawer */}
-      <SidebarDrawer isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Notifications Drawer */}
       <NotificationsDrawer isOpen={isNotifOpen} onClose={closeNotifications} />

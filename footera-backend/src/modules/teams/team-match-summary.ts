@@ -1,5 +1,6 @@
 type MatchOutcome = 'V' | 'N' | 'D';
-import type { MatchRecord } from '../../database/domain-records.js';
+import type { MatchRecord } from '../../types/records.js';
+import { MATCH_EVENT_TYPES, MATCH_STATUSES } from '../../types/domain.js';
 
 function byLatestDate(left: MatchRecord, right: MatchRecord): number {
   const leftDate = Date.parse(left.playedAt ?? left.scheduledAt ?? left.date ?? '');
@@ -20,18 +21,18 @@ function withGoalScorers(teamId: string, match: MatchRecord) {
   return {
     ...match,
     isHome: match.homeTeam.id === teamId,
-    goalScorers: (match.events ?? []).filter((event) => event.type === 'goal'),
+    goalScorers: (match.events ?? []).filter((event) => event.type === MATCH_EVENT_TYPES.GOAL),
   };
 }
 
 export function buildTeamMatchSummary(teamId: string, matches: MatchRecord[], formLimit = 5) {
   const teamMatches = matches.filter((match) => match.homeTeam.id === teamId || match.awayTeam.id === teamId);
   const recentMatches = teamMatches
-    .filter((match) => match.status === 'FINISHED')
+    .filter((match) => match.status === MATCH_STATUSES.FINISHED)
     .sort(byLatestDate)
     .map((match) => withGoalScorers(teamId, match));
   const upcomingMatches = teamMatches
-    .filter((match) => match.status === 'SCHEDULED')
+    .filter((match) => match.status === MATCH_STATUSES.SCHEDULED)
     .sort(byLatestDate)
     .map((match) => withGoalScorers(teamId, match));
 

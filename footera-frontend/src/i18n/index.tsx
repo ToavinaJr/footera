@@ -391,13 +391,13 @@ export function useTranslation(): LanguageContextValue {
 export const LanguageSwitcher: React.FC = () => {
   const { language, setLanguage, t } = useTranslation();
   return (
-    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+    <label className="inline-flex min-w-44 items-center gap-2 whitespace-nowrap text-xs font-semibold text-slate-600">
       <span>{t('language.label')}</span>
       <SelectField
         aria-label={t('language.label')}
         value={language}
         onChange={(event) => setLanguage(event.target.value as Language)}
-        className="min-h-10 rounded-xl border border-pitch-line bg-white px-3 text-pitch-ink"
+        className="min-h-10 min-w-40 rounded-xl border border-pitch-line bg-white px-3 text-pitch-ink"
       >
         <option value="mg">{t('language.malagasy')}</option>
         <option value="en">{t('language.english')}</option>

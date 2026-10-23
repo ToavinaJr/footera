@@ -6,6 +6,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import type { MarketplaceRecord } from '../../types/records.js';
+import { APP_SECTIONS, NOTIFICATION_TYPES } from '../../types/domain.js';
 
 export interface CreateMarketplaceInput {
   title: string;
@@ -73,8 +74,8 @@ export class MarketplaceService {
     await this.notifications.add({
       title: 'Annonce mise en ligne',
       message: `Votre article "${item.title}" (${item.price} €) est publié.`,
-      type: 'marketplace',
-      targetSection: 'marketplace',
+      type: NOTIFICATION_TYPES.MARKETPLACE,
+      targetSection: APP_SECTIONS.MARKETPLACE,
       targetId: id,
     });
     return item;

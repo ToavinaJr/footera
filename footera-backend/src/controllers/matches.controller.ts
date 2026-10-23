@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Query, Post, Put, NotFoundException } from '@nestjs/common';
 import { MatchesService } from '../modules/matches/matches.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
-import type { UpdateMatchInput } from '../database/domain-records.js';
+import type { UpdateMatchInput } from '../types/records.js';
 
 @Controller('matches')
 export class MatchesController {

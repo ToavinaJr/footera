@@ -1,4 +1,4 @@
-import type { ApplicationStatus, BookingStatus, MatchEventType, MatchStatus, TeamInvitationStatus, TournamentStatus } from './domain.js';
+import type { AppSection, ApplicationStatus, BookingStatus, MatchEventType, MatchStatus, NotificationType, TeamInvitationStatus, TournamentStatus } from './domain.js';
 
 export interface UserRecord {
   id: string;
@@ -218,12 +218,12 @@ export interface NotificationRecord {
   id: string;
   title: string;
   message: string;
-  type: string;
-  targetSection: string;
+  type: NotificationType;
+  targetSection: AppSection;
   targetId?: string;
   recipientId: string;
   invitationId?: string;
-  invitationStatus?: string;
+  invitationStatus?: TeamInvitationStatus;
   time?: string;
   createdAt: string;
   isRead: boolean;
@@ -268,4 +268,44 @@ export interface MarketplaceRecord {
   price: number;
   isAvailable?: boolean;
   [key: string]: unknown;
+}
+
+export interface LeagueStandingRecord {
+  id: string;
+  tournamentId: string;
+  teamId: string;
+  [key: string]: unknown;
+}
+
+export interface ActivityFeedRecord {
+  id: string;
+  type: string;
+  [key: string]: unknown;
+}
+
+export interface CatalogRecord {
+  id: string;
+  [key: string]: unknown;
+}
+
+/** Strongly typed payload per logical collection stored in Prisma's JSON records. */
+export interface RecordPayloadMap {
+  users: UserRecord;
+  authCredentials: AuthCredentialRecord;
+  authSessions: AuthSessionRecord;
+  players: PlayerRecord;
+  teams: TeamRecord;
+  clubs: ClubRecord;
+  matches: MatchRecord;
+  tournaments: TournamentRecord;
+  pitches: PitchRecord;
+  bookings: BookingRecord;
+  recruitmentAds: RecruitmentAdRecord;
+  applications: ApplicationRecord;
+  marketplace: MarketplaceRecord;
+  notifications: NotificationRecord;
+  teamInvitations: TeamInvitationRecord;
+  standings: LeagueStandingRecord;
+  activity: ActivityFeedRecord;
+  catalogs: CatalogRecord;
 }

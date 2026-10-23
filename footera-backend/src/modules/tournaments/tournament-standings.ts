@@ -1,4 +1,5 @@
 import type { TeamRecord, TournamentRecord } from '../../types/records.js';
+import { MATCH_STATUSES } from '../../types/domain.js';
 
 export interface StandingMatch {
   id: string;
@@ -37,7 +38,7 @@ export function buildTournamentStandings(tournament: TournamentRecord, teams: Te
   }
 
   const completedMatches = matches.filter((match) => match.tournamentId === tournament?.id
-    && match.status === 'FINISHED'
+    && match.status === MATCH_STATUSES.FINISHED
     && Boolean(match.homeTeam?.id && match.awayTeam?.id)
     && participantIds.has(match.homeTeam!.id)
     && participantIds.has(match.awayTeam!.id)

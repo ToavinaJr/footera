@@ -28,3 +28,14 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[keyof typeof APPLI
 
 export const TEAM_INVITATION_STATUSES = { PENDING: 'PENDING', ACCEPTED: 'ACCEPTED', DECLINED: 'DECLINED' } as const;
 export type TeamInvitationStatus = (typeof TEAM_INVITATION_STATUSES)[keyof typeof TEAM_INVITATION_STATUSES];
+
+export const NOTIFICATION_TYPES = {
+  MATCH: 'match', TEAM: 'team', RECRUITMENT: 'recruitment', MARKETPLACE: 'marketplace', BOOKING: 'booking', SYSTEM: 'system',
+} as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+
+export const APP_SECTIONS = {
+  MATCHES: 'matches', TEAMS: 'teams', RECRUITMENT: 'recruitment', MARKETPLACE: 'marketplace',
+  BOOKINGS: 'bookings', PITCHES: 'pitches', TOURNAMENTS: 'tournaments',
+} as const;
+export type AppSection = (typeof APP_SECTIONS)[keyof typeof APP_SECTIONS];

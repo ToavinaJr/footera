@@ -7,6 +7,7 @@ import { buildTeamMatchSummary } from './team-match-summary.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import { aggregatePlayerMatchStats } from '../players/player-match-stats.js';
 import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
+import { APP_SECTIONS, MATCH_STATUSES, NOTIFICATION_TYPES, TEAM_INVITATION_STATUSES } from '../../types/domain.js';
 
 export interface EnrichedTeamMember extends TeamMemberRecord {
   appearances: number;
@@ -200,7 +201,7 @@ export class TeamsService {
       ? buildTournamentStandings(competition, teams, matches).find((row) => row.teamId === team.id)
       : undefined;
     const playedMatches = this.matchesForTeamCompetition({ ...team, competitionId: competition?.id }, matches)
-      .filter((match) => match.status === 'FINISHED' && (match.homeTeam?.id === team.id || match.awayTeam?.id === team.id));
+      .filter((match) => match.status === MATCH_STATUSES.FINISHED && (match.homeTeam?.id === team.id || match.awayTeam?.id === team.id));
     const goalsFor = standing?.goalsFor ?? 0;
     const goalsAgainst = standing?.goalsAgainst ?? 0;
     return {
@@ -246,7 +247,7 @@ export class TeamsService {
 
     const invitations = await this.records.list<TeamInvitationRecord>('teamInvitations');
     if (invitations.some((invitation) =>
-      invitation.teamId === team.id && invitation.playerId === playerId && invitation.status === 'PENDING')) {
+      invitation.teamId === team.id && invitation.playerId === playerId && invitation.status === TEAM_INVITATION_STATUSES.PENDING)) {
       throw new ConflictException('Une invitation est déjà en attente pour ce joueur.');
     }
 
@@ -255,13 +256,13 @@ export class TeamsService {
     const invitation = {
       id, teamId: team.id, teamName: team.name, playerId, playerName: player.name,
       senderId: user?.id, senderName: user?.name, message: trimmedMessage,
-      status: 'PENDING' as const, createdAt, updatedAt: createdAt,
+      status: TEAM_INVITATION_STATUSES.PENDING, createdAt, updatedAt: createdAt,
     };
     await this.records.create('teamInvitations', id, invitation);
     await this.notifications.add({
       title: `Invitation de ${team.name}`,
       message: `${team.name} vous propose de rejoindre son équipe. ${trimmedMessage}`,
-      type: 'team', targetSection: 'teams', targetId: team.id,
+      type: NOTIFICATION_TYPES.TEAM, targetSection: APP_SECTIONS.TEAMS, targetId: team.id,
       recipientId: player.userId || player.id, invitationId: id, invitationStatus: invitation.status,
     });
     return { success: true, invitation, message: `Invitation envoyée à ${player.name}.` };
@@ -301,7 +302,7 @@ export class TeamsService {
     await this.notifications.add({
       title: 'Demande transmise au staff',
       message: `Votre demande pour rejoindre ${team.name} a bien été enregistrée. Message: "${message.slice(0, 40)}..."`,
-      type: 'team', targetSection: 'teams', targetId: id,
+      type: NOTIFICATION_TYPES.TEAM, targetSection: APP_SECTIONS.TEAMS, targetId: id,
     });
     return { success: true, message: `Bienvenue dans l'équipe ${team.name} !` };
   }

@@ -7,6 +7,7 @@ export interface PlayerMatchStats {
 }
 
 import type { MatchEventRecord, MatchRecord, PlayerRecord, TournamentRecord } from '../../types/records.js';
+import { MATCH_EVENT_TYPES, MATCH_STATUSES } from '../../types/domain.js';
 
 export function aggregatePlayerMatchStats(
   players: PlayerRecord[],
@@ -16,7 +17,7 @@ export function aggregatePlayerMatchStats(
 ) {
   const totals = new Map<string, PlayerMatchStats>();
   const competitions = new Map(tournaments.map((tournament) => [tournament.id, new Set<string>(tournament.participantTeamIds ?? [])]));
-  const finishedMatches = matches.filter((match) => match.status === 'FINISHED'
+  const finishedMatches = matches.filter((match) => match.status === MATCH_STATUSES.FINISHED
     && (!filters.competitionId || match.tournamentId === filters.competitionId)
     && (!filters.teamId || match.homeTeam?.id === filters.teamId || match.awayTeam?.id === filters.teamId)
     && (!match.tournamentId || !tournaments.length || (competitions.get(match.tournamentId)?.has(match.homeTeam?.id)
@@ -40,13 +41,13 @@ export function aggregatePlayerMatchStats(
       const scorer = resolvePlayer(event, event.teamId, 'player', 'playerId');
       if (scorer) {
         const stats = totals.get(scorer.id) ?? { appearances: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0 };
-        if (event.type === 'goal' || event.type === 'penalty') stats.goals += 1;
-        if (event.type === 'yellow_card') stats.yellowCards += 1;
-        if (event.type === 'red_card') stats.redCards += 1;
+        if (event.type === MATCH_EVENT_TYPES.GOAL || event.type === MATCH_EVENT_TYPES.PENALTY) stats.goals += 1;
+        if (event.type === MATCH_EVENT_TYPES.YELLOW_CARD) stats.yellowCards += 1;
+        if (event.type === MATCH_EVENT_TYPES.RED_CARD) stats.redCards += 1;
         totals.set(scorer.id, stats);
         participants.add(scorer.id);
       }
-      if (event.type === 'goal' || event.type === 'penalty') {
+      if (event.type === MATCH_EVENT_TYPES.GOAL || event.type === MATCH_EVENT_TYPES.PENALTY) {
         const assister = resolvePlayer(event, event.teamId, 'assist', 'assistPlayerId');
         if (assister) {
           const stats = totals.get(assister.id) ?? { appearances: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0 };

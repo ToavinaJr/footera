@@ -1,10 +1,11 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
 import { Header } from './components/layout/Header';
 import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
+import { SidebarDrawer } from './components/layout/SidebarDrawer';
 import { ToastContainer } from './components/common/Toast';
 import { AuthView } from './components/modules/Auth/AuthView';
 import { LanguageProvider, useTranslation } from './i18n';
@@ -30,6 +31,8 @@ const LegacyPlayerRedirect: React.FC = () => {
 const AppContent: React.FC = () => {
   const { setActiveSection, user, isLoadingUser, login, register } = useApp();
   const { t } = useTranslation();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
@@ -52,10 +55,20 @@ const AppContent: React.FC = () => {
       <DemoBanner />
 
       {/* Top Navigation Bar */}
-      <Header />
+      <Header onMenuClick={() => {
+        if (window.matchMedia('(min-width: 768px)').matches) setIsSidebarCollapsed((collapsed) => !collapsed);
+        else setIsMobileSidebarOpen(true);
+      }} />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
+      <div className="flex min-h-0 flex-1">
+      <SidebarDrawer
+        isOpen={isMobileSidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapsed={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
+      <main className="min-w-0 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
         <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">{t('common.loading')}</div>}>
         <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<Navigate to="/home" replace />} />
@@ -92,6 +105,7 @@ const AppContent: React.FC = () => {
         </Routes>
         </Suspense>
       </main>
+      </div>
 
       {/* Mobile Ergonomic Bottom Tab Navigation */}
       <MobileNav />

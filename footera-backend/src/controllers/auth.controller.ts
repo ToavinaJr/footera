@@ -4,6 +4,7 @@ import { AccountsService } from '../modules/accounts/accounts.service.js';
 import { SeedService } from '../database/seed.service.js';
 import { AuthService } from '../modules/auth/auth.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
+import { parseCookieValue } from '../utils/text.utils.js';
 
 @Controller('auth')
 export class AuthController {
@@ -91,8 +92,6 @@ export class AuthController {
   }
 
   private readCookie(request: Request, name: string) {
-    const prefix = `${name}=`;
-    const value = request.headers.cookie?.split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix))?.slice(prefix.length);
-    return value ? decodeURIComponent(value) : undefined;
+    return parseCookieValue(request.headers.cookie, name);
   }
 }

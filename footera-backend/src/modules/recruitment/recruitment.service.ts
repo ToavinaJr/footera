@@ -4,6 +4,8 @@ import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import type { ApplicationRecord, RecruitmentAdRecord } from '../../types/records.js';
+import { APPLICATION_STATUSES, APP_SECTIONS, NOTIFICATION_TYPES } from '../../types/domain.js';
+import { sanitizeMultilineText, sanitizePlainText } from '../../utils/sanitize.utils.js';
 
 @Injectable()
 export class RecruitmentService {
@@ -30,13 +32,13 @@ export class RecruitmentService {
     const application = {
       id, userId: user.id, adId, adTitle: `${ad.positionSought} — ${ad.teamName}`,
       teamName: ad?.teamName || 'Équipe Footera', applicantName: user?.name || 'Joueur Footera',
-      applicantPosition: user?.sportsCv?.primaryPosition || 'Joueur', phone: input.phone || user?.phone || '',
-      message: input.message, submittedAt: new Date().toISOString(), status: 'EN_REVUE',
+      applicantPosition: user?.sportsCv?.primaryPosition || 'Joueur', phone: sanitizePlainText(input.phone || user?.phone, 32),
+      message: sanitizeMultilineText(input.message, 2000), submittedAt: new Date().toISOString(), status: APPLICATION_STATUSES.IN_REVIEW,
     };
     await this.records.create('applications', id, application);
     await this.records.save('recruitmentAds', adId, { ...ad, candidatesCount: Number(ad.candidatesCount || 0) + 1 });
     try {
-      await this.notifications.add({ title: 'Candidature transmise', message: `Votre candidature pour ${application.teamName} a été envoyée avec succès.`, type: 'recruitment', targetSection: 'recruitment', targetId: adId });
+      await this.notifications.add({ title: 'Candidature transmise', message: `Votre candidature pour ${application.teamName} a été envoyée avec succès.`, type: NOTIFICATION_TYPES.RECRUITMENT, targetSection: APP_SECTIONS.RECRUITMENT, targetId: adId });
     } catch (error: unknown) {
       this.logger.warn(`Application ${id} was saved, but its notification could not be created: ${String(error)}`);
     }

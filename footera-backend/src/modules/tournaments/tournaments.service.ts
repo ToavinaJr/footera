@@ -4,6 +4,11 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTournamentStandings } from './tournament-standings.js';
 import { UserContext } from '../auth/user-context.js';
+import { APP_SECTIONS, NOTIFICATION_TYPES, TOURNAMENT_STATUSES } from '../../types/domain.js';
+import { isDateOnOrBeforeToday } from '../../utils/date.utils.js';
+import { normalizeSearchText, slugify, splitDelimitedText } from '../../utils/text.utils.js';
+import { isFiniteNumberInRange, isIntegerInRange } from '../../utils/number.utils.js';
+import { sanitizePlainText } from '../../utils/sanitize.utils.js';
 import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord } from '../../types/records.js';
 
 export interface CreateTournamentInput {
@@ -52,21 +57,19 @@ export class TournamentsService {
       const { ownerId: _ownerId, managerIds: _managerIds, ...publicTeam } = team;
       return [publicTeam];
     });
-    const cityTerms = String(tournament.city ?? '').toLocaleLowerCase()
-      .split(/[,;&/]+/).map((value) => value.trim()).filter(Boolean);
-    const venue = String(tournament.venue ?? '').toLocaleLowerCase();
+    const cityTerms = splitDelimitedText(tournament.city).map((city) => normalizeSearchText(city));
+    const venue = normalizeSearchText(tournament.venue);
     const associatedPitches = pitches.filter((pitch) => {
-      const pitchCities = String(pitch.city ?? '').toLocaleLowerCase()
-        .split(/[,;&/]+/).map((value) => value.trim()).filter(Boolean);
+      const pitchCities = splitDelimitedText(pitch.city).map((city) => normalizeSearchText(city));
       return cityTerms.some((city) => pitchCities.some((pitchCity: string) => city === pitchCity
         || city.includes(pitchCity) || pitchCity.includes(city)))
-        || venue.includes(String(pitch.complexName ?? '').toLocaleLowerCase());
+        || venue.includes(normalizeSearchText(pitch.complexName));
     });
     const matchStadiums = matches.filter((match) => match.tournamentId === tournament.id && match.venue)
       .map((match) => {
         const pitch = pitches.find((item) => item.id === match.pitchId);
         return {
-          id: pitch?.id ?? `${tournament.id}_venue_${String(match.venue).toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          id: pitch?.id ?? `${tournament.id}_venue_${slugify(String(match.venue))}`,
           name: pitch?.complexName || pitch?.name || match.venue,
           pitchId: pitch?.id,
           city: pitch?.city || match.city,
@@ -74,12 +77,12 @@ export class TournamentsService {
         };
       });
     const uniqueMatchStadiums = [...new Map(matchStadiums.map((stadium) => [stadium.id, stadium])).values()];
-    const registrationOpen = tournament.status === 'INSCRIPTIONS_OUVERTES' && !this.hasStarted(tournament.startDate);
+    const registrationOpen = tournament.status === TOURNAMENT_STATUSES.REGISTRATION_OPEN && !this.hasStarted(tournament.startDate);
     const stadiums = uniqueMatchStadiums.length
       ? uniqueMatchStadiums
       : associatedPitches.length
         ? associatedPitches.map((pitch) => ({ id: pitch.id, name: pitch.complexName || pitch.name, pitchId: pitch.id, city: pitch.city, address: pitch.address }))
-      : String(tournament.venue ?? '').split(/[;&,]+/).map((name: string) => name.trim()).filter(Boolean)
+      : splitDelimitedText(tournament.venue, /[;&,]+/)
         .map((name: string, index: number) => ({ id: `${tournament.id}_venue_${index}`, name, city: tournament.city }));
 
     return {
@@ -98,9 +101,21 @@ export class TournamentsService {
     const organizerId = this.userContext.userId;
     if (!organizerId) throw new UnauthorizedException('Authentification requise pour créer un tournoi.');
     const id = `tourn_${randomUUID()}`;
-    const tournament = { ...input, id, organizerId, registeredTeams: 0, participantTeamIds: [], status: 'INSCRIPTIONS_OUVERTES', standings: [], fixtures: [] };
+    if (!isIntegerInRange(input.maxTeams, 2, 128)
+      || !isFiniteNumberInRange(input.entryFee, 0, 1_000_000_000)
+      || !isFiniteNumberInRange(input.prizePool, 0, 1_000_000_000)) {
+      throw new BadRequestException('Les valeurs numériques du tournoi sont invalides.');
+    }
+    const tournament: TournamentRecord = {
+      ...input,
+      title: sanitizePlainText(input.title, 120),
+      city: sanitizePlainText(input.city, 100),
+      venue: sanitizePlainText(input.venue, 200),
+      organizer: sanitizePlainText(input.organizer, 120),
+      id, organizerId, registeredTeams: 0, participantTeamIds: [], status: TOURNAMENT_STATUSES.REGISTRATION_OPEN, standings: [], fixtures: [],
+    };
     await this.records.create('tournaments', id, tournament);
-    await this.notifications.add({ title: 'Nouveau tournoi ouvert', message: `Le tournoi "${input.title}" est maintenant ouvert aux inscriptions !`, type: 'system', targetSection: 'tournaments', targetId: id });
+    await this.notifications.add({ title: 'Nouveau tournoi ouvert', message: `Le tournoi "${input.title}" est maintenant ouvert aux inscriptions !`, type: NOTIFICATION_TYPES.SYSTEM, targetSection: APP_SECTIONS.TOURNAMENTS, targetId: id });
     const { organizerId: _organizerId, ...publicTournament } = tournament;
     return publicTournament;
   }
@@ -109,7 +124,7 @@ export class TournamentsService {
     if (!teamId?.trim()) throw new BadRequestException('Une équipe doit être sélectionnée.');
     const tournament = await this.getById(id);
     if (!tournament) throw new NotFoundException('Tournoi introuvable.');
-    if (tournament.status !== 'INSCRIPTIONS_OUVERTES' || this.hasStarted(tournament.startDate)) {
+    if (tournament.status !== TOURNAMENT_STATUSES.REGISTRATION_OPEN || this.hasStarted(tournament.startDate)) {
       throw new ConflictException('Les inscriptions sont fermées car ce tournoi a commencé.');
     }
     if (tournament.maxTeams !== undefined && tournament.registeredTeams >= tournament.maxTeams) throw new ConflictException('Ce tournoi est complet.');
@@ -125,25 +140,13 @@ export class TournamentsService {
     await this.notifications.add({
       title: 'Inscription au tournoi',
       message: `L'équipe ${team.name} est pré-inscrite pour ${tournament.title}.`,
-      type: 'system', targetSection: 'tournaments', targetId: id,
+      type: NOTIFICATION_TYPES.SYSTEM, targetSection: APP_SECTIONS.TOURNAMENTS, targetId: id,
       ...(team.ownerId ? { recipientId: team.ownerId } : {}),
     });
     return true;
   }
 
   private hasStarted(value: unknown) {
-    if (typeof value !== 'string') return false;
-    let dateKey = /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
-    if (!dateKey) {
-      const match = value.trim().toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/);
-      const months: Record<string, string> = {
-        janvier: '01', fevrier: '02', mars: '03', avril: '04', mai: '05', juin: '06',
-        juillet: '07', aout: '08', septembre: '09', octobre: '10', novembre: '11', decembre: '12',
-      };
-      const month = match ? months[match[2]] : undefined;
-      if (match && month) dateKey = `${match[3]}-${month}-${match[1].padStart(2, '0')}`;
-    }
-    return Boolean(dateKey) && dateKey <= new Date().toISOString().slice(0, 10);
+    return isDateOnOrBeforeToday(value);
   }
 }

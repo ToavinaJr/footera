@@ -4,7 +4,13 @@ import { AccountsService } from '../accounts/accounts.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import { UserContext } from '../auth/user-context.js';
+import { MATCH_EVENT_TYPES, MATCH_STATUSES, type MatchEventType } from '../../types/domain.js';
+import { isIntegerInRange } from '../../utils/number.utils.js';
+import { sanitizePlainText } from '../../utils/sanitize.utils.js';
 import type { MatchEventRecord, MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UpdateMatchInput } from '../../types/records.js';
+
+const SCORING_EVENT_TYPES = new Set<MatchEventType>([MATCH_EVENT_TYPES.GOAL, MATCH_EVENT_TYPES.PENALTY]);
+const isScoringEvent = (type: MatchEventType) => SCORING_EVENT_TYPES.has(type);
 
 @Injectable()
 export class MatchesService {
@@ -113,7 +119,7 @@ export class MatchesService {
     ]);
     const managedTournamentIds = new Set(tournaments.filter((tournament) => tournament.organizerId === userId).map((tournament) => tournament.id));
     return matches.filter((match) => match.tournamentId && managedTournamentIds.has(match.tournamentId)
-      && match.status !== 'FINISHED').map((match) => match.id);
+      && match.status !== MATCH_STATUSES.FINISHED).map((match) => match.id);
   }
 
   async update(id: string, input: UpdateMatchInput) {
@@ -135,7 +141,7 @@ export class MatchesService {
       if (field === 'scheduledAt' && Number.isNaN(Date.parse(value))) {
         throw new BadRequestException('La date planifiée est invalide.');
       }
-      nextMatch[field] = value.trim();
+      nextMatch[field] = sanitizePlainText(value, field === 'venue' ? 200 : 100);
     }
     if (input.date !== undefined || input.time !== undefined) {
       const matchDate = input.date?.trim() ?? match.date ?? '';
@@ -149,11 +155,11 @@ export class MatchesService {
       nextMatch.events = events;
       nextMatch.homeTeam = {
         ...match.homeTeam,
-        score: events.filter((event) => event.teamId === match.homeTeam.id && ['goal', 'penalty'].includes(event.type)).length,
+        score: events.filter((event) => event.teamId === match.homeTeam.id && isScoringEvent(event.type)).length,
       };
       nextMatch.awayTeam = {
         ...match.awayTeam,
-        score: events.filter((event) => event.teamId === match.awayTeam.id && ['goal', 'penalty'].includes(event.type)).length,
+        score: events.filter((event) => event.teamId === match.awayTeam.id && isScoringEvent(event.type)).length,
       };
     }
     const saved = await this.records.save('matches', id, nextMatch);
@@ -162,10 +168,10 @@ export class MatchesService {
 
   async start(id: string) {
     const match = await this.getEditableMatch(id);
-    if (match.status !== 'SCHEDULED') throw new ConflictException('Seul un match planifié peut être lancé.');
+    if (match.status !== MATCH_STATUSES.SCHEDULED) throw new ConflictException('Seul un match planifié peut être lancé.');
     return this.records.save('matches', id, {
       ...match,
-      status: 'LIVE',
+      status: MATCH_STATUSES.LIVE,
       minute: 0,
       playedAt: new Date().toISOString(),
     });
@@ -173,10 +179,10 @@ export class MatchesService {
 
   async finish(id: string) {
     const match = await this.getEditableMatch(id);
-    if (match.status !== 'LIVE') throw new ConflictException('Seul un match en direct peut être terminé.');
+    if (match.status !== MATCH_STATUSES.LIVE) throw new ConflictException('Seul un match en direct peut être terminé.');
     return this.records.save('matches', id, {
       ...match,
-      status: 'FINISHED',
+      status: MATCH_STATUSES.FINISHED,
       minute: Math.max(match.minute ?? 0, 90),
       playedAt: new Date().toISOString(),
     });
@@ -185,7 +191,7 @@ export class MatchesService {
   private async getEditableMatch(id: string) {
     const match = await this.records.find<MatchRecord>('matches', id);
     if (!match) throw new NotFoundException('Match introuvable.');
-    if (match.status === 'FINISHED') throw new ConflictException('Un match terminé ne peut plus être modifié.');
+    if (match.status === MATCH_STATUSES.FINISHED) throw new ConflictException('Un match terminé ne peut plus être modifié.');
     const userId = this.userContext.userId;
     if (!userId) throw new UnauthorizedException('Authentification requise.');
     if (!match.tournamentId) throw new ForbiddenException('Ce match n’est associé à aucun tournoi.');
@@ -197,14 +203,14 @@ export class MatchesService {
 
   private async validateMatchEvents(events: MatchEventRecord[], match: MatchRecord) {
     if (!Array.isArray(events) || events.length > 100) throw new BadRequestException('La liste des événements est invalide.');
-    const allowedTypes = new Set(['goal', 'penalty', 'yellow_card', 'red_card', 'sub']);
+    const allowedTypes = new Set<MatchEventType>(Object.values(MATCH_EVENT_TYPES));
     const [players, teams] = await Promise.all([
       this.records.list<PlayerRecord>('players'),
       this.records.list<TeamRecord>('teams'),
     ]);
     const teamIds = new Set([match.homeTeam.id, match.awayTeam.id]);
     return events.map((event) => {
-      if (!event || !Number.isInteger(event.minute) || event.minute < 0 || event.minute > 130
+      if (!event || !isIntegerInRange(event.minute, 0, 130)
         || !allowedTypes.has(event.type) || !teamIds.has(event.teamId)) {
         throw new BadRequestException('Un événement du match contient des informations invalides.');
       }
@@ -219,7 +225,7 @@ export class MatchesService {
           && (candidate.currentTeamId === event.teamId || rosterPlayerIds.has(candidate.id)
             || (candidate.userId ? rosterPlayerIds.has(candidate.userId) : false)))
         : undefined;
-      if (event.assistPlayerId && (!assist || !['goal', 'penalty'].includes(event.type) || assist.id === player.id)) {
+      if (event.assistPlayerId && (!assist || !isScoringEvent(event.type) || assist.id === player.id)) {
         throw new BadRequestException('La passe décisive sélectionnée est invalide.');
       }
       return {
@@ -229,8 +235,8 @@ export class MatchesService {
         playerId: player.id,
         player: player.name,
         ...(assist ? { assistPlayerId: assist.id, assist: assist.name } : {}),
-        ...(typeof event.description === 'string' && event.description.trim()
-          ? { description: event.description.trim().slice(0, 300) } : {}),
+        ...(typeof event.description === 'string' && sanitizePlainText(event.description, 300)
+          ? { description: sanitizePlainText(event.description, 300) } : {}),
       };
     }).sort((left, right) => left.minute - right.minute);
   }
@@ -242,7 +248,7 @@ export class MatchesService {
 
     const profile = await this.accounts.profile();
     const isAlreadyFollowed = profile?.favoriteMatchIds?.includes(id) ?? false;
-    if (match.status === 'FINISHED' && !isAlreadyFollowed) {
+    if (match.status === MATCH_STATUSES.FINISHED && !isAlreadyFollowed) {
       throw new ConflictException('Un match terminé ne peut plus être suivi.');
     }
 

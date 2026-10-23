@@ -3,13 +3,11 @@ import { NestFactory } from '@nestjs/core';
 import express from 'express';
 import { resolve } from 'node:path';
 import { AppModule } from './app.module.js';
+import { normalizeOriginList } from './utils/text.utils.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const frontendOrigins = (process.env.FRONTEND_URL || 'http://localhost:3001')
-    .split(',')
-    .map((origin) => origin.trim().replace(/\/+$/, ''))
-    .filter(Boolean);
+  const frontendOrigins = normalizeOriginList(process.env.FRONTEND_URL, 'http://localhost:3001');
 
   app.enableCors({
     origin: frontendOrigins,

@@ -7,6 +7,8 @@ import {
 import { PrismaService } from './prisma.service.js';
 import { asJson, RECORD_MODELS, RecordCollection, type RecordDelegate } from './record.repository.js';
 import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
+import { MATCH_EVENT_TYPES, MATCH_STATUSES } from '../types/domain.js';
+import { normalizeSearchText } from '../utils/text.utils.js';
 
 function derivePasswordKey(password: string, salt: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -18,9 +20,7 @@ function derivePasswordKey(password: string, salt: Buffer): Promise<Buffer> {
 }
 
 function normalizedName(value: unknown): string {
-  return typeof value === 'string'
-    ? value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
-    : '';
+  return normalizeSearchText(value);
 }
 
 const seededPlayers = [...SEED_PLAYERS, ...SEED_PLAYERS_EXTRA];
@@ -65,7 +65,7 @@ function deriveSeedPlayerStats() {
   const totals = new Map(seededPlayers.map((player) => [player.id, { appearances: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0 }]));
   for (const rawMatch of seededMatches) {
     const match = asObject(rawMatch);
-    if (match.status !== 'FINISHED') continue;
+    if (match.status !== MATCH_STATUSES.FINISHED) continue;
     const participants = new Set<string>();
     for (const lineup of asObjectArray(match.lineups)) {
       for (const id of Array.isArray(lineup.playerIds) ? lineup.playerIds : []) {
@@ -77,12 +77,12 @@ function deriveSeedPlayerStats() {
       const stats = id ? totals.get(id) : undefined;
       if (!stats) continue;
       participants.add(id!);
-      if (event.type === 'goal' || event.type === 'penalty') stats.goals += 1;
-      if (event.type === 'yellow_card') stats.yellowCards += 1;
-      if (event.type === 'red_card') stats.redCards += 1;
+      if (event.type === MATCH_EVENT_TYPES.GOAL || event.type === MATCH_EVENT_TYPES.PENALTY) stats.goals += 1;
+      if (event.type === MATCH_EVENT_TYPES.YELLOW_CARD) stats.yellowCards += 1;
+      if (event.type === MATCH_EVENT_TYPES.RED_CARD) stats.redCards += 1;
       const assistId = typeof event.assistPlayerId === 'string' ? event.assistPlayerId : undefined;
       const assistStats = assistId ? totals.get(assistId) : undefined;
-      if (assistStats && assistId !== id && (event.type === 'goal' || event.type === 'penalty')) {
+      if (assistStats && assistId !== id && (event.type === MATCH_EVENT_TYPES.GOAL || event.type === MATCH_EVENT_TYPES.PENALTY)) {
         assistStats.assists += 1;
         participants.add(assistId!);
       }
@@ -170,11 +170,11 @@ export function validateSeedRelations(): void {
       const playerId = typeof event.playerId === 'string' ? event.playerId : undefined;
       const player = playerId ? playerById.get(playerId) : undefined;
       if (!player || player.currentTeamId !== teamId) fail('match.event.playerId', `${matchId}/${playerId ?? String(event.player)}`);
-      if (event.type === 'goal' || event.type === 'penalty') goalCounts.set(teamId, (goalCounts.get(teamId) ?? 0) + 1);
+      if (event.type === MATCH_EVENT_TYPES.GOAL || event.type === MATCH_EVENT_TYPES.PENALTY) goalCounts.set(teamId, (goalCounts.get(teamId) ?? 0) + 1);
       const assistId = typeof event.assistPlayerId === 'string' ? event.assistPlayerId : undefined;
       if (assistId && playerById.get(assistId)?.currentTeamId !== teamId) fail('match.event.assistPlayerId', `${matchId}/${assistId}`);
     }
-    if (match.status === 'FINISHED' || match.status === 'LIVE') {
+    if (match.status === MATCH_STATUSES.FINISHED || match.status === MATCH_STATUSES.LIVE) {
       if (goalCounts.get(String(home.id)) !== home.score || goalCounts.get(String(away.id)) !== away.score) fail('match.score/events', matchId);
     }
     for (const lineup of asObjectArray(match.lineups)) {

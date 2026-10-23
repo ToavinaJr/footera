@@ -5,6 +5,10 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
+import { APP_SECTIONS, BOOKING_STATUSES, NOTIFICATION_TYPES } from '../../types/domain.js';
+import { normalizeDateKey } from '../../utils/date.utils.js';
+import { isFiniteNumberInRange, isIntegerInRange } from '../../utils/number.utils.js';
+import { sanitizeMultilineText, sanitizePlainText } from '../../utils/sanitize.utils.js';
 import type { BookingRecord, PitchRecord, PitchReviewRecord } from '../../types/records.js';
 
 export interface BookingSelection { date: string; time: string }
@@ -21,16 +25,6 @@ export interface CreatePitchInput {
   hourlyRate: number;
   amenities: string[];
 }
-
-const normalizeDateKey = (value: string) => {
-  const normalized = value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR');
-  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized;
-  const match = /^(?:[a-z]+\s+)?(\d{1,2})\s+([a-z]+)\s+(\d{4})$/.exec(normalized);
-  if (!match) return value.trim();
-  const months = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
-  const month = months.indexOf(match[2]);
-  return month < 0 ? value.trim() : `${match[3]}-${String(month + 1).padStart(2, '0')}-${match[1].padStart(2, '0')}`;
-};
 
 @Injectable()
 export class BookingsService {
@@ -86,7 +80,7 @@ export class BookingsService {
   private withDateAvailability(pitch: PitchRecord, bookings: BookingRecord[], date?: string): PitchRecord {
     if (!date) return pitch;
     const bookedTimes = new Set(bookings
-      .filter((booking) => booking.pitchId === pitch.id && normalizeDateKey(booking.date) === normalizeDateKey(date) && booking.status !== 'CANCELLED')
+      .filter((booking) => booking.pitchId === pitch.id && normalizeDateKey(booking.date) === normalizeDateKey(date) && booking.status !== BOOKING_STATUSES.CANCELLED)
       .map((booking) => booking.time));
     return {
       ...pitch,
@@ -115,7 +109,7 @@ export class BookingsService {
       seen.add(key);
       const slot = pitch.availableSlots?.find((candidate) => candidate.time === selection.time && candidate.isAvailable);
       const alreadyBooked = bookings.some((booking) => booking.pitchId === input.pitchId
-        && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
+        && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== BOOKING_STATUSES.CANCELLED);
       if (!slot || alreadyBooked) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} n’est plus disponible.`);
       const price = Number(slot.price);
       if (!Number.isFinite(price) || price < 0) throw new ConflictException('Le tarif de ce créneau est invalide.');
@@ -138,7 +132,7 @@ export class BookingsService {
     const selections = input.selections;
     for (const selection of selections) {
       const reserved = currentBookings.some((booking) => booking.pitchId === input.pitchId
-        && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== 'CANCELLED');
+        && normalizeDateKey(booking.date) === normalizeDateKey(selection.date) && booking.time === selection.time && booking.status !== BOOKING_STATUSES.CANCELLED);
       if (reserved) throw new ConflictException(`Le créneau ${selection.time} du ${selection.date} vient d’être réservé.`);
     }
 
@@ -151,8 +145,8 @@ export class BookingsService {
         complexName: pitch.complexName || 'Complexe Footera', surface: pitch.surface || 'Synthétique',
         date: selection.date, time: selection.time, durationMinutes: 90, totalPrice: Number(slot.price),
         bookerName: user?.name || 'Joueur Footera', bookerPhone: user?.phone || '',
-        teamName: input.teamName?.trim() || user?.sportsCv?.currentTeam || 'Footera FC',
-        status: 'CONFIRMED', createdAt: new Date().toISOString(),
+        teamName: sanitizePlainText(input.teamName, 100) || user?.sportsCv?.currentTeam || 'Footera FC',
+        status: BOOKING_STATUSES.CONFIRMED, createdAt: new Date().toISOString(),
       };
     });
 
@@ -161,7 +155,7 @@ export class BookingsService {
       await this.notifications.add({
         title: 'Réservation confirmée',
         message: `Créneau validé le ${booking.date} à ${booking.time} (${booking.pitchName}).`,
-        type: 'booking', targetSection: 'bookings', targetId: booking.id,
+        type: NOTIFICATION_TYPES.BOOKING, targetSection: APP_SECTIONS.BOOKINGS, targetId: booking.id,
       });
     }
     return bookings;
@@ -169,8 +163,8 @@ export class BookingsService {
 
   async ratePitch(pitchId: string, input: { rating: number; comment?: string }) {
     const rating = Number(input?.rating);
-    const comment = typeof input?.comment === 'string' ? input.comment.trim() : '';
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.length > 500) {
+    const comment = sanitizeMultilineText(input?.comment, 500);
+    if (!isIntegerInRange(rating, 1, 5) || (typeof input?.comment === 'string' && input.comment.length > 500)) {
       throw new BadRequestException('La note doit être comprise entre 1 et 5 et le commentaire ne doit pas dépasser 500 caractères.');
     }
     const [pitch, user] = await Promise.all([
@@ -214,7 +208,7 @@ export class BookingsService {
     input.imageUrl = validateImageUrl(input.imageUrl, 'Photo du terrain');
     const id = `pitch_${randomUUID()}`;
     const rate = Number(input.hourlyRate);
-    if (!Number.isFinite(rate) || rate < 5 || rate > 1_000_000) {
+    if (!isFiniteNumberInRange(rate, 5, 1_000_000)) {
       throw new BadRequestException('Le tarif par créneau doit être compris entre 5 et 1 000 000.');
     }
     const availableSlots = [
@@ -225,7 +219,7 @@ export class BookingsService {
     ];
     const pitch = { ...input, id, rating: 0, reviewsCount: 0, reviews: [], amenities: input.amenities || [], availableSlots };
     await this.records.create('pitches', id, pitch);
-    await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: 'booking', targetSection: 'pitches', targetId: id });
+    await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: NOTIFICATION_TYPES.BOOKING, targetSection: APP_SECTIONS.PITCHES, targetId: id });
     return pitch;
   }
   async listBookings() {
@@ -246,14 +240,14 @@ export class BookingsService {
     const booking = await this.records.find<BookingRecord>('bookings', id);
     const user = await this.accounts.profile();
     if (!booking || booking.userId !== user?.id) return false;
-    if (booking.status === 'CANCELLED') return true;
-    await this.records.save('bookings', id, { ...booking, status: 'CANCELLED' });
+    if (booking.status === BOOKING_STATUSES.CANCELLED) return true;
+    await this.records.save('bookings', id, { ...booking, status: BOOKING_STATUSES.CANCELLED });
     try {
       await this.notifications.add({
         title: 'Réservation annulée',
         message: `La réservation pour ${booking.pitchName} du ${booking.date} à ${booking.time} a été annulée.`,
-        type: 'booking',
-        targetSection: 'bookings',
+        type: NOTIFICATION_TYPES.BOOKING,
+        targetSection: APP_SECTIONS.BOOKINGS,
         targetId: id,
       });
     } catch (error) {

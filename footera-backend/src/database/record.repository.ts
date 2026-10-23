@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
+import type { RecordPayloadMap } from '../types/records.js';
 
 export interface StoredRecord { id: string; payload: unknown }
 export interface RecordDelegate {
@@ -47,14 +48,18 @@ export class RecordRepository {
     return (this.prisma as unknown as DynamicRecordClient)[RECORD_MODELS[collection]];
   }
 
-  async list<T>(collection: RecordCollection): Promise<T[]> {
+  async list<C extends RecordCollection>(collection: C): Promise<RecordPayloadMap[C][]>;
+  async list<T>(collection: RecordCollection): Promise<T[]>;
+  async list(collection: RecordCollection): Promise<unknown[]> {
     const records = await this.delegate(collection).findMany({ orderBy: { id: 'asc' } });
-    return records.map((record) => record.payload as T);
+    return records.map((record) => record.payload);
   }
 
-  async find<T>(collection: RecordCollection, id: string): Promise<T | null> {
+  async find<C extends RecordCollection>(collection: C, id: string): Promise<RecordPayloadMap[C] | null>;
+  async find<T>(collection: RecordCollection, id: string): Promise<T | null>;
+  async find(collection: RecordCollection, id: string): Promise<unknown | null> {
     const record = await this.delegate(collection).findUnique({ where: { id } });
-    return record ? record.payload as T : null;
+    return record ? record.payload : null;
   }
 
   async save<T>(collection: RecordCollection, id: string, payload: T): Promise<T> {

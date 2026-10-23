@@ -4,6 +4,7 @@ import { PlayersService } from '../players/players.service.js';
 import { TeamsService } from '../teams/teams.service.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord } from '../../types/records.js';
+import { MATCH_EVENT_TYPES, MATCH_STATUSES } from '../../types/domain.js';
 
 const FALLBACK_LOGO = 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=96&h=96&q=80';
 
@@ -70,12 +71,12 @@ export class StatsService {
       const participantIds = new Set<string>(tournament.participantTeamIds ?? []);
       if (!participantIds.size) continue;
       const tournamentMatches = matches.filter((match) => match.tournamentId === tournament.id
-        && match.status === 'FINISHED'
+        && match.status === MATCH_STATUSES.FINISHED
         && participantIds.has(match.homeTeam?.id)
         && participantIds.has(match.awayTeam?.id));
       for (const match of tournamentMatches) {
         for (const event of Array.isArray(match.events) ? match.events : []) {
-          if (!['goal', 'penalty'].includes(event.type) || !participantIds.has(event.teamId)
+          if ((event.type !== MATCH_EVENT_TYPES.GOAL && event.type !== MATCH_EVENT_TYPES.PENALTY) || !participantIds.has(event.teamId)
             || (event.teamId !== match.homeTeam?.id && event.teamId !== match.awayTeam?.id)) continue;
           const team = teams.find((item) => item.id === event.teamId);
           const player = players.find((item) => item.id === event.playerId
@@ -86,7 +87,7 @@ export class StatsService {
             const row = totals.get(key) ?? this.newContributionRow(player, team, tournament);
             row.goals += 1;
             row.matchIds.add(match.id);
-            if (event.type === 'penalty') row.penalties += 1;
+            if (event.type === MATCH_EVENT_TYPES.PENALTY) row.penalties += 1;
             totals.set(key, row);
           }
           const assister = players.find((item) => item.id === event.assistPlayerId
@@ -132,7 +133,7 @@ export class StatsService {
       if (!tournament) return null;
       const standing = buildTournamentStandings(tournament, teams, matches).find((row) => row.teamId === team.id);
       const tournamentMatches = matches.filter((match) => match.tournamentId === tournament.id
-        && match.status === 'FINISHED'
+        && match.status === MATCH_STATUSES.FINISHED
         && (match.homeTeam?.id === team.id || match.awayTeam?.id === team.id));
       const topScorer = scorers.filter((row) => row.teamId === team.id && row.tournamentId === tournament.id)
         .sort((a, b) => b.goals - a.goals)[0];
@@ -154,8 +155,8 @@ export class StatsService {
         cleanSheets: tournamentMatches.filter((match) => (match.homeTeam.id === team.id
           ? match.awayTeam.score : match.homeTeam.score) === 0).length,
         possessionAvg: 0, passAccuracy: 0, shotsPerMatch: 0,
-        yellowCards: events.filter((event) => event.teamId === team.id && event.type === 'yellow_card').length,
-        redCards: events.filter((event) => event.teamId === team.id && event.type === 'red_card').length,
+        yellowCards: events.filter((event) => event.teamId === team.id && event.type === MATCH_EVENT_TYPES.YELLOW_CARD).length,
+        redCards: events.filter((event) => event.teamId === team.id && event.type === MATCH_EVENT_TYPES.RED_CARD).length,
         points: standing?.points ?? 0, recentForm: standing?.form ?? [],
         topScorer: topScorer ? { name: topScorer.playerName, playerId: topScorer.playerId, goals: topScorer.goals, avatarUrl: topScorer.avatarUrl }
           : { name: 'Aucun buteur', goals: 0 },

@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { createHash, createHmac, randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
-import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
+import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../types/records.js';
 import { calculateAge } from '../accounts/calculate-age.js';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;

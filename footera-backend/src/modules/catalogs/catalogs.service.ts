@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
+import { toCamelCase } from '../../utils/text.utils.js';
 
 export interface CatalogOptions {
   pitchSurfaces: string[];
@@ -20,7 +21,7 @@ export class CatalogsService {
   async options(): Promise<CatalogOptions> {
     const records = await this.records.list<{ id: string; values: string[] }>('catalogs');
     const persisted = Object.fromEntries(records.map(({ id, values }) => [
-      id.replace(/-([a-z])/g, (_match, letter: string) => letter.toUpperCase()),
+      toCamelCase(id),
       Array.isArray(values) ? values.filter((value) => typeof value === 'string' && value.trim()) : [],
     ])) as unknown as Partial<CatalogOptions>;
     return {
