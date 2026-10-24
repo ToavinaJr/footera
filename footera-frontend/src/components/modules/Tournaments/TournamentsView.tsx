@@ -86,7 +86,7 @@ export const TournamentsView: React.FC = () => {
 
   useEffect(() => {
     catalogsService.getOptions().then(setCatalogOptions).catch((err: unknown) => {
-      showToast(err instanceof Error ? err.message : 'Impossible de charger les options du tournoi.', 'error');
+          showToast(err instanceof Error ? err.message : t('common.loadOptionsError'), 'error');
     });
   }, [showToast]);
 
@@ -108,7 +108,7 @@ export const TournamentsView: React.FC = () => {
           if (match) setSelectedTournament(match);
         }
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des tournois', 'error');
+        showToast(err instanceof Error ? err.message : t('common.loadTournamentsError'), 'error');
       } finally {
         setIsLoading(false);
       }
@@ -118,7 +118,7 @@ export const TournamentsView: React.FC = () => {
 
   useEffect(() => {
     teamsService.list().then(setTeams).catch((err: unknown) => {
-      showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des équipes', 'error');
+      showToast(err instanceof Error ? err.message : t('common.loadTeamsError'), 'error');
     });
   }, [showToast]);
 
@@ -134,7 +134,7 @@ export const TournamentsView: React.FC = () => {
         setTournamentTeams(participatingTeams);
         setTournamentStadiums(stadiums);
       }).catch((error: unknown) => {
-        showToast(error instanceof Error ? error.message : 'Erreur lors du chargement des détails du tournoi', 'error');
+        showToast(error instanceof Error ? error.message : t('common.loadTournamentDetailError'), 'error');
       });
     }
   }, [selectedTournament?.id, showToast]);
@@ -147,7 +147,7 @@ export const TournamentsView: React.FC = () => {
     try {
       const ok = await tournamentsService.registerTeam(selectedTournament.id, registerTeamId);
       if (ok) {
-        showToast(`Inscription validée pour ${team.name} !`, 'success');
+        showToast(t('tournaments.registrationSuccess', { team: team.name }), 'success');
         setIsRegisterOpen(false);
         setRegisterTeamId('');
         const updated = await tournamentsService.getById(selectedTournament.id);
@@ -156,7 +156,7 @@ export const TournamentsView: React.FC = () => {
         setTournaments(allUpdated);
       }
     } catch {
-      showToast('Erreur lors de l’inscription au tournoi', 'error');
+      showToast(t('tournaments.registrationError'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -165,18 +165,18 @@ export const TournamentsView: React.FC = () => {
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formVenue.trim() || !formPitchIds.length || !formCity.trim() || !formFormat || !formMaxTeams || !formStartDate || !formEndDate || !formOrganizer.trim() || !formBannerUrl) {
-      showToast('Veuillez remplir tous les champs obligatoires.', 'info');
+      showToast(t('common.requiredFields'), 'info');
       return;
     }
     if (formStartDate < getTodayDateInputValue() || formEndDate < formStartDate) {
-      showToast('Vérifiez les dates : la fin doit être après le début et le tournoi ne peut pas commencer dans le passé.', 'info');
+      showToast(t('tournaments.invalidDates'), 'info');
       return;
     }
 
     const fee = parseFloat(formEntryFee);
     const prize = parseFloat(formPrizePool);
     if (!Number.isFinite(fee) || fee < 0 || !Number.isFinite(prize) || prize < 0) {
-      showToast('Veuillez entrer des montants valides pour les frais et dotations.', 'info');
+      showToast(t('tournaments.invalidAmounts'), 'info');
       return;
     }
 
@@ -250,7 +250,7 @@ export const TournamentsView: React.FC = () => {
           className="px-5 py-2.5 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors self-start md:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Organiser un tournoi</span>
+          <span>{t('tournaments.organize')}</span>
         </button>
       </div>
 
@@ -262,8 +262,8 @@ export const TournamentsView: React.FC = () => {
       ) : tournaments.length === 0 ? (
         <EmptyState
           icon={Trophy}
-          title="Aucun tournoi disponible"
-          description="De nouvelles compétitions seront bientôt publiées."
+          title={t('tournaments.emptyTitle')}
+          description={t('tournaments.emptyDescription')}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -284,7 +284,7 @@ export const TournamentsView: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
                   <div className="absolute top-3 right-3">
                     <span className="px-3 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-xs shadow-xs">
-                      {tourn.status === 'INSCRIPTIONS_OUVERTES' ? 'Inscriptions ouvertes' : 'En cours'}
+                      {tourn.status === 'INSCRIPTIONS_OUVERTES' ? t('tournaments.open') : t('tournaments.inProgress')}
                     </span>
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
@@ -311,13 +311,13 @@ export const TournamentsView: React.FC = () => {
 
                   <div className="p-3.5 rounded-2xl bg-pitch-panel border border-border-subtle flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-slate-500 text-caption block font-medium">Dotation Vainqueur</span>
+                      <span className="text-slate-500 text-caption block font-medium">{t('tournaments.prizePool')}</span>
                       <strong className="text-pitch-primary font-extrabold text-base tabular-nums">
                         {tourn.prizePool.toLocaleString()} €
                       </strong>
                     </div>
                     <div className="text-right">
-                      <span className="text-slate-500 text-caption block font-medium">Équipes engagées</span>
+                      <span className="text-slate-500 text-caption block font-medium">{t('tournaments.teamsEngaged')}</span>
                       <strong className="text-pitch-ink font-extrabold text-sm tabular-nums">
                         {tourn.registeredTeams} / {tourn.maxTeams}
                       </strong>
@@ -329,7 +329,7 @@ export const TournamentsView: React.FC = () => {
               <div className="p-4 bg-pitch-panel border-t border-pitch-separator flex items-center justify-between text-xs">
                 <span className="text-slate-500 font-medium">{tourn.venue}</span>
                 <span className="font-bold text-pitch-primary group-hover:translate-x-0.5 transition-transform">
-                  Consulter le tournoi →
+                  {t('tournaments.view')}
                 </span>
               </div>
             </div>

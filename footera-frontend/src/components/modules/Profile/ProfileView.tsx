@@ -30,8 +30,10 @@ import { catalogsService } from '../../../services/catalogsService';
 import { formatDateForDisplay } from '../../../utils/date';
 import { PhotoGallery } from '../../common/PhotoGallery';
 import { RoleRequestsPanel } from './RoleRequestsPanel';
+import { useTranslation } from '../../../i18n';
 
 export const ProfileView: React.FC = () => {
+  const { t } = useTranslation();
   const { user, updateProfile, updateSportsCv, showToast, selectedResourceId } = useApp();
   const { profileId } = useParams();
   const isOwner = !profileId;
@@ -203,8 +205,8 @@ export const ProfileView: React.FC = () => {
     }
   };
 
-  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-500">Chargement du profil joueur…</div>;
-  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-600">Ce profil joueur est introuvable ou indisponible.</div>;
+  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-500">{t('profile.loading')}</div>;
+  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-600">{t('profile.notFound')}</div>;
   if (isOwner && !user) return null;
 
   const displayedPlayer = isOwner ? myPlayer : publicPlayer;
@@ -263,24 +265,24 @@ export const ProfileView: React.FC = () => {
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {(isOwner ? user!.city : publicPlayer!.city) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Ville</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.city')}</span>
                   <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><MapPin className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.city : publicPlayer!.city}</span>
                 </div>}
                 {(isOwner || publicPlayer!.email) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Adresse e-mail</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.email')}</span>
                   <span className="mt-1 flex min-w-0 items-start gap-2 break-all text-sm font-semibold text-pitch-ink"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.email : publicPlayer!.email}</span>
                 </div>}
                 {(isOwner ? user!.phone?.trim() : publicPlayer!.phone?.trim()) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Téléphone</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.phone')}</span>
                   <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.phone : publicPlayer!.phone}</span>
                 </div>}
                 {displayedAge !== undefined && displayedAge > 0 && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Âge</span>
-                  <span className="mt-1 block text-sm font-semibold text-pitch-ink">{displayedAge} ans</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.age')}</span>
+                  <span className="mt-1 block text-sm font-semibold text-pitch-ink">{t('profile.ageYears', { age: displayedAge })}</span>
                 </div>}
               </div>
               <p className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-pitch-panel px-3 py-2 text-sm text-slate-600">
-                <span>Équipe officielle :</span><strong className="text-pitch-ink">{displayedTeam || 'Sans équipe actuellement'}</strong>
+                <span>{t('profile.officialTeam')}</span><strong className="text-pitch-ink">{displayedTeam || t('profile.noCurrentTeam')}</strong>
               </p>
             </div>
           </div>
@@ -314,8 +316,8 @@ export const ProfileView: React.FC = () => {
           <div className="p-6 rounded-3xl bg-white border border-pitch-line space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-extrabold text-pitch-ink">CV Sportif Vérifié</h2>
-                <p className="text-xs text-slate-500">{isOwner ? 'Transmis lors de vos candidatures d’équipe' : 'Profil sportif public'}</p>
+                <h2 className="text-base font-extrabold text-pitch-ink">{t('profile.sportsCv')}</h2>
+                <p className="text-xs text-slate-500">{isOwner ? t('profile.cvApplicationsNote') : t('profile.publicSportsProfile')}</p>
               </div>
               {isOwner && <button
                 onClick={() => {
@@ -330,27 +332,27 @@ export const ProfileView: React.FC = () => {
                 className="px-4 py-2 min-h-11 rounded-2xl bg-pitch-light hover:bg-[#d5edd9] text-pitch-primary text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Modifier mon CV</span>
+                <span>{t('profile.editCv')}</span>
               </button>}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Poste principal</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.primaryPosition')}</span>
                 <strong className="text-pitch-ink text-sm block mt-0.5">{isOwner ? user!.sportsCv.primaryPosition : publicPlayer!.primaryPosition}</strong>
               </div>
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Pied fort</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.strongFoot')}</span>
                 <strong className="text-pitch-ink text-sm block mt-0.5">{isOwner ? user!.sportsCv.strongFoot : publicPlayer!.strongFoot}</strong>
               </div>
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Mensurations</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.measurements')}</span>
                 <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner ? user!.sportsCv.height : publicPlayer!.height} cm · {isOwner ? user!.sportsCv.weight : publicPlayer!.weight} kg
                 </strong>
               </div>
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Expérience</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.experience')}</span>
                 <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner
                     ? `${user!.sportsCv.experienceYears} ans`
@@ -362,7 +364,7 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line text-xs text-slate-700 leading-relaxed">
-              <h3 className="font-bold text-pitch-ink mb-1">Présentation sportive :</h3>
+              <h3 className="font-bold text-pitch-ink mb-1">{t('profile.sportsPresentation')}</h3>
               {isOwner ? user!.sportsCv.bio : publicPlayer!.bio}
             </div>
           </div>
@@ -371,19 +373,19 @@ export const ProfileView: React.FC = () => {
           {displayedPlayer && <PhotoGallery entity="players" id={displayedPlayer.id} />}
           {isOwner && <RoleRequestsPanel />}
           {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
-            <h2 className="text-lg font-extrabold text-pitch-ink">Parcours en club</h2>
+            <h2 className="text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
             {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">
               {displayedPlayer.previousClubs.map((club) => {
                 const matchingTeam = teams.find((team) => team.name.toLowerCase() === club.toLowerCase())
                   ?? teams.find((team) => team.clubName?.toLowerCase() === club.toLowerCase());
                 return <li key={club} className="text-sm font-semibold text-slate-700"><button type="button" onClick={() => matchingTeam ? navigate(`/teams/${encodeURIComponent(matchingTeam.id)}`) : navigate(`/teams?query=${encodeURIComponent(club)}`)} className="cursor-pointer text-left hover:text-pitch-primary hover:underline">{club}</button></li>;
               })}
-            </ol> : <p className="mt-3 text-sm text-slate-500">Aucun ancien club renseigné.</p>}
+            </ol> : <p className="mt-3 text-sm text-slate-500">{t('profile.noPreviousClubs')}</p>}
             {displayedPlayer.currentTeam && <p className="mt-3 text-sm font-bold text-pitch-primary">
               <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">(actuel)</span>
             </p>}
           </section>}
-          {!isOwner && <p className="text-center text-xs text-slate-400">Cette fiche publique n’affiche ni coordonnées privées, ni réservations, ni candidatures.</p>}
+          {!isOwner && <p className="text-center text-xs text-slate-400">{t('profile.publicPrivacyNotice')}</p>}
         </div>
       )}
 
@@ -508,8 +510,8 @@ export const ProfileView: React.FC = () => {
           </label>
           {personalInfoError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">{personalInfoError}</p>}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setIsEditInfoOpen(false)} className="min-h-11 rounded-xl px-4 text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button>
-            <button type="submit" className="min-h-11 rounded-xl bg-pitch-action px-4 text-xs font-bold text-white hover:bg-pitch-action-hover">Enregistrer</button>
+            <button type="button" onClick={() => setIsEditInfoOpen(false)} className="min-h-11 rounded-xl px-4 text-xs font-bold text-slate-600 hover:bg-slate-100">{t('common.cancel')}</button>
+            <button type="submit" className="min-h-11 rounded-xl bg-pitch-action px-4 text-xs font-bold text-white hover:bg-pitch-action-hover">{t('common.save')}</button>
           </div>
         </form>
       </Modal>}
@@ -535,14 +537,14 @@ export const ProfileView: React.FC = () => {
                 disabled={!positionOptions.length}
                 className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               >
-                <option value="" disabled>Choisir un poste</option>
+                <option value="" disabled>{t('profile.choosePosition')}</option>
                 {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
               </SelectField>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Taille (cm)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.height')}</label>
                 <input
                   type="number"
                   min={100}
@@ -556,7 +558,7 @@ export const ProfileView: React.FC = () => {
                 {cvErrors.height && <p className="mt-1 text-xs text-rose-600">{cvErrors.height}</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Poids (kg)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.weight')}</label>
                 <input
                   type="number"
                   min={30}
@@ -570,7 +572,7 @@ export const ProfileView: React.FC = () => {
                 {cvErrors.weight && <p className="mt-1 text-xs text-rose-600">{cvErrors.weight}</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Pied fort</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.strongFoot')}</label>
                 <SelectField
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as StrongFoot)}
@@ -578,14 +580,14 @@ export const ProfileView: React.FC = () => {
                   disabled={!strongFootOptions.length}
                   className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
                 >
-                  <option value="" disabled>Choisir un pied fort</option>
+                  <option value="" disabled>{t('profile.chooseStrongFoot')}</option>
                   {strongFootOptions.map((foot) => <option key={foot} value={foot}>{foot}</option>)}
                 </SelectField>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Club actuel</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.currentClub')}</label>
               <input
                 type="text"
                 value={cvCurrentTeam}
@@ -599,7 +601,7 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Bio sportive</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.sportsBio')}</label>
               <textarea
                 rows={3}
                 value={cvBio}

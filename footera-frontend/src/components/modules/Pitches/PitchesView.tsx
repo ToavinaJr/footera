@@ -103,7 +103,7 @@ export const PitchesView: React.FC = () => {
         setGameFormatOptions(options.formats);
         setAmenityOptions(options.amenities);
       })
-      .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les options des terrains.', 'error'));
+      .catch((err: unknown) => showToast(err instanceof Error ? err.message : t('pitch.optionsError'), 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -123,7 +123,7 @@ export const PitchesView: React.FC = () => {
 
       } catch (err: unknown) {
         if (requestId !== pitchRequestId.current) return;
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des terrains', 'error');
+        showToast(err instanceof Error ? err.message : t('pitch.loadError'), 'error');
       } finally {
         if (requestId === pitchRequestId.current) setIsLoading(false);
       }
@@ -151,7 +151,7 @@ export const PitchesView: React.FC = () => {
     }).catch((error: unknown) => {
       if (active) {
         setBookingQuote(null);
-        showToast(error instanceof Error ? error.message : 'Impossible de calculer le devis.', 'error');
+        showToast(error instanceof Error ? error.message : t('pitch.quoteError'), 'error');
       }
     }).finally(() => {
       if (active) setIsQuotingBooking(false);
@@ -212,11 +212,11 @@ export const PitchesView: React.FC = () => {
         selections: selectedSlots.map(({ date, slot }) => ({ date, time: slot.time })),
         teamName: teamName.trim() || undefined,
       });
-      showToast(`${created.length} créneau(x) confirmé(s) sur ${selectedPitch.name}.`, 'success');
+      showToast(t('pitch.bookingCreated', { count: created.length, pitch: selectedPitch.name }), 'success');
       navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
       setSelectedSlots([]);
     } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'Erreur lors de la réservation', 'error');
+      showToast(e instanceof Error ? e.message : t('pitch.bookingError'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -228,9 +228,9 @@ export const PitchesView: React.FC = () => {
     try {
       const updatedPitch = await pitchesService.rate(detailPitch.id, { rating: reviewRating, comment: reviewComment });
       setPitches((current) => current.map((pitch) => pitch.id === updatedPitch.id ? updatedPitch : pitch));
-      showToast('Votre évaluation du terrain a été enregistrée.', 'success');
+      showToast(t('pitch.reviewSaved'), 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Impossible d’enregistrer votre évaluation.', 'error');
+      showToast(error instanceof Error ? error.message : t('pitch.reviewSaveError'), 'error');
     } finally {
       setIsSubmittingReview(false);
     }
@@ -245,13 +245,13 @@ export const PitchesView: React.FC = () => {
   const handleCreatePitch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formComplexName.trim() || !formCity.trim() || !formAddress.trim() || !formSurface || !formGameFormat || !formDimensions.trim() || !formImageUrl) {
-      showToast('Veuillez remplir tous les champs obligatoires du terrain.', 'info');
+      showToast(t('pitch.requiredFields'), 'info');
       return;
     }
 
     const rate = parseFloat(formHourlyRate);
     if (!Number.isFinite(rate) || rate <= 0) {
-      showToast('Veuillez indiquer un tarif horaire valide.', 'info');
+      showToast(t('pitch.invalidRate'), 'info');
       return;
     }
 
@@ -271,7 +271,7 @@ export const PitchesView: React.FC = () => {
       };
 
       const created = await pitchesService.create(input);
-      showToast(`Terrain "${created.name}" ajouté avec succès !`, 'success');
+      showToast(t('pitch.created', { pitch: created.name }), 'success');
       // Reset form fields
       resetCreatePitchForm();
 
@@ -280,7 +280,7 @@ export const PitchesView: React.FC = () => {
       setPitches(updated);
       navigate(`/pitches/${encodeURIComponent(created.id)}`, { replace: true });
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erreur lors de l’ajout du terrain', 'error');
+      showToast(err instanceof Error ? err.message : t('pitch.createError'), 'error');
     } finally {
       setIsCreating(false);
     }
@@ -299,12 +299,12 @@ export const PitchesView: React.FC = () => {
   if (routePitchId && !isBookingRoute && pitchModal.mode !== 'create') {
     if (isLoading) return <CardSkeleton />;
     if (!detailPitch) {
-      return <EmptyState icon={MapPin} title="Terrain introuvable" description="Ce terrain n’existe pas ou n’est plus disponible." />;
+      return <EmptyState icon={MapPin} title={t('pitch.notFoundTitle')} description={t('pitch.notFoundDescription')} />;
     }
 
     return (
       <div className="page-enter space-y-6 pb-16">
-        <button type="button" onClick={() => navigate('/pitches')} className="text-sm font-bold text-pitch-primary hover:underline">← Retour aux terrains</button>
+        <button type="button" onClick={() => navigate('/pitches')} className="text-sm font-bold text-pitch-primary hover:underline">{t('pitch.backToPitches')}</button>
         <section className="overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
           <div className="relative h-64 sm:h-80 lg:h-105">
             <img src={detailPitch.imageUrl} alt={detailPitch.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
@@ -316,44 +316,44 @@ export const PitchesView: React.FC = () => {
             </div>
           </div>
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-7">
-            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.surface}</strong></div>
-            {detailPitch.gameFormat && <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Format</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.gameFormat}</strong></div>}
-            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.dimensions}</strong></div>
-            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-pitch-ink">{detailPitch.reviewsCount > 0 && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}{detailPitch.reviewsCount > 0 ? `${formatFiniteNumber(detailPitch.rating, 1)} (${formatFiniteNumber(detailPitch.reviewsCount)} avis)` : 'Pas encore noté'}</strong></div>
-            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-pitch-primary">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">{t('pitch.surface')}</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.surface}</strong></div>
+            {detailPitch.gameFormat && <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">{t('pitch.format')}</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.gameFormat}</strong></div>}
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">{t('pitch.dimensions')}</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.dimensions}</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">{t('pitch.rating')}</span><strong className="mt-1 flex items-center gap-1 text-sm text-pitch-ink">{detailPitch.reviewsCount > 0 && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}{detailPitch.reviewsCount > 0 ? `${formatFiniteNumber(detailPitch.rating, 1)} (${t('pitch.reviewCount', { count: formatFiniteNumber(detailPitch.reviewsCount) })})` : t('pitch.notRated')}</strong></div>
+            <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">{t('pitch.indicativeRate')}</span><strong className="mt-1 block text-sm text-pitch-primary">{t('pitch.fromPrice', { price: formatFiniteNumber(detailPitch.hourlyRate) })}</strong></div>
           </div>
         </section>
         <PhotoGallery entity="pitches" id={detailPitch.id} />
 
         <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
           <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
-            <h2 className="text-lg font-extrabold text-pitch-ink">Équipements et services</h2>
+            <h2 className="text-lg font-extrabold text-pitch-ink">{t('pitch.amenitiesTitle')}</h2>
             {detailPitch.amenities.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               {detailPitch.amenities.map((amenity) => <li key={amenity} className="flex items-center gap-2 text-sm text-slate-700"><Check className="h-4 w-4 shrink-0 text-pitch-primary" />{amenity}</li>)}
-            </ul> : <p className="mt-3 text-sm text-slate-500">Aucun équipement renseigné.</p>}
+            </ul> : <p className="mt-3 text-sm text-slate-500">{t('pitch.noAmenities')}</p>}
           </div>
           <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
             <div className="flex items-center justify-between gap-3">
-              <div><h2 className="text-lg font-extrabold text-pitch-ink">Créneaux disponibles</h2><p className="mt-1 text-xs text-slate-500">Sélectionnez un ou plusieurs créneaux à réserver.</p></div>
+              <div><h2 className="text-lg font-extrabold text-pitch-ink">{t('pitch.availableSlots')}</h2><p className="mt-1 text-xs text-slate-500">{t('pitch.selectSlots')}</p></div>
               <Calendar className="h-5 w-5 text-pitch-primary" />
             </div>
             <div className="mt-4 max-w-sm">
-              <DatePickerField id="pitch-detail-date" label="Choisir une date" value={bookingDate} onChange={handleBookingDateChange} min={getTodayDateInputValue()} />
+              <DatePickerField id="pitch-detail-date" label={t('pitch.chooseDate')} value={bookingDate} onChange={handleBookingDateChange} min={getTodayDateInputValue()} />
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {bookingDate ? detailPitch.availableSlots.map((slot) => {
                 const isSelected = selectedSlots.some((selected) => selected.date === bookingDate && selected.slot.id === slot.id);
                 return <div key={slot.id} className="flex items-center justify-between gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <div><strong className="block text-sm text-pitch-ink">{slot.time}</strong><span className="mt-1 block text-xs text-slate-500">{slot.price} € · 1h30</span></div>
-                  <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-pitch-action text-white' : 'border border-pitch-line bg-white text-pitch-primary hover:bg-pitch-panel-hover'}`}>{!slot.isAvailable ? 'Indisponible' : isSelected ? 'Sélectionné' : 'Sélectionner'}</button>
+                  <div><strong className="block text-sm text-pitch-ink">{slot.time}</strong><span className="mt-1 block text-xs text-slate-500">{slot.price} € · {t('pitch.slotDuration')}</span></div>
+                  <button type="button" disabled={!slot.isAvailable} aria-pressed={isSelected} onClick={() => toggleSlot(slot)} className={`rounded-xl px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:bg-slate-300 ${isSelected ? 'bg-pitch-action text-white' : 'border border-pitch-line bg-white text-pitch-primary hover:bg-pitch-panel-hover'}`}>{!slot.isAvailable ? t('pitch.unavailable') : isSelected ? t('pitch.selected') : t('pitch.select')}</button>
                 </div>;
-              }) : <p className="text-sm text-slate-500">Choisissez une date pour afficher les créneaux disponibles.</p>}
-              {bookingDate && !detailPitch.availableSlots.some((slot) => slot.isAvailable) && <p className="text-sm text-slate-500">Aucun créneau disponible pour cette date.</p>}
+              }) : <p className="text-sm text-slate-500">{t('pitch.chooseDateForSlots')}</p>}
+              {bookingDate && !detailPitch.availableSlots.some((slot) => slot.isAvailable) && <p className="text-sm text-slate-500">{t('pitch.noSlotsOnDate')}</p>}
             </div>
             {selectedSlots.length > 0 && <div className="mt-5 rounded-2xl border border-pitch-line bg-pitch-panel p-4">
               <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                <p className="text-sm text-slate-600"><strong className="text-pitch-ink">Rappel : {selectedSlots.length} créneau(x)</strong> · <strong className="text-pitch-primary">{isQuotingBooking ? 'Calcul du devis…' : bookingQuote ? `${selectedSlotsTotal} € au total` : 'Devis indisponible'}</strong></p>
-                <button type="button" onClick={() => { setTeamName(''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover">Réserver les créneaux sélectionnés</button>
+                <p className="text-sm text-slate-600"><strong className="text-pitch-ink">{t('pitch.selectionReminder', { count: selectedSlots.length })}</strong> · <strong className="text-pitch-primary">{isQuotingBooking ? t('pitch.calculatingQuote') : bookingQuote ? t('pitch.totalPrice', { price: selectedSlotsTotal }) : t('pitch.quoteUnavailable')}</strong></p>
+                <button type="button" onClick={() => { setTeamName(''); navigate(`/pitches/${encodeURIComponent(detailPitch.id)}/book`); }} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover">{t('pitch.bookSelectedSlots')}</button>
               </div>
               <ul className="mt-3 space-y-2 border-t border-pitch-line pt-3">
                 {Object.entries(selectedSlotsByDate).map(([date, slots]) => <li key={date} className="flex flex-wrap justify-between gap-2 text-xs text-slate-600"><span className="font-bold text-pitch-ink">{date}</span><span>{slots.map((slot) => slot.time).join(' · ')}{bookingQuote && ` · ${formatFiniteNumber(bookingQuote.perDate[date])} €`}</span></li>)}
@@ -364,15 +364,15 @@ export const PitchesView: React.FC = () => {
 
         <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div><h2 className="text-lg font-extrabold text-pitch-ink">Évaluer ce terrain</h2><p className="mt-1 text-sm text-slate-500">Votre note contribue à la note affichée aux autres joueurs.</p></div>
-            <p className="flex items-center gap-1 text-sm font-bold text-pitch-ink"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{detailPitch.reviewsCount ? `${formatFiniteNumber(detailPitch.rating, 1)} / 5 · ${formatFiniteNumber(detailPitch.reviewsCount)} avis` : 'Aucun avis pour le moment'}</p>
+            <div><h2 className="text-lg font-extrabold text-pitch-ink">{t('pitch.rateTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('pitch.rateDescription')}</p></div>
+            <p className="flex items-center gap-1 text-sm font-bold text-pitch-ink"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{detailPitch.reviewsCount ? `${formatFiniteNumber(detailPitch.rating, 1)} / 5 · ${t('pitch.reviewCount', { count: formatFiniteNumber(detailPitch.reviewsCount) })}` : t('pitch.reviewsEmptyShort')}</p>
           </div>
-          <div className="mt-4 flex items-center gap-1" role="radiogroup" aria-label="Votre note sur cinq">
-            {[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" role="radio" aria-checked={reviewRating === value} aria-label={`${value} sur 5`} onClick={() => setReviewRating(value)} className="rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-pitch-primary"><Star className={`h-7 w-7 ${reviewRating >= value ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} /></button>)}
+          <div className="mt-4 flex items-center gap-1" role="radiogroup" aria-label={t('pitch.yourRating')}>
+            {[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" role="radio" aria-checked={reviewRating === value} aria-label={t('pitch.reviewRating', { rating: value })} onClick={() => setReviewRating(value)} className="rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-pitch-primary"><Star className={`h-7 w-7 ${reviewRating >= value ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} /></button>)}
           </div>
-          <label className="mt-3 block text-xs font-bold text-slate-700" htmlFor="pitch-review-comment">Commentaire (facultatif)</label>
-          <textarea id="pitch-review-comment" value={reviewComment} onChange={(event) => setReviewComment(event.target.value.slice(0, 500))} maxLength={500} rows={3} placeholder="Décrivez votre expérience sur ce terrain…" className="mt-1 w-full resize-y rounded-xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary focus:outline-hidden" />
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-500">{reviewComment.length}/500 caractères · une note par compte, modifiable à tout moment</span><button type="button" disabled={!reviewRating || isSubmittingReview} onClick={handleRatePitch} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover disabled:cursor-not-allowed disabled:opacity-50">{isSubmittingReview ? 'Enregistrement…' : detailPitch.myRating ? 'Mettre à jour mon avis' : 'Publier mon avis'}</button></div>
+          <label className="mt-3 block text-xs font-bold text-slate-700" htmlFor="pitch-review-comment">{t('pitch.commentOptional')}</label>
+          <textarea id="pitch-review-comment" value={reviewComment} onChange={(event) => setReviewComment(event.target.value.slice(0, 500))} maxLength={500} rows={3} placeholder={t('pitch.reviewPlaceholder')} className="mt-1 w-full resize-y rounded-xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary focus:outline-hidden" />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-500">{t('pitch.commentLength', { count: reviewComment.length })}</span><button type="button" disabled={!reviewRating || isSubmittingReview} onClick={handleRatePitch} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover disabled:cursor-not-allowed disabled:opacity-50">{isSubmittingReview ? t('pitch.savingReview') : detailPitch.myRating ? t('pitch.updateReview') : t('pitch.publishReview')}</button></div>
         </section>
         <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -419,7 +419,7 @@ export const PitchesView: React.FC = () => {
             className="px-4 py-2 min-h-11 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-xs md:text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Ajouter un terrain</span>
+            <span>{t('pitch.addPitch')}</span>
           </button>
           <button
             onClick={() => navigate('/profile/bookings')}
@@ -433,7 +433,7 @@ export const PitchesView: React.FC = () => {
       {/* Filters */}
       <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.surface')}</label>
           <SelectField
             value={surfaceFilter}
             onChange={(e) => setSurfaceFilter(e.target.value as SurfaceType | 'Toutes')}
@@ -448,13 +448,13 @@ export const PitchesView: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Localisation</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.location')}</label>
           <SelectField
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
             className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
           >
-            <option value="Toutes">Toutes les villes</option>
+            <option value="Toutes">{t('pitch.allCities')}</option>
             <option value="Fianarantsoa">Fianarantsoa</option>
             <option value="Antananarivo">Antananarivo</option>
             <option value="Toamasina">Toamasina</option>
@@ -473,8 +473,8 @@ export const PitchesView: React.FC = () => {
       ) : pitches.length === 0 ? (
         <EmptyState
           icon={MapPin}
-          title="Aucun terrain trouvé"
-          description="Modifiez vos critères de surface ou de ville, ou ajoutez un nouveau terrain."
+          title={t('pitch.noneFoundTitle')}
+          description={t('pitch.noneFoundDescription')}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -503,7 +503,7 @@ export const PitchesView: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-pitch-ink/85 backdrop-blur-xs text-lime-volt px-2.5 py-1 rounded-full text-xs font-extrabold shadow-xs">
-                    {pitch.reviewsCount > 0 ? <><Star className="w-3.5 h-3.5 fill-lime-volt" /><span>{formatFiniteNumber(pitch.rating, 1)}</span><span className="text-white/60 font-medium">({formatFiniteNumber(pitch.reviewsCount)})</span></> : <span>Pas encore noté</span>}
+                    {pitch.reviewsCount > 0 ? <><Star className="w-3.5 h-3.5 fill-lime-volt" /><span>{formatFiniteNumber(pitch.rating, 1)}</span><span className="text-white/60 font-medium">({formatFiniteNumber(pitch.reviewsCount)})</span></> : <span>{t('pitch.notRated')}</span>}
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
                     <span className="text-xs font-bold text-lime-volt block mb-0.5">
@@ -541,7 +541,7 @@ export const PitchesView: React.FC = () => {
 
               <div className="p-4 bg-pitch-panel border-t border-pitch-separator flex items-center justify-between">
                 <div>
-                  <span className="text-slate-400 text-caption block font-medium">À partir de</span>
+                  <span className="text-slate-400 text-caption block font-medium">{t('pitch.from')}</span>
                   <span className="text-lg font-extrabold text-pitch-primary tabular-nums">
                     {formatFiniteNumber(pitch.hourlyRate)} €
                   </span>
@@ -612,7 +612,7 @@ export const PitchesView: React.FC = () => {
                     </button>
                   );
                 })}
-              </div> : <p className="text-sm text-slate-500">Choisissez une date pour consulter les créneaux.</p>}
+              </div> : <p className="text-sm text-slate-500">{t('pitch.chooseDateForSlots')}</p>}
             </div>
 
             {selectedSlotsForCurrentDate.length > 0 && (
@@ -632,7 +632,7 @@ export const PitchesView: React.FC = () => {
 
             {selectedSlots.length > 0 && <aside className="rounded-2xl border border-pitch-line bg-white p-4" aria-label="Récapitulatif des créneaux sélectionnés">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-extrabold text-pitch-ink">Rappel de votre sélection</p>
+                <p className="text-xs font-extrabold text-pitch-ink">{t('pitch.selectionSummary')}</p>
                 <p className="text-xs font-bold text-pitch-primary">{selectedSlots.length} créneau(x) · {isQuotingBooking ? 'Calcul du devis…' : `${selectedSlotsTotal} €`}</p>
               </div>
               <ul className="mt-2 space-y-1.5">
@@ -660,36 +660,36 @@ export const PitchesView: React.FC = () => {
         <Modal
           isOpen={pitchModal.mode === 'create'}
           onClose={pitchModal.close}
-          title="Ajouter un terrain ou complexe"
-          subtitle="Proposez votre terrain à la communauté pour réservations et matchs"
+          title={t('pitch.addPitchTitle')}
+          subtitle={t('pitch.addPitchSubtitle')}
           maxWidth="lg"
         >
           <form onSubmit={handleCreatePitch} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nom du terrain *
+                  {t('pitch.pitchNameRequired')}
                 </label>
                 <input
                   type="text"
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Ex: Terrain Synthétique Élite Matsiatra"
+                  placeholder={t('pitch.pitchNameExample')}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nom du Complexe ou Club *
+                  {t('pitch.complexNameRequired')}
                 </label>
                 <input
                   type="text"
                   required
                   value={formComplexName}
                   onChange={(e) => setFormComplexName(e.target.value)}
-                  placeholder="Ex: Complexe Omnisports Municipal"
+                  placeholder={t('pitch.complexNameExample')}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
@@ -697,25 +697,25 @@ export const PitchesView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Ville *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.cityRequired')}</label>
                 <input
                   type="text"
                   required
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
-                  placeholder="Ex: Fianarantsoa"
+                  placeholder={t('pitch.cityExample')}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Adresse exacte *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.addressRequired')}</label>
                 <input
                   type="text"
                   required
                   value={formAddress}
                   onChange={(e) => setFormAddress(e.target.value)}
-                  placeholder="Ex: Boulevard de la Liberté, Ampasambazaha"
+                  placeholder={t('pitch.addressExample')}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
@@ -723,7 +723,7 @@ export const PitchesView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Type de surface *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.surfaceRequired')}</label>
                 <SelectField
                   value={formSurface}
                   onChange={(e) => setFormSurface(e.target.value as SurfaceType)}
@@ -731,33 +731,33 @@ export const PitchesView: React.FC = () => {
                   disabled={surfaceOptions.length === 0}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="" disabled>Choisir un type de surface</option>
+                  <option value="" disabled>{t('pitch.chooseSurface')}</option>
                   {surfaceOptions.map((surface) => <option key={surface} value={surface}>{surface}</option>)}
                 </SelectField>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Format du terrain *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.gameFormatRequired')}</label>
                 <SelectField value={formGameFormat} onChange={(event) => setFormGameFormat(event.target.value)} required disabled={gameFormatOptions.length === 0} className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden">
-                  <option value="" disabled>Choisir un format</option>
+                  <option value="" disabled>{t('pitch.chooseFormat')}</option>
                   {gameFormatOptions.map((format) => <option key={format} value={format}>{format}</option>)}
                 </SelectField>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Dimensions *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.dimensionsRequired')}</label>
                 <input
                   type="text"
                   required
                   value={formDimensions}
                   onChange={(e) => setFormDimensions(e.target.value)}
-                  placeholder="105m x 68m (11v11)"
+                  placeholder={t('pitch.dimensionsExample')}
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tarif horaire (€) *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.hourlyRateRequired')}</label>
                 <input
                   type="number"
                   required
