@@ -800,6 +800,7 @@ export const SEED_TOURNAMENTS = [
 export const SEED_PITCHES = [
   {
     id: 'pitch_01',
+    ownerId: 'usr_me',
     name: 'Terrain d Honneur 11x11 Synthétique',
     complexName: 'Stade Municipal de Fianarantsoa',
     city: 'Fianarantsoa',
@@ -818,6 +819,7 @@ export const SEED_PITCHES = [
   },
   {
     id: 'pitch_02',
+    ownerId: 'usr_me',
     name: 'Pitch Arena Five #3 (Indoor)',
     complexName: 'Urban Soccer Indoor Arena',
     city: 'Antananarivo',
@@ -835,6 +837,7 @@ export const SEED_PITCHES = [
   },
   {
     id: 'pitch_03',
+    ownerId: 'usr_me',
     name: 'Terrain principal',
     complexName: 'Stade Dejerine',
     city: 'Paris',

@@ -13,6 +13,7 @@ const validTournament = {
   prizePool: 1_000_000,
   bannerUrl: 'https://images.unsplash.com/photo-123?auto=format',
   organizer: 'Organisateur Footera',
+  pitchIds: ['pitch-owned'],
 };
 
 describe('tournament request validation', () => {

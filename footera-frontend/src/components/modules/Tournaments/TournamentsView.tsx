@@ -164,7 +164,7 @@ export const TournamentsView: React.FC = () => {
 
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim() || !formVenue.trim() || !formCity.trim() || !formFormat || !formMaxTeams || !formStartDate || !formEndDate || !formOrganizer.trim() || !formBannerUrl) {
+    if (!formTitle.trim() || !formVenue.trim() || !formPitchIds.length || !formCity.trim() || !formFormat || !formMaxTeams || !formStartDate || !formEndDate || !formOrganizer.trim() || !formBannerUrl) {
       showToast('Veuillez remplir tous les champs obligatoires.', 'info');
       return;
     }
@@ -730,10 +730,10 @@ export const TournamentsView: React.FC = () => {
                 <input
                   type="text"
                   required
+                  readOnly
                   value={formCity}
-                  onChange={(e) => setFormCity(e.target.value)}
-                  placeholder="Ex: Fianarantsoa"
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
+                  placeholder={t('tournaments.cityFromPitch')}
+                  className="w-full cursor-not-allowed rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-xs text-pitch-ink outline-hidden"
                 />
               </div>
 

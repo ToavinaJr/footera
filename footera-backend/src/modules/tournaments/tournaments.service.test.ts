@@ -61,12 +61,14 @@ describe('TournamentsService registration', () => {
   it('binds a newly created tournament to the authenticated organizer', async () => {
     const records = {
       find: vi.fn(async () => ({ id: 'organizer-1', name: 'Compte organisateur', roles: ['Organisateur Tournoi'] })),
+      list: vi.fn(async () => [{ id: 'pitch-owned', ownerId: 'organizer-1', name: 'Terrain central', complexName: 'Complexe Footera', city: 'Fianarantsoa' }]),
       create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
     const notifications = { add: vi.fn(async () => undefined) };
     const service = new TournamentsService(records as unknown as never, notifications as unknown as never, { userId: 'organizer-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     const created = await service.create({
+      pitchIds: ['pitch-owned'],
       title: 'Coupe test', format: '7v7', city: 'Antananarivo', venue: 'Terrain central',
       startDate: '2026-11-01', endDate: '2026-11-02', maxTeams: 8, entryFee: 0, prizePool: 0,
       bannerUrl: '', organizer: 'Organisateur affiché',
@@ -74,6 +76,7 @@ describe('TournamentsService registration', () => {
 
     expect(records.create).toHaveBeenCalledWith('tournaments', created.id, expect.objectContaining({ organizerId: 'organizer-1' }));
     expect(created.organizer).toBe('Compte organisateur');
+    expect(records.create).toHaveBeenCalledWith('tournaments', created.id, expect.objectContaining({ city: 'Fianarantsoa', venue: 'Complexe Footera', pitchIds: ['pitch-owned'] }));
   });
 
   it('rejects tournament creation for accounts without the organizer role', async () => {
@@ -84,6 +87,7 @@ describe('TournamentsService registration', () => {
     const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'player-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     await expect(service.create({
+      pitchIds: ['pitch-owned'],
       title: 'Coupe test', format: '7v7', city: 'Antananarivo', venue: 'Terrain central',
       startDate: '2026-11-01', endDate: '2026-11-02', maxTeams: 8, entryFee: 0, prizePool: 0,
       bannerUrl: '', organizer: 'Organisateur spoofé',

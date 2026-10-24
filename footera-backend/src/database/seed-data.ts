@@ -282,6 +282,9 @@ export async function seedDatabase(prisma: PrismaService, { reset = false } = {}
           };
           await delegate.update({ where: { id }, data: { payload: asJson(synchronized) } });
         }
+        if (collection === 'pitches' && payload.ownerId) {
+          await delegate.update({ where: { id }, data: { payload: asJson({ ...current, ownerId: payload.ownerId }) } });
+        }
         if (collection === 'clubs' && Array.isArray(payload.teams)) {
           await delegate.update({ where: { id }, data: { payload: asJson({
             ...current,

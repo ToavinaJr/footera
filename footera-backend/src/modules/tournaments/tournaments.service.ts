@@ -23,7 +23,7 @@ export interface CreateTournamentInput {
   prizePool: number;
   bannerUrl: string;
   organizer: string;
-  pitchIds?: string[];
+  pitchIds: string[];
 }
 
 @Injectable()
@@ -133,13 +133,10 @@ export class TournamentsService {
       throw new ForbiddenException('Le rôle Organisateur Tournoi est requis pour créer un tournoi.');
     }
     const pitchIds = [...new Set(input.pitchIds ?? [])];
-    if (pitchIds.length) {
-      const ownedPitchIds = new Set((await this.records.list<PitchRecord>('pitches'))
-        .filter((pitch) => pitch.ownerId === organizerId).map((pitch) => pitch.id));
-      if (pitchIds.some((pitchId) => !ownedPitchIds.has(pitchId))) {
-        throw new ForbiddenException('Vous pouvez uniquement associer vos propres terrains à ce tournoi.');
-      }
-    }
+    if (pitchIds.length !== 1) throw new BadRequestException('Sélectionnez un terrain pour accueillir ce tournoi.');
+    const ownedPitches = (await this.records.list<PitchRecord>('pitches')).filter((pitch) => pitch.ownerId === organizerId);
+    const selectedPitch = ownedPitches.find((pitch) => pitch.id === pitchIds[0]);
+    if (!selectedPitch) throw new ForbiddenException('Vous pouvez uniquement utiliser un terrain dont vous êtes propriétaire.');
     const formats = await this.catalogs.values('tournamentFormats');
     if (!formats.includes(input.format)) throw new BadRequestException('Le format du tournoi est invalide.');
     const id = `tourn_${randomUUID()}`;
@@ -151,10 +148,10 @@ export class TournamentsService {
     const tournament: TournamentRecord = {
       ...input,
       pitchIds,
+      city: sanitizePlainText(selectedPitch.city, 100),
+      venue: sanitizePlainText(selectedPitch.complexName || selectedPitch.name, 200),
       galleryImages: [],
       title: sanitizePlainText(input.title, 120),
-      city: sanitizePlainText(input.city, 100),
-      venue: sanitizePlainText(input.venue, 200),
       organizer: sanitizePlainText(organizerAccount.name, 120),
       id, organizerId, registeredTeams: 0, participantTeamIds: [], status: TOURNAMENT_STATUSES.REGISTRATION_OPEN, standings: [], fixtures: [],
     };

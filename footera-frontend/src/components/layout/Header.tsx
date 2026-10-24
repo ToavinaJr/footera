@@ -11,7 +11,7 @@ interface HeaderProps { onMenuClick: () => void }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { t } = useTranslation();
-  const { activeSection, setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
+  const { setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const isNotifOpen = location.pathname === '/notifications';

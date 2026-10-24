@@ -30,7 +30,7 @@ export const createTournamentBodyPipe = new StrictObjectValidationPipe({
     prizePool: { required: true, validate: (value) => typeof value === 'number' && isFiniteNumberInRange(value, 0, 1_000_000_000), message: 'La dotation est invalide.' },
     bannerUrl: { required: true, validate: isAllowedImage, message: 'L’image du tournoi doit être un upload Footera ou une image HTTPS autorisée.' },
     organizer: { required: true, validate: (value) => isText(value, 120), message: 'Le nom de l’organisateur est invalide.' },
-    pitchIds: { validate: (value) => value === undefined || (Array.isArray(value) && value.length <= 20 && value.every((id) => isText(id, 128))), message: 'La sélection des terrains est invalide.' },
+    pitchIds: { required: true, validate: (value) => Array.isArray(value) && value.length === 1 && isText(value[0], 128), message: 'Sélectionnez un terrain dont vous êtes propriétaire.' },
   },
   validateObject: (value) => {
     const start = typeof value.startDate === 'string' ? parseIsoDateOnly(value.startDate) : undefined;

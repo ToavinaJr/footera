@@ -30,6 +30,9 @@ describe('seed reference integrity', () => {
     expect(catalogValues.get('tournament-formats')).toContain('9v9');
     expect(catalogValues.has('tournament-team-counts')).toBe(false);
   });
+  it('assigns every seeded pitch to an owner account', () => {
+    expect(SEED_PITCHES.every((pitch) => typeof pitch.ownerId === 'string' && pitch.ownerId.length > 0)).toBe(true);
+  });
   const players = [...SEED_PLAYERS, ...SEED_PLAYERS_EXTRA];
   const playerIds = new Set(players.map((player) => player.id));
   const playersById = new Map(players.map((player) => [player.id, player]));
