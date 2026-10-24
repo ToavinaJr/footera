@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../../config/dataMode';
 import { AppApiError } from './errors';
+import { parseSuccessfulResponse } from './response';
 
 interface ApiErrorBody extends Record<string, unknown> {
   message?: string;
@@ -63,17 +64,7 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
       );
     }
 
-    if (response.status === 204) return {} as T;
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      const body = (await response.text()).slice(0, 160);
-      throw new AppApiError(
-        `L’API a renvoyé une réponse non JSON (${response.status}). Vérifiez que le backend répond sur ${API_BASE_URL}. ${body}`,
-        response.status,
-        'INVALID_API_RESPONSE',
-      );
-    }
-    return await response.json() as T;
+    return parseSuccessfulResponse<T>(response, API_BASE_URL);
   } catch (err: unknown) {
     if (err instanceof AppApiError) throw err;
     throw new AppApiError(

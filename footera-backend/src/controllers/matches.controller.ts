@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Query, Post, Put, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, Post, Put, NotFoundException, HttpCode, HttpStatus } from '@nestjs/common';
 import { MatchesService } from '../modules/matches/matches.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
 import type { UpdateMatchInput } from '../types/records.js';
@@ -48,6 +48,7 @@ export class MatchesController {
   }
 
   @Post(':id/follow')
+  @HttpCode(HttpStatus.OK)
   toggleFollow(@Param('id') id: string) {
     return this.matches.toggleFavorite(id);
   }

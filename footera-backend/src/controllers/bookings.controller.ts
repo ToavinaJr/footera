@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { BookingsService } from '../modules/bookings/bookings.service.js';
 import type { CreateBookingInput } from '../modules/bookings/bookings.service.js';
 
@@ -27,6 +27,7 @@ export class BookingsController {
   }
 
   @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
   cancel(@Param('id') id: string) {
     return this.bookings.cancelBooking(id);
   }

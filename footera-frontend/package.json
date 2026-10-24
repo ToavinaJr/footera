@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node ./node_modules/vite/bin/vite.js --host=0.0.0.0",
     "build": "node ./node_modules/vite/bin/vite.js build",
-    "test:security": "node --require ./scripts/test-preload.cjs ./node_modules/tsx/dist/cli.mjs --test src/services/imageUploadService.test.ts",
+    "test:security": "node --require ./scripts/test-preload.cjs ./node_modules/tsx/dist/cli.mjs --test src/services/imageUploadService.test.ts src/lib/api/response.test.ts",
     "test:unit": "npm run test:security",
     "preview": "node ./node_modules/vite/bin/vite.js preview",
     "clean": "rm -rf dist server.js",
