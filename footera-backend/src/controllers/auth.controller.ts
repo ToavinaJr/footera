@@ -5,6 +5,7 @@ import { SeedService } from '../database/seed.service.js';
 import { AuthService } from '../modules/auth/auth.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
 import { parseCookieValue } from '../utils/text.utils.js';
+import { loginBodyPipe, profileBodyPipe, registerBodyPipe } from '../modules/auth/auth-request.validation.js';
 
 @Controller('auth')
 export class AuthController {
@@ -13,7 +14,7 @@ export class AuthController {
   @Post('register')
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() body: { name?: unknown; email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
+  async register(@Body(registerBodyPipe) body: { name?: unknown; email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.register(body);
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };
@@ -22,7 +23,7 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: { email?: unknown; password?: unknown }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+  async login(@Body(loginBodyPipe) body: { email?: unknown; password?: unknown }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.login(body, request.ip || request.socket.remoteAddress || 'unknown');
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };
@@ -55,7 +56,7 @@ export class AuthController {
   }
 
   @Put('profile')
-  updateProfile(@Body() body: Record<string, unknown>) {
+  updateProfile(@Body(profileBodyPipe) body: Record<string, unknown>) {
     return this.accounts.updateProfile(body);
   }
 
