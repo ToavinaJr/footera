@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import type { PlayerRecord, TeamRecord, UserRecord } from '../../types/records.js';
 import { PlayerMatchStatsService } from './player-match-stats.service.js';
 import { calculateAge } from '../accounts/calculate-age.js';
+import { AccountsService } from '../accounts/accounts.service.js';
 
 @Injectable()
 export class PlayersService {
@@ -11,7 +12,16 @@ export class PlayersService {
     private readonly records: RecordRepository,
     private readonly catalogs: CatalogsService,
     private readonly matchStats: PlayerMatchStatsService,
+    private readonly accounts: AccountsService,
   ) {}
+
+  async getCurrentUserPlayer() {
+    const user = await this.accounts.profile();
+    if (!user) throw new UnauthorizedException('Authentification requise.');
+    const player = (await this.records.list<PlayerRecord>('players')).find((record) => record.userId === user.id);
+    if (!player) throw new NotFoundException('Aucun profil joueur n’est associé à ce compte.');
+    return this.getById(player.id);
+  }
 
   async options() {
     const options = await this.catalogs.options();

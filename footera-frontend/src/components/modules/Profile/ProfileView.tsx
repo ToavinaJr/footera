@@ -132,11 +132,11 @@ export const ProfileView: React.FC = () => {
   }, [isOwner, user]);
 
   useEffect(() => {
-    if (!isOwner || !user?.name) return;
-    playersService.list({ query: user.name })
-      .then((players) => setMyPlayer(players.find((player) => player.name.toLowerCase() === user.name.toLowerCase()) ?? null))
+    if (!isOwner || !user) return;
+    playersService.getMine()
+      .then(setMyPlayer)
       .catch(() => setMyPlayer(null));
-  }, [isOwner, user?.name, user?.dateOfBirth, user?.avatarUrl]);
+  }, [isOwner, user?.id, user?.name, user?.dateOfBirth, user?.avatarUrl]);
 
   const handleSaveCv = async (e: React.FormEvent) => {
     e.preventDefault();

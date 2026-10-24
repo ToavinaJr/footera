@@ -33,6 +33,10 @@ export const playersService = {
     return apiClient<Player>(`players/${encodeURIComponent(id)}`);
   },
 
+  getMine(): Promise<Player> {
+    return apiClient<Player>('players/me');
+  },
+
   getMatchStats(id: string, competitionId?: string): Promise<{
     appearances: number;
     minutesPlayed: number | null;

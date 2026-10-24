@@ -16,6 +16,11 @@ export class PlayersController {
     return this.players.options();
   }
 
+  @Get('me')
+  getMine() {
+    return this.players.getCurrentUserPlayer();
+  }
+
   @Get()
   @Public()
   list(

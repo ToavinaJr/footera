@@ -16,14 +16,22 @@ export class JwtAuthGuard implements CanActivate {
       if (origin && !allowedOrigins.includes(origin.replace(/\/+$/, ''))) throw new ForbiddenException('Origine de requête non autorisée.');
     }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_ROUTE, [context.getHandler(), context.getClass()]);
-    if (isPublic) return true;
     const authorization = request.headers.authorization;
     const bearer = authorization?.startsWith('Bearer ') ? authorization.slice(7) : undefined;
     const cookieToken = parseCookieValue(request.headers.cookie, 'footera_session');
     const token = bearer || cookieToken;
-    if (!token) throw new UnauthorizedException('Authentification requise.');
-    request.user = this.auth.verifyToken(decodeURIComponent(token));
-    await this.auth.validateSession(request.user.id, request.user.sessionId);
+    if (!token) {
+      if (isPublic) return true;
+      throw new UnauthorizedException('Authentification requise.');
+    }
+    try {
+      request.user = this.auth.verifyToken(decodeURIComponent(token));
+      await this.auth.validateSession(request.user.id, request.user.sessionId);
+    } catch (error: unknown) {
+      request.user = undefined;
+      if (isPublic) return true;
+      throw error;
+    }
     return true;
   }
 }
