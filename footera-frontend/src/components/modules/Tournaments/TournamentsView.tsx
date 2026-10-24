@@ -18,6 +18,7 @@ import { catalogsService } from '../../../services/catalogsService';
 import type { CatalogOptions } from '../../../types';
 import { ImageUploadField } from '../../common/ImageUploadField';
 import { PhotoGallery } from '../../common/PhotoGallery';
+import { useTranslation } from '../../../i18n';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -40,6 +41,7 @@ const TOURNAMENT_BANNER_PRESETS = [
 
 export const TournamentsView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
+  const { t } = useTranslation();
   const tournamentModal = useRouteModal('/tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [catalogOptions, setCatalogOptions] = useState<CatalogOptions | null>(null);
@@ -76,6 +78,7 @@ export const TournamentsView: React.FC = () => {
   const [formBannerUrl, setFormBannerUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const canCreateTournament = Boolean(formTitle.trim() && formFormat && formCity.trim() && formVenue.trim()
+    && formPitchIds.length === 1
     && formStartDate && formEndDate >= formStartDate && typeof formMaxTeams === 'number' && formMaxTeams >= 2 && formMaxTeams <= 128
     && formEntryFee !== '' && Number.isFinite(Number(formEntryFee)) && Number(formEntryFee) >= 0
     && formPrizePool !== '' && Number.isFinite(Number(formPrizePool)) && Number(formPrizePool) >= 0
@@ -736,39 +739,25 @@ export const TournamentsView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Stade ou Complexe d&apos;accueil *</label>
-                <input
-                  type="text"
+                <SelectField
+                  name="tournament-pitch"
+                  value={formPitchIds[0] ?? ''}
                   required
-                  value={formVenue}
-                  onChange={(e) => setFormVenue(e.target.value)}
-                  placeholder="Ex: Stade Moderne Ampasambazaha"
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                />
+                  disabled={ownedPitches.length === 0}
+                  onChange={(event) => {
+                    const pitch = ownedPitches.find((item) => item.id === event.target.value);
+                    setFormPitchIds(pitch ? [pitch.id] : []);
+                    setFormVenue(pitch?.complexName || pitch?.name || '');
+                    if (pitch?.city) setFormCity(pitch.city);
+                  }}
+                  className="w-full rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
+                >
+                  <option value="">{t('tournaments.selectOwnedPitch')}</option>
+                  {ownedPitches.map((pitch) => <option key={pitch.id} value={pitch.id}>{pitch.complexName || pitch.name} · {pitch.city}</option>)}
+                </SelectField>
+                {ownedPitches.length === 0 && <p className="mt-1 text-xs text-amber-800">{t('tournaments.noOwnedPitches')}</p>}
               </div>
             </div>
-
-            {ownedPitches.length > 0 && <fieldset className="rounded-2xl border border-pitch-line bg-pitch-panel p-4">
-              <legend className="px-1 text-xs font-bold text-pitch-ink">Vos terrains disponibles pour ce tournoi</legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {ownedPitches.map((pitch) => {
-                  const checked = formPitchIds.includes(pitch.id);
-                  return <label key={pitch.id} className="flex min-w-0 cursor-pointer items-start gap-2 rounded-xl border border-pitch-line bg-white p-3 text-xs">
-                    <input type="checkbox" checked={checked} onChange={(event) => {
-                      const nextIds = event.target.checked
-                        ? [...formPitchIds, pitch.id]
-                        : formPitchIds.filter((id) => id !== pitch.id);
-                      setFormPitchIds(nextIds);
-                      const selected = ownedPitches.filter((item) => nextIds.includes(item.id));
-                      if (selected.length) {
-                        setFormVenue(selected.map((item) => item.complexName || item.name).join(', '));
-                        setFormCity(selected[0]?.city ?? formCity);
-                      }
-                    }} className="mt-0.5 accent-pitch-primary" />
-                    <span className="min-w-0"><strong className="block truncate text-pitch-ink">{pitch.complexName || pitch.name}</strong><span className="text-slate-500">{pitch.name} · {pitch.city}</span></span>
-                  </label>;
-                })}
-              </div>
-            </fieldset>}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>

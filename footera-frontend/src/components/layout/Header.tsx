@@ -107,13 +107,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <button
               onClick={() => setActiveSection('stats')}
               aria-label={t('nav.stats')}
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                activeSection === 'stats'
-                  ? 'bg-pitch-primary text-white shadow-xs'
-                  : 'bg-[#f4f7f2] hover:bg-pitch-light text-pitch-ink border border-pitch-line'
-              }`}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer bg-[#f4f7f2] hover:bg-pitch-light text-pitch-ink border border-pitch-line"
             >
-              <BarChart3 className={`w-3.5 h-3.5 ${activeSection === 'stats' ? 'text-white' : 'text-pitch-primary'}`} />
+              <BarChart3 className="w-3.5 h-3.5 text-pitch-primary" />
               <span>{t('nav.stats')}</span>
             </button>
 
