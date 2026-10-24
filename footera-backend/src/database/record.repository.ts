@@ -22,6 +22,7 @@ export const RECORD_MODELS = {
   users: 'userRecord',
   authCredentials: 'authCredentialRecord',
   authSessions: 'authSessionRecord',
+  roleRequests: 'roleRequestRecord',
   players: 'playerRecord',
   teams: 'teamRecord',
   clubs: 'clubRecord',

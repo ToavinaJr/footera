@@ -85,9 +85,14 @@ export class GalleriesService {
     if (entity === 'pitches') return (record as PitchRecord).ownerId === userId;
     if (entity === 'tournaments') return (record as TournamentRecord).organizerId === userId;
     const club = record as ClubRecord;
-    const teams = await this.records.list<TeamRecord>('teams');
+    const [teams, user] = await Promise.all([
+      this.records.list<TeamRecord>('teams'),
+      this.records.find<import('../../types/records.js').UserRecord>('users', userId),
+    ]);
     const clubTeamIds = new Set((club.teams ?? []).map((team) => team.id));
-    return teams.some((team) => clubTeamIds.has(team.id) && (team.ownerId === userId || team.managerIds?.includes(userId)));
+    return teams.some((team) => clubTeamIds.has(team.id)
+      && (team.ownerId === userId || team.managerIds?.includes(userId)
+        || (user?.roles?.includes('Entraîneur') && team.name === user.sportsCv?.currentTeam)));
   }
 
   private async assertCanManage(entity: GalleryEntity, record: GalleryRecord) {

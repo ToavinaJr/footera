@@ -20,6 +20,11 @@ export const TOURNAMENT_STATUSES = {
 } as const;
 export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[keyof typeof TOURNAMENT_STATUSES];
 
+export const ROLE_REQUESTABLE_ROLES = ['Gestionnaire Terrain', 'Entraîneur', 'Organisateur Tournoi', 'Vendeur'] as const;
+export type RequestableRole = (typeof ROLE_REQUESTABLE_ROLES)[number];
+export const ROLE_REQUEST_STATUSES = { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED' } as const;
+export type RoleRequestStatus = (typeof ROLE_REQUEST_STATUSES)[keyof typeof ROLE_REQUEST_STATUSES];
+
 export const BOOKING_STATUSES = { CONFIRMED: 'CONFIRMED', CANCELLED: 'CANCELLED' } as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[keyof typeof BOOKING_STATUSES];
 

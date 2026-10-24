@@ -16,6 +16,7 @@ import { ImageUploadField } from '../../common/ImageUploadField';
 import { DatePickerField } from '../../common/DatePickerField';
 import { formatDateForDisplay, getTodayDateInputValue } from '../../../utils/date';
 import { PhotoGallery } from '../../common/PhotoGallery';
+import { useTranslation } from '../../../i18n';
 
 const PITCH_IMAGE_PRESETS = [
   {
@@ -42,6 +43,7 @@ interface SelectedPitchSlot {
 }
 
 export const PitchesView: React.FC = () => {
+  const { t } = useTranslation();
   const { showToast, selectedResourceId } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -371,6 +373,29 @@ export const PitchesView: React.FC = () => {
           <label className="mt-3 block text-xs font-bold text-slate-700" htmlFor="pitch-review-comment">Commentaire (facultatif)</label>
           <textarea id="pitch-review-comment" value={reviewComment} onChange={(event) => setReviewComment(event.target.value.slice(0, 500))} maxLength={500} rows={3} placeholder="Décrivez votre expérience sur ce terrain…" className="mt-1 w-full resize-y rounded-xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary focus:outline-hidden" />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-500">{reviewComment.length}/500 caractères · une note par compte, modifiable à tout moment</span><button type="button" disabled={!reviewRating || isSubmittingReview} onClick={handleRatePitch} className="rounded-xl bg-pitch-action px-4 py-3 text-sm font-bold text-white hover:bg-pitch-action-hover disabled:cursor-not-allowed disabled:opacity-50">{isSubmittingReview ? 'Enregistrement…' : detailPitch.myRating ? 'Mettre à jour mon avis' : 'Publier mon avis'}</button></div>
+        </section>
+        <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-extrabold text-pitch-ink">{t('pitch.reviewsTitle')}</h2>
+              <p className="mt-1 text-sm text-slate-500">{t('pitch.reviewsDescription')}</p>
+            </div>
+            <span className="text-sm font-semibold text-slate-600">{t('pitch.reviewCount', { count: formatFiniteNumber(detailPitch.reviewsCount) })}</span>
+          </div>
+          {detailPitch.reviews?.length ? <ul className="mt-5 grid gap-3 md:grid-cols-2">
+            {detailPitch.reviews.map((review) => <li key={review.userId} className="rounded-2xl border border-pitch-line bg-pitch-panel p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="break-words font-bold text-pitch-ink">{review.reviewerName}</p>
+                  <time className="mt-1 block text-xs text-slate-500" dateTime={review.createdAt}>{formatDateForDisplay(review.createdAt)}</time>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-pitch-ink" aria-label={t('pitch.reviewRating', { rating: review.rating })}>
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />{review.rating}/5
+                </span>
+              </div>
+              {review.comment && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{review.comment}</p>}
+            </li>)}
+          </ul> : <p className="mt-4 rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">{t('pitch.reviewsEmpty')}</p>}
         </section>
       </div>
     );

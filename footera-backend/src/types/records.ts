@@ -1,4 +1,4 @@
-import type { AppSection, ApplicationStatus, BookingStatus, MatchEventType, MatchStatus, NotificationType, TeamInvitationStatus, TeamJoinRequestStatus, TournamentStatus } from './domain.js';
+import type { AppSection, ApplicationStatus, BookingStatus, MatchEventType, MatchStatus, NotificationType, RequestableRole, RoleRequestStatus, TeamInvitationStatus, TeamJoinRequestStatus, TournamentStatus } from './domain.js';
 
 export interface UserRecord {
   id: string;
@@ -19,6 +19,14 @@ export interface UserRecord {
 
 export interface AuthCredentialRecord { userId: string; passwordHash: string }
 export interface AuthSessionRecord { userId: string; expiresAt: string }
+export interface RoleRequestRecord {
+  id: string;
+  userId: string;
+  role: RequestableRole;
+  status: RoleRequestStatus;
+  reason?: string;
+  createdAt: string;
+}
 
 export interface SportsCvRecord {
   primaryPosition?: string;
@@ -326,6 +334,7 @@ export interface RecordPayloadMap {
   users: UserRecord;
   authCredentials: AuthCredentialRecord;
   authSessions: AuthSessionRecord;
+  roleRequests: RoleRequestRecord;
   players: PlayerRecord;
   teams: TeamRecord;
   clubs: ClubRecord;

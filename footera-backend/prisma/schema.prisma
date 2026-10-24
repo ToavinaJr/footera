@@ -24,6 +24,11 @@ model AuthSessionRecord {
   payload Json
   @@map("auth_sessions")
 }
+model RoleRequestRecord {
+  id      String @id
+  payload Json
+  @@map("role_requests")
+}
 model AuthLoginAttemptRecord {
   id        String   @id
   attempts  Int      @default(0)

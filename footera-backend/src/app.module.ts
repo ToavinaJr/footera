@@ -20,6 +20,7 @@ import { TeamsModule } from './modules/teams/teams.module.js';
 import { TournamentsModule } from './modules/tournaments/tournaments.module.js';
 import { UploadsModule } from './modules/uploads/uploads.module.js';
 import { GalleriesModule } from './modules/galleries/galleries.module.js';
+import { RoleRequestsModule } from './modules/role-requests/role-requests.module.js';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { GalleriesModule } from './modules/galleries/galleries.module.js';
     StatsModule,
     UploadsModule,
     GalleriesModule,
+    RoleRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_INTERCEPTOR, useClass: UserContextInterceptor }],
