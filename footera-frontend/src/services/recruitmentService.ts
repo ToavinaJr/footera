@@ -30,4 +30,8 @@ export const recruitmentService = {
   listMyApplications(): Promise<Application[]> {
     return apiClient<Application[]>('recruitment/my-applications');
   },
+
+  cancelApplication(id: string): Promise<Application> {
+    return apiClient<Application>(`recruitment/my-applications/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
+  },
 };

@@ -394,7 +394,7 @@ export interface Application {
   phone: string;
   message: string;
   submittedAt: string;
-  status: 'EN_REVUE' | 'ACCEPTEE' | 'REFUSEE';
+  status: 'EN_REVUE' | 'ACCEPTEE' | 'REFUSEE' | 'RETIRÉE';
 }
 
 export interface MarketplaceListing {

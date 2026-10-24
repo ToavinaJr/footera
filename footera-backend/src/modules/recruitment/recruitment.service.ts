@@ -22,7 +22,9 @@ export class RecruitmentService {
       this.records.list<RecruitmentAdRecord>('recruitmentAds'),
       this.records.list<ApplicationRecord>('applications'),
     ]);
-    const appliedAdIds = new Set(applications.filter((application) => application.userId === user.id).map((application) => application.adId));
+    const appliedAdIds = new Set(applications
+      .filter((application) => application.userId === user.id && application.status !== APPLICATION_STATUSES.WITHDRAWN && application.status !== APPLICATION_STATUSES.REJECTED)
+      .map((application) => application.adId));
     return this.filterAds(ads.filter((ad) => !appliedAdIds.has(ad.id)), filters);
   }
 
@@ -38,12 +40,30 @@ export class RecruitmentService {
       .filter((application) => application.userId === user?.id)
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   }
+  async cancelApplication(applicationId: string) {
+    const user = await this.accounts.profile();
+    if (!user) throw new UnauthorizedException('Connectez-vous pour annuler votre candidature.');
+    const application = await this.records.find<ApplicationRecord>('applications', applicationId);
+    if (!application || application.userId !== user.id) throw new NotFoundException('Candidature introuvable.');
+    if (application.status !== APPLICATION_STATUSES.IN_REVIEW) {
+      throw new ConflictException('Cette candidature ne peut plus être annulée.');
+    }
+    const ad = await this.records.find<RecruitmentAdRecord>('recruitmentAds', application.adId);
+    const withdrawn: ApplicationRecord = { ...application, status: APPLICATION_STATUSES.WITHDRAWN };
+    await this.records.save('applications', applicationId, withdrawn);
+    if (ad) {
+      const candidatesCount = Number.isFinite(ad.candidatesCount) ? Math.max(0, (ad.candidatesCount ?? 0) - 1) : 0;
+      await this.records.save('recruitmentAds', ad.id, { ...ad, candidatesCount });
+    }
+    return withdrawn;
+  }
   async apply(adId: string, input: { message: string; phone: string }) {
     const [ad, user] = await Promise.all([this.getAd(adId), this.accounts.profile()]);
     if (!ad) throw new NotFoundException('Annonce de recrutement introuvable.');
     if (!user) throw new UnauthorizedException('Connectez-vous pour candidater.');
     const existingApplications = await this.records.list<ApplicationRecord>('applications');
-    if (existingApplications.some((application) => application.userId === user.id && application.adId === adId)) {
+    if (existingApplications.some((application) => application.userId === user.id && application.adId === adId
+      && application.status !== APPLICATION_STATUSES.WITHDRAWN && application.status !== APPLICATION_STATUSES.REJECTED)) {
       throw new ConflictException('Vous avez déjà postulé à cette offre.');
     }
     const id = `app_${randomUUID()}`;

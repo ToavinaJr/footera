@@ -5,6 +5,7 @@ export type Language = 'mg' | 'en' | 'fr';
 
 const messages = {
   fr: {
+    'recruitment.cancelApplication': 'Annuler ma candidature', 'recruitment.cancelling': 'Annulation…', 'recruitment.applicationCancelled': 'Votre candidature a été annulée.', 'recruitment.cancelApplicationError': 'Impossible d’annuler cette candidature.', 'recruitment.withdrawn': 'Retirée', 'recruitment.inReview': 'En cours d’examen', 'recruitment.accepted': 'Acceptée', 'recruitment.rejected': 'Refusée',
     'players.profile': 'Profil joueur', 'players.currentTeam': 'Équipe actuelle : {team}', 'players.available': 'Disponible', 'players.about': 'À propos', 'players.current': 'actuel',
     'pitch.addPitch': 'Ajouter un terrain',
     'profile.primaryPosition': 'Poste principal', 'profile.strongFoot': 'Pied fort', 'profile.measurements': 'Mensurations', 'profile.experience': 'Expérience', 'profile.choosePosition': 'Choisir un poste', 'profile.height': 'Taille (cm)', 'profile.weight': 'Poids (kg)', 'profile.chooseStrongFoot': 'Choisir un pied fort', 'profile.currentClub': 'Club actuel', 'profile.sportsBio': 'Bio sportive', 'profile.editPersonalInfo': 'Modifier mes informations personnelles',
@@ -133,6 +134,7 @@ const messages = {
     'landing.footer': 'Footera — Faites grandir le football, ensemble.',
   },
   en: {
+    'recruitment.cancelApplication': 'Withdraw my application', 'recruitment.cancelling': 'Withdrawing…', 'recruitment.applicationCancelled': 'Your application has been withdrawn.', 'recruitment.cancelApplicationError': 'Could not withdraw this application.', 'recruitment.withdrawn': 'Withdrawn', 'recruitment.inReview': 'Under review', 'recruitment.accepted': 'Accepted', 'recruitment.rejected': 'Rejected',
     'players.profile': 'Player profile', 'players.currentTeam': 'Current team: {team}', 'players.available': 'Available', 'players.about': 'About', 'players.current': 'current',
     'pitch.addPitch': 'Add a pitch',
     'profile.primaryPosition': 'Primary position', 'profile.strongFoot': 'Strong foot', 'profile.measurements': 'Measurements', 'profile.experience': 'Experience', 'profile.choosePosition': 'Choose a position', 'profile.height': 'Height (cm)', 'profile.weight': 'Weight (kg)', 'profile.chooseStrongFoot': 'Choose a strong foot', 'profile.currentClub': 'Current club', 'profile.sportsBio': 'Sports bio', 'profile.editPersonalInfo': 'Edit my personal information',
@@ -259,6 +261,7 @@ const messages = {
     'landing.footer': 'Footera — Growing football together.',
   },
   mg: {
+    'recruitment.cancelApplication': 'Hanafoana ny fangatahako', 'recruitment.cancelling': 'Eo am-panafoanana…', 'recruitment.applicationCancelled': 'Nofoanana ny fangatahanao.', 'recruitment.cancelApplicationError': 'Tsy afaka nanafoana ity fangatahana ity.', 'recruitment.withdrawn': 'Nofoanana', 'recruitment.inReview': 'Eo am-pandinihana', 'recruitment.accepted': 'Nekena', 'recruitment.rejected': 'Nolavina',
     'players.profile': 'Mombamomba ny mpilalao', 'players.currentTeam': 'Ekipa misy azy: {team}', 'players.available': 'Afaka milalao', 'players.about': 'Momba azy', 'players.current': 'ankehitriny',
     'pitch.addPitch': 'Hanampy kianja',
     'profile.primaryPosition': 'Toerana fototra', 'profile.strongFoot': 'Tongotra matanjaka', 'profile.measurements': 'Refy', 'profile.experience': 'Traikefa', 'profile.choosePosition': 'Misafidiana toerana', 'profile.height': 'Haavo (cm)', 'profile.weight': 'Lanja (kg)', 'profile.chooseStrongFoot': 'Misafidiana tongotra matanjaka', 'profile.currentClub': 'Klioba misy anao', 'profile.sportsBio': 'Mombamomba ara-panatanjahantena', 'profile.editPersonalInfo': 'Hanova ny mombamomba ahy',

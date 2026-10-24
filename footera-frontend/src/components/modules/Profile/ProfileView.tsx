@@ -51,6 +51,7 @@ export const ProfileView: React.FC = () => {
   };
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [cancellingApplicationId, setCancellingApplicationId] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [myPlayer, setMyPlayer] = useState<Player | null>(null);
   const [publicPlayer, setPublicPlayer] = useState<Player | null>(null);
@@ -202,6 +203,20 @@ export const ProfileView: React.FC = () => {
         return;
       }
       showToast('Erreur lors de l’annulation', 'error');
+    }
+  };
+
+  const handleCancelApplication = async (application: Application) => {
+    if (application.status !== 'EN_REVUE' || cancellingApplicationId) return;
+    setCancellingApplicationId(application.id);
+    try {
+      const updated = await recruitmentService.cancelApplication(application.id);
+      setApplications((current) => current.map((item) => item.id === updated.id ? updated : item));
+      showToast(t('recruitment.applicationCancelled'), 'success');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : t('recruitment.cancelApplicationError'), 'error');
+    } finally {
+      setCancellingApplicationId(null);
     }
   };
 
@@ -450,8 +465,8 @@ export const ProfileView: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
-                    <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : 'amber'} size="sm">
-                      {app.status === 'EN_REVUE' ? 'En cours d’examen' : 'Acceptée'}
+                    <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : app.status === 'RETIRÉE' ? 'rose' : 'amber'} size="sm">
+                      {app.status === 'EN_REVUE' ? t('recruitment.inReview') : app.status === 'ACCEPTEE' ? t('recruitment.accepted') : app.status === 'RETIRÉE' ? t('recruitment.withdrawn') : t('recruitment.rejected')}
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
@@ -459,6 +474,9 @@ export const ProfileView: React.FC = () => {
                   </p>
                   <p className="text-xs text-slate-600 italic mt-1">« {app.message} »</p>
                 </div>
+                {app.status === 'EN_REVUE' && <button type="button" disabled={cancellingApplicationId !== null} onClick={() => void handleCancelApplication(app)} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60">
+                  <XCircle className="h-4 w-4" aria-hidden="true" />{cancellingApplicationId === app.id ? t('recruitment.cancelling') : t('recruitment.cancelApplication')}
+                </button>}
               </div>
             ))
           )}

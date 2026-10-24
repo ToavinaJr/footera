@@ -38,4 +38,9 @@ export class RecruitmentController {
   getMyApplications() {
     return this.recruitment.listApplications();
   }
+
+  @Post('my-applications/:id/cancel')
+  cancelMyApplication(@Param('id') id: string) {
+    return this.recruitment.cancelApplication(id);
+  }
 }

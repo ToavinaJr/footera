@@ -28,7 +28,7 @@ export type RoleRequestStatus = (typeof ROLE_REQUEST_STATUSES)[keyof typeof ROLE
 export const BOOKING_STATUSES = { CONFIRMED: 'CONFIRMED', CANCELLED: 'CANCELLED' } as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[keyof typeof BOOKING_STATUSES];
 
-export const APPLICATION_STATUSES = { IN_REVIEW: 'EN_REVUE' } as const;
+export const APPLICATION_STATUSES = { IN_REVIEW: 'EN_REVUE', ACCEPTED: 'ACCEPTEE', REJECTED: 'REFUSEE', WITHDRAWN: 'RETIRÉE' } as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[keyof typeof APPLICATION_STATUSES];
 
 export const TEAM_INVITATION_STATUSES = { PENDING: 'PENDING', ACCEPTED: 'ACCEPTED', DECLINED: 'DECLINED' } as const;
