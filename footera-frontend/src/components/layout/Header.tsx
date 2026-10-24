@@ -17,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const isNotifOpen = location.pathname === '/notifications';
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
+  const notificationBadgeLabel = unreadNotificationsCount > 99 ? '99+' : String(unreadNotificationsCount);
 
   const confirmLogout = async () => {
     try {
@@ -119,13 +120,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             {/* Notification Trigger with Red Badge */}
             <button
               onClick={openNotifications}
-              aria-label={`Notifications (${unreadNotificationsCount} non lues)`}
+              aria-label={t('nav.notificationsUnread', { count: unreadNotificationsCount })}
               className="relative min-h-11 min-w-11 flex items-center justify-center rounded-full text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer"
             >
               <Bell className="w-5 h-5 stroke-[2.2]" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-2 right-2 min-w-45 h-4.5 px-1 rounded-full bg-[#dc2626] text-white text-micro font-extrabold flex items-center justify-center ring-2 ring-white">
-                  {unreadNotificationsCount}
+                <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#dc2626] px-1 text-micro font-extrabold leading-none text-white ring-2 ring-white">
+                  {notificationBadgeLabel}
                 </span>
               )}
             </button>
