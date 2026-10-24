@@ -61,6 +61,8 @@ export const MarketplaceView: React.FC = () => {
   const [formDescription, setFormDescription] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const canCreateListing = Boolean(formTitle.trim() && formCategory && formCondition && formBrand
+    && formCity.trim() && formImageUrl && Number.isFinite(Number(formPrice)) && Number(formPrice) > 0);
 
   useEffect(() => {
     catalogsService.getOptions()
@@ -490,7 +492,7 @@ export const MarketplaceView: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !canCreateListing}
                 className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? t('market.publishing') : t('market.publish')}

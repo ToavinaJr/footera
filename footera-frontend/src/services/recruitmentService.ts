@@ -3,11 +3,20 @@ import type { Application, RecruitmentAd } from '../types';
 
 export const recruitmentService = {
   async listAds(filters?: { query?: string; position?: string; division?: string }): Promise<RecruitmentAd[]> {
+    return this.requestAds('recruitment/ads', filters);
+  },
+
+  async listAvailableAds(filters?: { query?: string; position?: string; division?: string }): Promise<RecruitmentAd[]> {
+    return this.requestAds('recruitment/ads/available', filters);
+  },
+
+  requestAds(path: string, filters?: { query?: string; position?: string; division?: string }): Promise<RecruitmentAd[]> {
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
     if (filters?.position && filters.position !== 'Tous') params.set('position', filters.position);
     if (filters?.division && filters.division !== 'Toutes') params.set('division', filters.division);
-    return apiClient<RecruitmentAd[]>(`recruitment/ads?${params.toString()}`);
+    const query = params.size ? `?${params.toString()}` : '';
+    return apiClient<RecruitmentAd[]>(`${path}${query}`);
   },
 
   getAdById(id: string): Promise<RecruitmentAd> {

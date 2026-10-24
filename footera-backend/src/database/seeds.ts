@@ -39,7 +39,7 @@ export const SEED_CATALOGS = [
   { id: 'pitch-surfaces', values: ['Synthétique dernière génération', 'Gazon naturel', 'Indoor Five', 'Futsal parquet'] },
   { id: 'pitch-formats', values: ['11v11', '9v9', '7v7', '5v5', '4v4'] },
   { id: 'tournament-formats', values: ['11v11', '9v9', '7v7', '5v5 (Five)', 'Futsal'] },
-  { id: 'tournament-team-counts', values: ['8', '12', '16', '24', '32'] },
+
   { id: 'pitch-amenities', values: ['Vestiaires avec douches chaudes', 'Éclairage nocturne LED', 'Parking gratuit surveillé', 'Buvette & Club House', 'Tribunes abritées', 'Caméras vidéo HD Replay', 'Chronomètre & Tableau d’affichage', 'Ballons & Chasubles fournis', 'Vestiaires chauffés', 'Parking gratuit', 'Tribunes 500 places', 'Buvette'] },
   { id: 'marketplace-categories', values: ['Crampons', 'Maillots', 'Ballons', 'Gardiens', 'Équipements'] },
   { id: 'marketplace-conditions', values: ['Neuf avec étiquette', 'Comme neuf', 'Très bon état', 'Bon état'] },

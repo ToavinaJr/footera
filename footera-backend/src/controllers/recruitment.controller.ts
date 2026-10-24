@@ -13,6 +13,11 @@ export class RecruitmentController {
     return this.recruitment.listAds({ query, position, division });
   }
 
+  @Get('ads/available')
+  listAvailableAds(@Query('q') query?: string, @Query('position') position?: string, @Query('division') division?: string) {
+    return this.recruitment.listAvailableAds({ query, position, division });
+  }
+
   @Get('ads/:id')
   @Public()
   async getAdById(@Param('id') id: string) {

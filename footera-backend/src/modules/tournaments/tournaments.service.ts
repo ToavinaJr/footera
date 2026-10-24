@@ -113,12 +113,8 @@ export class TournamentsService {
     if (!organizerAccount?.roles?.includes('Organisateur Tournoi')) {
       throw new ForbiddenException('Le rôle Organisateur Tournoi est requis pour créer un tournoi.');
     }
-    const [formats, teamCounts] = await Promise.all([
-      this.catalogs.values('tournamentFormats'),
-      this.catalogs.values('tournamentTeamCounts'),
-    ]);
+    const formats = await this.catalogs.values('tournamentFormats');
     if (!formats.includes(input.format)) throw new BadRequestException('Le format du tournoi est invalide.');
-    if (!teamCounts.includes(String(input.maxTeams))) throw new BadRequestException('Le nombre d’équipes du tournoi est invalide.');
     const id = `tourn_${randomUUID()}`;
     if (!isIntegerInRange(input.maxTeams, 2, 128)
       || !isFiniteNumberInRange(input.entryFee, 0, 1_000_000_000)

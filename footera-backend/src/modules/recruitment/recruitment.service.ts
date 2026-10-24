@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -12,7 +12,21 @@ export class RecruitmentService {
   private readonly logger = new Logger(RecruitmentService.name);
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService) {}
   async listAds(filters: { query?: string; position?: string; division?: string } = {}) {
-    const ads = await this.records.list<RecruitmentAdRecord>('recruitmentAds');
+    return this.filterAds(await this.records.list<RecruitmentAdRecord>('recruitmentAds'), filters);
+  }
+
+  async listAvailableAds(filters: { query?: string; position?: string; division?: string } = {}) {
+    const user = await this.accounts.profile();
+    if (!user?.id) throw new UnauthorizedException('Connectez-vous pour consulter vos offres disponibles.');
+    const [ads, applications] = await Promise.all([
+      this.records.list<RecruitmentAdRecord>('recruitmentAds'),
+      this.records.list<ApplicationRecord>('applications'),
+    ]);
+    const appliedAdIds = new Set(applications.filter((application) => application.userId === user.id).map((application) => application.adId));
+    return this.filterAds(ads.filter((ad) => !appliedAdIds.has(ad.id)), filters);
+  }
+
+  private filterAds(ads: RecruitmentAdRecord[], filters: { query?: string; position?: string; division?: string }) {
     return ads.filter((ad) => (!filters.query || `${ad.teamName} ${ad.city} ${ad.description}`.toLowerCase().includes(filters.query.toLowerCase()))
       && (!filters.position || filters.position === 'Tous' || ad.positionSought === filters.position)
       && (!filters.division || filters.division === 'Toutes' || ad.division === filters.division));
@@ -28,6 +42,10 @@ export class RecruitmentService {
     const [ad, user] = await Promise.all([this.getAd(adId), this.accounts.profile()]);
     if (!ad) throw new NotFoundException('Annonce de recrutement introuvable.');
     if (!user) throw new UnauthorizedException('Connectez-vous pour candidater.');
+    const existingApplications = await this.records.list<ApplicationRecord>('applications');
+    if (existingApplications.some((application) => application.userId === user.id && application.adId === adId)) {
+      throw new ConflictException('Vous avez déjà postulé à cette offre.');
+    }
     const id = `app_${randomUUID()}`;
     const application = {
       id, userId: user.id, adId, adTitle: `${ad.positionSought} — ${ad.teamName}`,

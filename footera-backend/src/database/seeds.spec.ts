@@ -28,7 +28,7 @@ describe('seed reference integrity', () => {
     expect(catalogValues.get('marketplace-conditions')).toContain('Bon état');
     expect(catalogValues.get('pitch-formats')).toEqual(['11v11', '9v9', '7v7', '5v5', '4v4']);
     expect(catalogValues.get('tournament-formats')).toContain('9v9');
-    expect(catalogValues.get('tournament-team-counts')).toContain('16');
+    expect(catalogValues.has('tournament-team-counts')).toBe(false);
   });
   const players = [...SEED_PLAYERS, ...SEED_PLAYERS_EXTRA];
   const playerIds = new Set(players.map((player) => player.id));

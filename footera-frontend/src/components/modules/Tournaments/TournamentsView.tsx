@@ -66,11 +66,17 @@ export const TournamentsView: React.FC = () => {
   const [formStartDate, setFormStartDate] = useState('');
   const [formEndDate, setFormEndDate] = useState('');
   const [formMaxTeams, setFormMaxTeams] = useState<number | ''>('');
+
   const [formEntryFee, setFormEntryFee] = useState('');
   const [formPrizePool, setFormPrizePool] = useState('');
   const [formOrganizer, setFormOrganizer] = useState('');
   const [formBannerUrl, setFormBannerUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const canCreateTournament = Boolean(formTitle.trim() && formFormat && formCity.trim() && formVenue.trim()
+    && formStartDate && formEndDate >= formStartDate && typeof formMaxTeams === 'number' && formMaxTeams >= 2 && formMaxTeams <= 128
+    && formEntryFee !== '' && Number.isFinite(Number(formEntryFee)) && Number(formEntryFee) >= 0
+    && formPrizePool !== '' && Number.isFinite(Number(formPrizePool)) && Number(formPrizePool) >= 0
+    && formOrganizer.trim() && formBannerUrl);
 
   useEffect(() => {
     catalogsService.getOptions().then(setCatalogOptions).catch((err: unknown) => {
@@ -690,15 +696,17 @@ export const TournamentsView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nombre d&apos;équipes max *</label>
-                <SelectField
+                <input
+                  type="number"
+                  min={2}
+                  max={128}
+                  step={1}
                   value={formMaxTeams}
-                  onChange={(e) => setFormMaxTeams(e.target.value ? Number(e.target.value) : '')}
+                  onChange={(event) => setFormMaxTeams(event.target.value ? Number(event.target.value) : '')}
+                  placeholder="16"
                   required
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                >
-                  <option value="">Choisir un nombre d’équipes</option>
-                  {(catalogOptions?.tournamentTeamCounts ?? []).map((count) => <option key={count} value={count}>{count} équipes</option>)}
-                </SelectField>
+                />
               </div>
             </div>
 
@@ -825,7 +833,7 @@ export const TournamentsView: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || !canCreateTournament}
                 className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isCreating ? 'Création en cours...' : 'Publier et ouvrir le tournoi'}

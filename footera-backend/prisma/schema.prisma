@@ -120,3 +120,10 @@ model CatalogRecord {
   payload Json
   @@map("catalogs")
 }
+model UploadedImageRecord {
+  id        String   @id
+  mimeType  String
+  content   Bytes
+  createdAt DateTime @default(now())
+  @@map("uploaded_images")
+}

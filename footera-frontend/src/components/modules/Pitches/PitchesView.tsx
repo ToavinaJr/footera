@@ -41,7 +41,7 @@ interface SelectedPitchSlot {
 }
 
 export const PitchesView: React.FC = () => {
-  const { showToast, selectedResourceId, user } = useApp();
+  const { showToast, selectedResourceId } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const { pitchId: routePitchId } = useParams();
@@ -89,6 +89,9 @@ export const PitchesView: React.FC = () => {
   const [formAmenities, setFormAmenities] = useState<string[]>([]);
   const [formImageUrl, setFormImageUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const canCreatePitch = Boolean(formName.trim() && formComplexName.trim() && formCity.trim() && formAddress.trim()
+    && formSurface && formGameFormat && formDimensions.trim() && formImageUrl
+    && Number.isFinite(Number(formHourlyRate)) && Number(formHourlyRate) >= 5);
 
   useEffect(() => {
     pitchesService.getOptions()
@@ -777,7 +780,7 @@ export const PitchesView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Photo principale du terrain *
               </label>
-              <ImageUploadField purpose="pitch" label="Importer une photo du terrain" onUploaded={setFormImageUrl} disabled={isCreating || !user?.roles?.includes('Gestionnaire Terrain')} disabledHint="Le rôle Gestionnaire Terrain doit être attribué à votre compte pour importer l’image." />
+              <ImageUploadField purpose="pitch" label="Importer une photo du terrain" onUploaded={setFormImageUrl} disabled={isCreating} />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {PITCH_IMAGE_PRESETS.map((preset) => {
                   const isSelected = formImageUrl === preset.url;
@@ -817,7 +820,7 @@ export const PitchesView: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || !canCreatePitch}
                 className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isCreating ? 'Ajout en cours...' : 'Enregistrer le terrain'}

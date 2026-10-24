@@ -1,10 +1,9 @@
-import { BadRequestException, ForbiddenException, HttpException, Injectable, PayloadTooLargeException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
 import { AccountsService } from '../accounts/accounts.service.js';
+import { PrismaService } from '../../database/prisma.service.js';
 
-export const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+export const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 6_000;
 const MAX_IMAGE_PIXELS = 20_000_000;
 const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
@@ -66,7 +65,7 @@ function imageDimensions(buffer: Buffer, type: ImageInfo['extension']): { width:
 
 function inspectImage(file: ImageUpload | undefined): ImageInfo {
   if (!file?.buffer?.length) throw new BadRequestException('Aucun fichier image reçu.');
-  if (file.buffer.length > MAX_IMAGE_SIZE) throw new PayloadTooLargeException('Image trop volumineuse (5 Mo maximum).');
+  if (file.buffer.length > MAX_IMAGE_SIZE) throw new PayloadTooLargeException('Image trop volumineuse (4 Mo maximum).');
 
   let extension: ImageInfo['extension'];
   let mimeType: ImageInfo['mimeType'];
@@ -105,10 +104,9 @@ function inspectImage(file: ImageUpload | undefined): ImageInfo {
 
 @Injectable()
 export class UploadsService {
-  private readonly uploadDirectory = resolve(process.env.UPLOAD_DIR || 'uploads');
   private readonly uploadAttempts = new Map<string, { count: number; expiresAt: number }>();
 
-  constructor(private readonly accounts: AccountsService) {}
+  constructor(private readonly accounts: AccountsService, private readonly prisma: PrismaService) {}
 
   async uploadImage(file: ImageUpload | undefined, purpose: string | undefined, clientIp: string) {
     if (!purpose || !ALLOWED_PURPOSES.has(purpose)) {
@@ -128,10 +126,9 @@ export class UploadsService {
     const image = inspectImage(file);
     if (!file) throw new BadRequestException('Aucun fichier image reçu.');
     const filename = `${randomUUID()}.${image.extension}`;
-    const filePath = resolve(this.uploadDirectory, filename);
-    if (dirname(filePath) !== this.uploadDirectory) throw new BadRequestException('Nom de fichier invalide.');
-    await mkdir(this.uploadDirectory, { recursive: true });
-    await writeFile(filePath, file.buffer, { flag: 'wx', mode: 0o640 });
+    await this.prisma.uploadedImageRecord.create({
+      data: { id: filename, mimeType: image.mimeType, content: new Uint8Array(file.buffer) },
+    });
     return {
       url: `/api/v1/uploads/${filename}`,
       filename,
@@ -140,6 +137,15 @@ export class UploadsService {
       width: image.width,
       height: image.height,
     };
+  }
+
+  async getImage(filename: string) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(png|jpg|webp)$/i.test(filename)) {
+      throw new NotFoundException('Image introuvable.');
+    }
+    const image = await this.prisma.uploadedImageRecord.findUnique({ where: { id: filename } });
+    if (!image) throw new NotFoundException('Image introuvable.');
+    return { buffer: Buffer.from(image.content), mimeType: image.mimeType };
   }
 
   private enforceRateLimit(clientIp: string) {

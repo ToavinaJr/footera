@@ -1,10 +1,10 @@
-export const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+export const MAX_IMAGE_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 export async function validateImageFile(file: File): Promise<void> {
   if (!file.size) throw new Error('Le fichier image est vide.');
-  if (file.size > MAX_IMAGE_UPLOAD_BYTES) throw new Error('Image trop volumineuse (5 Mo maximum).');
+  if (file.size > MAX_IMAGE_UPLOAD_BYTES) throw new Error('Image trop volumineuse (4 Mo maximum).');
   if (!allowedTypes.has(file.type)) throw new Error('Format refusé. Choisissez une image PNG, JPEG ou WebP.');
 
   const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());

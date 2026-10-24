@@ -65,8 +65,10 @@ export const RecruitmentView: React.FC = () => {
       setIsLoading(true);
       try {
         const [adsData, appsData] = await Promise.all([
-          recruitmentService.listAds({ query: searchQuery, position: positionFilter }),
-          recruitmentService.listMyApplications(),
+          user
+            ? recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter })
+            : recruitmentService.listAds({ query: searchQuery, position: positionFilter }),
+          user ? recruitmentService.listMyApplications() : Promise.resolve([]),
         ]);
         setAds(adsData);
         setMyApplications(appsData);
@@ -78,23 +80,25 @@ export const RecruitmentView: React.FC = () => {
       }
     }
     loadRecruitmentData();
-  }, [searchQuery, positionFilter, selectedResourceId, showToast]);
+  }, [searchQuery, positionFilter, selectedResourceId, showToast, user]);
 
   const handleApply = async () => {
     if (!applicationAd || !applyMessage.trim() || !applicantPhone.trim()) return;
     setIsSubmitting(true);
     try {
-      const application = await recruitmentService.apply(applicationAd.id, {
+      await recruitmentService.apply(applicationAd.id, {
         message: applyMessage,
         phone: applicantPhone,
       });
       showToast(`Candidature transmise à ${applicationAd.teamName} !`);
       closeApplication();
       setApplyMessage('');
-      setMyApplications((current) => [application, ...current.filter((item) => item.id !== application.id)]);
-      setAds((current) => current.map((ad) => ad.id === applicationAd.id
-        ? { ...ad, candidatesCount: ad.candidatesCount + 1 }
-        : ad));
+      const [availableAds, applications] = await Promise.all([
+        recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter }),
+        recruitmentService.listMyApplications(),
+      ]);
+      setAds(availableAds);
+      setMyApplications(applications);
       setActiveTab('my-applications');
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : 'Erreur lors de la candidature', 'error');

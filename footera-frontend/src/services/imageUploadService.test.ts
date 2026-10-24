@@ -22,7 +22,7 @@ test('rejects a MIME spoof where the file content is not an image', async () => 
 
 test('rejects files larger than the upload limit before sending them', async () => {
   const file = new File([new Uint8Array(MAX_IMAGE_UPLOAD_BYTES + 1)], 'huge.png', { type: 'image/png' });
-  await assert.rejects(validateImageFile(file), /5 Mo maximum/);
+  await assert.rejects(validateImageFile(file), /4 Mo maximum/);
 });
 
 test('normalizes legacy French booking dates to the date picker format', () => {

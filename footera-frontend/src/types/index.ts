@@ -7,7 +7,6 @@ export interface CatalogOptions {
   pitchFormats: string[];
   pitchAmenities: string[];
   tournamentFormats: string[];
-  tournamentTeamCounts: string[];
   marketplaceCategories: string[];
   marketplaceConditions: string[];
   marketplaceBrands: string[];
