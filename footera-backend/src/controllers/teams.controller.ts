@@ -22,6 +22,21 @@ export class TeamsController {
     return this.teams.listMyTeamInvitations();
   }
 
+  @Get('my-team/join-requests')
+  listMyTeamJoinRequests() {
+    return this.teams.listMyTeamJoinRequests();
+  }
+
+  @Post('my-team/join-requests/:requestId/accept')
+  acceptJoinRequest(@Param('requestId') requestId: string) {
+    return this.teams.respondToJoinRequest(requestId, true);
+  }
+
+  @Post('my-team/join-requests/:requestId/decline')
+  declineJoinRequest(@Param('requestId') requestId: string) {
+    return this.teams.respondToJoinRequest(requestId, false);
+  }
+
   @Get(':id/detail')
   @Public()
   async getDetail(
@@ -44,7 +59,7 @@ export class TeamsController {
 
   @Post(':id/join')
   joinTeam(@Param('id') id: string, @Body('message') message?: string) {
-    return this.teams.join(id, message || 'Je souhaite rejoindre l équipe');
+    return this.teams.requestJoin(id, message || 'Je souhaite rejoindre l’équipe.');
   }
 
   @Post(':id/favorite')

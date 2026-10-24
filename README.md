@@ -26,6 +26,6 @@ Un tag `vX.Y.Z` publie les images Docker frontend et backend dans GitHub Contain
 
 ## Documentation
 
-- [Architecture générale](docs/architecture.md) · [CI/CD et publication](docs/ci-cd.md)
+- [Architecture générale](docs/architecture.md) · [Audit technique](docs/technical-audit.md) · [Plan de refactorisation](docs/refactoring-plan.md) · [CI/CD et publication](docs/ci-cd.md)
 - [Backend](footera-backend/README.md) · [architecture](footera-backend/docs/architecture.md) · [base de données](footera-backend/docs/database.md) · [déploiement](footera-backend/docs/deployment.md) · [changelog](footera-backend/CHANGELOG.md)
 - [Frontend](footera-frontend/README.md) · [architecture](footera-frontend/docs/architecture.md) · [configuration](footera-frontend/docs/configuration.md) · [changelog](footera-frontend/CHANGELOG.md)

@@ -1,4 +1,4 @@
-import type { AppSection, ApplicationStatus, BookingStatus, MatchEventType, MatchStatus, NotificationType, TeamInvitationStatus, TournamentStatus } from './domain.js';
+import type { AppSection, ApplicationStatus, BookingStatus, MatchEventType, MatchStatus, NotificationType, TeamInvitationStatus, TeamJoinRequestStatus, TournamentStatus } from './domain.js';
 
 export interface UserRecord {
   id: string;
@@ -214,6 +214,20 @@ export interface TeamInvitationRecord {
   [key: string]: unknown;
 }
 
+export interface TeamJoinRequestRecord {
+  id: string;
+  teamId: string;
+  teamName: string;
+  playerId: string;
+  playerName: string;
+  userId: string;
+  message: string;
+  status: TeamJoinRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: unknown;
+}
+
 export interface NotificationRecord {
   id: string;
   title: string;
@@ -305,6 +319,7 @@ export interface RecordPayloadMap {
   marketplace: MarketplaceRecord;
   notifications: NotificationRecord;
   teamInvitations: TeamInvitationRecord;
+  teamJoinRequests: TeamJoinRequestRecord;
   standings: LeagueStandingRecord;
   activity: ActivityFeedRecord;
   catalogs: CatalogRecord;

@@ -29,6 +29,11 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[keyof typeof APPLI
 export const TEAM_INVITATION_STATUSES = { PENDING: 'PENDING', ACCEPTED: 'ACCEPTED', DECLINED: 'DECLINED' } as const;
 export type TeamInvitationStatus = (typeof TEAM_INVITATION_STATUSES)[keyof typeof TEAM_INVITATION_STATUSES];
 
+export const TEAM_JOIN_REQUEST_STATUSES = {
+  PENDING: 'PENDING', ACCEPTED: 'ACCEPTED', DECLINED: 'DECLINED',
+} as const;
+export type TeamJoinRequestStatus = (typeof TEAM_JOIN_REQUEST_STATUSES)[keyof typeof TEAM_JOIN_REQUEST_STATUSES];
+
 export const NOTIFICATION_TYPES = {
   MATCH: 'match', TEAM: 'team', RECRUITMENT: 'recruitment', MARKETPLACE: 'marketplace', BOOKING: 'booking', SYSTEM: 'system',
 } as const;

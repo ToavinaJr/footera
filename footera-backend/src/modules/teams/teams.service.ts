@@ -6,8 +6,9 @@ import { RecordRepository } from '../../database/record.repository.js';
 import { buildTeamMatchSummary } from './team-match-summary.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import { aggregatePlayerMatchStats } from '../players/player-match-stats.js';
-import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
-import { APP_SECTIONS, MATCH_STATUSES, NOTIFICATION_TYPES, TEAM_INVITATION_STATUSES } from '../../types/domain.js';
+import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamJoinRequestRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
+import { APP_SECTIONS, MATCH_STATUSES, NOTIFICATION_TYPES, TEAM_INVITATION_STATUSES, TEAM_JOIN_REQUEST_STATUSES } from '../../types/domain.js';
+import { sanitizeMultilineText } from '../../utils/sanitize.utils.js';
 
 export interface EnrichedTeamMember extends TeamMemberRecord {
   appearances: number;
@@ -276,14 +277,13 @@ export class TeamsService {
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }
 
-  async join(id: string, message: string) {
+  async requestJoin(id: string, message: string) {
     const team = await this.records.find<TeamRecord>('teams', id);
-    if (!team) return { success: false, message: 'Équipe introuvable' };
+    if (!team) throw new NotFoundException('Équipe introuvable.');
     const user = await this.accounts.profile();
-    if (!user) return { success: false, message: 'Utilisateur non authentifié' };
-    const members = team.members || [];
-    const existingPlayers = await this.records.list<PlayerRecord>('players');
-    let player = existingPlayers.find((candidate) => candidate.userId === user.id || candidate.id === user.id);
+    if (!user) throw new ForbiddenException('Connectez-vous pour demander à rejoindre une équipe.');
+    const players = await this.records.list<PlayerRecord>('players');
+    let player = players.find((candidate) => candidate.userId === user.id || candidate.id === user.id);
     if (!player) {
       player = { id: randomUUID(), userId: user.id, name: user.name, city: user.city, avatarUrl: user.avatarUrl,
         primaryPosition: user.sportsCv?.primaryPosition || 'Joueur', secondaryPosition: user.sportsCv?.secondaryPosition,
@@ -291,20 +291,76 @@ export class TeamsService {
         experienceYears: user.sportsCv?.experienceYears, bio: user.sportsCv?.bio };
       await this.records.save('players', player.id, player);
     }
-    if (members.some((member) => member.playerId === player?.id || member.playerId === user.id)) {
-      return { success: false, message: 'Vous êtes déjà membre de cette équipe.' };
+    if (team.members?.some((member) => member.playerId === player.id || member.playerId === user.id)) {
+      throw new ConflictException('Vous êtes déjà membre de cette équipe.');
     }
-    player = { ...player, currentTeam: team.name, currentTeamId: team.id };
-    await this.records.save('players', player.id, player);
-    members.push({ playerId: player.id, name: player.name, position: player.primaryPosition,
-      jerseyNumber: user.sportsCv?.preferredNumber, role: 'Joueur', avatarUrl: player.avatarUrl });
-    await this.records.save('teams', id, { ...team, members, membersCount: members.length });
+    if (player.currentTeamId && player.currentTeamId !== team.id) {
+      throw new ConflictException('Vous devez quitter votre équipe actuelle avant d’en rejoindre une autre.');
+    }
+    const cleanMessage = sanitizeMultilineText(message, 500);
+    if (!cleanMessage) throw new BadRequestException('Ajoutez un message à votre demande.');
+    const requests = await this.records.list<TeamJoinRequestRecord>('teamJoinRequests');
+    if (requests.some((request) => request.teamId === team.id && request.userId === user.id && request.status === TEAM_JOIN_REQUEST_STATUSES.PENDING)) {
+      throw new ConflictException('Une demande est déjà en attente pour cette équipe.');
+    }
+    const createdAt = new Date().toISOString();
+    const request: TeamJoinRequestRecord = {
+      id: `team_join_${randomUUID()}`, teamId: team.id, teamName: team.name,
+      playerId: player.id, playerName: player.name, userId: user.id, message: cleanMessage,
+      status: TEAM_JOIN_REQUEST_STATUSES.PENDING, createdAt, updatedAt: createdAt,
+    };
+    await this.records.create('teamJoinRequests', request.id, request);
+    const staffIds = [...new Set([team.ownerId, ...(team.managerIds ?? [])].filter((staffId): staffId is string => Boolean(staffId)))];
+    await Promise.all(staffIds.map((recipientId) => this.notifications.add({
+      title: 'Nouvelle demande pour rejoindre votre équipe',
+      message: `${player.name} souhaite rejoindre ${team.name}.`, type: NOTIFICATION_TYPES.TEAM,
+      targetSection: APP_SECTIONS.TEAMS, targetId: request.id, recipientId,
+    })));
+    return { success: true, status: request.status, message: 'Votre demande a été envoyée au staff de l’équipe.' };
+  }
+
+  async listMyTeamJoinRequests() {
+    const team = await this.myTeam();
+    if (!team) return [];
+    const requests = await this.records.list<TeamJoinRequestRecord>('teamJoinRequests');
+    return requests.filter((request) => request.teamId === team.id)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  }
+
+  async respondToJoinRequest(requestId: string, accept: boolean) {
+    const [team, request] = await Promise.all([
+      this.myTeam(), this.records.find<TeamJoinRequestRecord>('teamJoinRequests', requestId),
+    ]);
+    if (!team) throw new ForbiddenException('Vous devez être responsable d’une équipe.');
+    if (!request || request.teamId !== team.id) throw new NotFoundException('Demande introuvable.');
+    if (request.status !== TEAM_JOIN_REQUEST_STATUSES.PENDING) throw new ConflictException('Cette demande a déjà été traitée.');
+    const updatedAt = new Date().toISOString();
+    const updatedRequest: TeamJoinRequestRecord = {
+      ...request, status: accept ? TEAM_JOIN_REQUEST_STATUSES.ACCEPTED : TEAM_JOIN_REQUEST_STATUSES.DECLINED, updatedAt,
+    };
+    if (!accept) {
+      await this.records.save('teamJoinRequests', request.id, updatedRequest);
+    } else {
+      const [currentTeam, player] = await Promise.all([
+        this.records.find<TeamRecord>('teams', team.id), this.records.find<PlayerRecord>('players', request.playerId),
+      ]);
+      if (!currentTeam || !player) throw new NotFoundException('Équipe ou profil du joueur introuvable.');
+      if (player.currentTeamId && player.currentTeamId !== team.id) throw new ConflictException('Ce joueur appartient déjà à une autre équipe.');
+      if (currentTeam.members?.some((member) => member.playerId === player.id)) throw new ConflictException('Ce joueur est déjà membre de l’équipe.');
+      const members = [...(currentTeam.members ?? []), {
+        playerId: player.id, name: player.name, position: player.primaryPosition,
+        jerseyNumber: player.preferredNumber, role: 'Joueur', avatarUrl: player.avatarUrl,
+      }];
+      await this.records.resolveTeamJoinRequest(request.id, updatedRequest,
+        { id: currentTeam.id, payload: { ...currentTeam, members, membersCount: members.length } },
+        { id: player.id, payload: { ...player, currentTeam: team.name, currentTeamId: team.id } });
+    }
     await this.notifications.add({
-      title: 'Demande transmise au staff',
-      message: `Votre demande pour rejoindre ${team.name} a bien été enregistrée. Message: "${message.slice(0, 40)}..."`,
-      type: NOTIFICATION_TYPES.TEAM, targetSection: APP_SECTIONS.TEAMS, targetId: id,
+      title: accept ? 'Demande acceptée' : 'Demande refusée',
+      message: accept ? `${team.name} a accepté votre demande.` : `${team.name} a refusé votre demande.`,
+      type: NOTIFICATION_TYPES.TEAM, targetSection: APP_SECTIONS.TEAMS, targetId: team.id, recipientId: request.userId,
     });
-    return { success: true, message: `Bienvenue dans l'équipe ${team.name} !` };
+    return { success: true, request: updatedRequest };
   }
 
   toggleFavorite(id: string) { return this.accounts.toggleFavoriteTeam(id); }

@@ -84,6 +84,11 @@ model TeamInvitationRecord {
   payload Json
   @@map("team_invitations")
 }
+model TeamJoinRequestRecord {
+  id      String @id
+  payload Json
+  @@map("team_join_requests")
+}
 model LeagueStandingRecord {
   id      String @id
   payload Json

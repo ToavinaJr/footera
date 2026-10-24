@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
@@ -122,6 +122,8 @@ export class TournamentsService {
 
   async register(id: string, teamId: string) {
     if (!teamId?.trim()) throw new BadRequestException('Une équipe doit être sélectionnée.');
+    const userId = this.userContext.userId;
+    if (!userId) throw new UnauthorizedException('Authentification requise pour inscrire une équipe.');
     const tournament = await this.getById(id);
     if (!tournament) throw new NotFoundException('Tournoi introuvable.');
     if (tournament.status !== TOURNAMENT_STATUSES.REGISTRATION_OPEN || this.hasStarted(tournament.startDate)) {
@@ -130,6 +132,9 @@ export class TournamentsService {
     if (tournament.maxTeams !== undefined && tournament.registeredTeams >= tournament.maxTeams) throw new ConflictException('Ce tournoi est complet.');
     const team = await this.records.find<TeamRecord>('teams', teamId);
     if (!team) throw new NotFoundException('Équipe introuvable.');
+    if (team.ownerId !== userId && !team.managerIds?.includes(userId)) {
+      throw new ForbiddenException('Seul le propriétaire ou un responsable de cette équipe peut l’inscrire.');
+    }
     const participantTeamIds: string[] = tournament.participantTeamIds ?? [];
     if (participantTeamIds.includes(teamId)) throw new ConflictException('Cette équipe participe déjà au tournoi.');
     await this.records.save('tournaments', id, {

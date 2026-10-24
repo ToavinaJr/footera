@@ -42,6 +42,31 @@ describe('TeamsService player invitations', () => {
   });
 });
 
+describe('TeamsService join requests', () => {
+  it('stores a pending request and does not add the player to the roster', async () => {
+    const team = { id: 'team-1', ownerId: 'owner-1', name: 'FC Test', members: [] };
+    const player = { id: 'player-1', userId: 'usr_player', name: 'Joueur Test' };
+    const user = { id: 'usr_player', name: 'Joueur Test', roles: ['Joueur'] };
+    const records = {
+      find: vi.fn(async () => team),
+      list: vi.fn(async (collection: string) => collection === 'players' ? [player] : []),
+      create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+    };
+    const notifications = { add: vi.fn(async (payload: unknown) => payload) };
+    const service = new TeamsService(records as unknown as never, { profile: vi.fn(async () => user) } as unknown as never, notifications as unknown as never);
+
+    const result = await service.requestJoin('team-1', 'Disponible les week-ends.');
+
+    expect(result).toMatchObject({ success: true, status: 'PENDING' });
+    expect(records.create).toHaveBeenCalledWith('teamJoinRequests', expect.any(String), expect.objectContaining({
+      teamId: 'team-1', playerId: 'player-1', userId: 'usr_player', status: 'PENDING',
+    }));
+    expect(records.save).not.toHaveBeenCalledWith('teams', expect.anything(), expect.anything());
+    expect(notifications.add).toHaveBeenCalledWith(expect.objectContaining({ recipientId: 'owner-1' }));
+  });
+});
+
 describe('TeamsService public roster statistics', () => {
   it('returns per-competition goal and assist totals for the team roster', async () => {
     const team = { id: 'team-1', name: 'FC Test', competitionId: 'cup-1', members: [

@@ -33,6 +33,7 @@ export const RECORD_MODELS = {
   marketplace: 'marketplaceRecord',
   notifications: 'notificationRecord',
   teamInvitations: 'teamInvitationRecord',
+  teamJoinRequests: 'teamJoinRequestRecord',
   standings: 'leagueStandingRecord',
   activity: 'activityFeedRecord',
   catalogs: 'catalogRecord',
@@ -74,6 +75,20 @@ export class RecordRepository {
   async create<T>(collection: RecordCollection, id: string, payload: T): Promise<T> {
     const record = await this.delegate(collection).create({ data: { id, payload: asJson(payload) } });
     return record.payload as T;
+  }
+
+  async resolveTeamJoinRequest(
+    requestId: string,
+    request: Record<string, unknown>,
+    team?: { id: string; payload: Record<string, unknown> },
+    player?: { id: string; payload: Record<string, unknown> },
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const client = transaction as unknown as DynamicRecordClient;
+      if (team) await client.teamRecord.update({ where: { id: team.id }, data: { payload: asJson(team.payload) } });
+      if (player) await client.playerRecord.update({ where: { id: player.id }, data: { payload: asJson(player.payload) } });
+      await client.teamJoinRequestRecord.update({ where: { id: requestId }, data: { payload: asJson(request) } });
+    });
   }
 
   async createUserAccount<T>(id: string, email: string, user: T, credential: { userId: string; passwordHash: string }, player?: unknown): Promise<void> {
