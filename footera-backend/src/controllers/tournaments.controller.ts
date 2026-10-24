@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Post, Body, NotFoundException } from '@nestjs/common';
 import { TournamentsService } from '../modules/tournaments/tournaments.service.js';
 import type { CreateTournamentInput } from '../modules/tournaments/tournaments.service.js';
+import { createTournamentBodyPipe, registerTournamentTeamBodyPipe } from '../modules/tournaments/tournament-request.validation.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('tournaments')
@@ -22,12 +23,12 @@ export class TournamentsController {
   }
 
   @Post()
-  create(@Body() body: CreateTournamentInput) {
+  create(@Body(createTournamentBodyPipe) body: CreateTournamentInput) {
     return this.tournaments.create(body);
   }
 
   @Post(':id/register')
-  registerTeam(@Param('id') id: string, @Body('teamId') teamId: string) {
-    return this.tournaments.register(id, teamId);
+  registerTeam(@Param('id') id: string, @Body(registerTournamentTeamBodyPipe) body: { teamId: string }) {
+    return this.tournaments.register(id, body.teamId);
   }
 }

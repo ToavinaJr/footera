@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
 import { RecruitmentService } from '../modules/recruitment/recruitment.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
+import { applyRecruitmentBodyPipe } from '../modules/recruitment/recruitment-request.validation.js';
 
 @Controller('recruitment')
 export class RecruitmentController {
@@ -23,7 +24,7 @@ export class RecruitmentController {
   @Post('ads/:id/apply')
   apply(
     @Param('id') id: string,
-    @Body() body: { message: string; phone: string },
+    @Body(applyRecruitmentBodyPipe) body: { message: string; phone: string },
   ) {
     return this.recruitment.apply(id, body);
   }

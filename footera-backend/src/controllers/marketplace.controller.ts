@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Post, Body } from '@nestjs/common';
 import { MarketplaceService } from '../modules/marketplace/marketplace.service.js';
 import type { CreateMarketplaceInput } from '../modules/marketplace/marketplace.service.js';
+import { createMarketplaceBodyPipe } from '../modules/marketplace/marketplace-request.validation.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('marketplace')
@@ -40,7 +41,7 @@ export class MarketplaceController {
   }
 
   @Post()
-  create(@Body() body: CreateMarketplaceInput) {
+  create(@Body(createMarketplaceBodyPipe) body: CreateMarketplaceInput) {
     return this.marketplace.create(body);
   }
 }

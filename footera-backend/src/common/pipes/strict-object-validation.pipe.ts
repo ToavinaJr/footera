@@ -9,6 +9,7 @@ export interface ObjectFieldRule {
 export interface StrictObjectSchema {
   fields: Readonly<Record<string, ObjectFieldRule>>;
   requireAtLeastOne?: boolean;
+  validateObject?: (value: Readonly<Record<string, unknown>>) => string | undefined;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -41,6 +42,8 @@ export class StrictObjectValidationPipe implements PipeTransform {
       }
       if (!rule.validate(value[field])) throw new BadRequestException(rule.message);
     }
+    const objectError = this.schema.validateObject?.(value);
+    if (objectError) throw new BadRequestException(objectError);
     return value;
   }
 }

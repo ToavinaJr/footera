@@ -8,7 +8,7 @@ Les lots sont ordonnés selon l’exposition et l’impact. Le statut `En cours`
 | FT-002 | Empêcher le seed et la réinitialisation des données de démo en production | P0 | Corrigé et testé |
 | FT-003 | Autoriser l’inscription à un tournoi uniquement au propriétaire/responsable d’équipe | P0 | Corrigé et testé |
 | FT-004 | Réservation atomique des créneaux avec contrainte DB/idempotence | P0 | Réservation batch atomique + contrainte unique faites ; idempotence client à compléter |
-| FT-005 | Validation de toutes les entrées HTTP par DTO/ValidationPipe global | P1 | En cours : garde JSON globale et schémas stricts auth/profil et réservations (avec validation imbriquée des créneaux) ; autres endpoints à couvrir |
+| FT-005 | Validation de toutes les entrées HTTP par DTO/ValidationPipe global | P1 | En cours : garde JSON globale et schémas stricts auth/profil, réservations, tournois, marketplace et candidatures ; autres endpoints à couvrir |
 | FT-006 | Limitation des tentatives login/inscription et stratégie distribuée pour les uploads | P1 | Connexion persistée en PostgreSQL (10 échecs/15 min par e-mail + IP) ; uploads restent par instance |
 | FT-007 | Revue d’autorisations des mutations (tournois, effectifs, scores et catalogue) | P1 | Création tournoi limitée à `Organisateur Tournoi` et nom lié au compte ; revue restante |
 | FT-008 | Remplacer valeurs marketplace simulées par données persistées/calculées | P1 | À faire |

@@ -17,6 +17,7 @@ export interface CreateMarketplaceInput {
   imageUrl: string;
   city: string;
   description: string;
+  size?: string;
 }
 
 @Injectable()
