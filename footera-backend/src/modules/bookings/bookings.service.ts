@@ -231,7 +231,7 @@ export class BookingsService {
       { id: `${id}_slot_3`, time: '18:00 - 19:30', price: Math.round(rate * 1.1), isAvailable: true },
       { id: `${id}_slot_4`, time: '20:00 - 21:30', price: Math.round(rate * 1.15), isAvailable: true },
     ];
-    const pitch = { ...input, id, rating: 0, reviewsCount: 0, reviews: [], amenities: input.amenities || [], availableSlots };
+    const pitch = { ...input, id, ownerId: user.id, galleryImages: [], rating: 0, reviewsCount: 0, reviews: [], amenities: input.amenities || [], availableSlots };
     await this.records.create('pitches', id, pitch);
     await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: NOTIFICATION_TYPES.BOOKING, targetSection: APP_SECTIONS.PITCHES, targetId: id });
     return pitch;

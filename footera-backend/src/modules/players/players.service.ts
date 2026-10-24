@@ -53,7 +53,7 @@ export class PlayersService {
         yellowCards: stats?.yellowCards ?? 0,
         redCards: stats?.redCards ?? 0,
         ...(stats ? { appearances: stats.appearances } : { appearances: 0 }),
-        minutesPlayed: stats?.minutesPlayed ?? null,
+        minutesPlayed: stats?.minutesPlayed ?? 0,
         teamHistoryStats: stats ? [...stats.teamStats.values()].map((teamStats) => ({
           teamId: teamStats.teamId,
           teamName: teams.find((team) => team.id === teamStats.teamId)?.name ?? 'Équipe historique',

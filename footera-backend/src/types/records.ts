@@ -36,6 +36,7 @@ export interface SportsCvRecord {
 export interface PlayerRecord {
   id: string;
   userId?: string;
+  galleryImages?: string[];
   name: string;
   age?: number;
   city?: string;
@@ -147,6 +148,8 @@ export interface UpdateMatchInput {
 
 export interface PitchRecord {
   id: string;
+  ownerId?: string;
+  galleryImages?: string[];
   name: string;
   complexName: string;
   city: string;
@@ -202,6 +205,8 @@ export interface BookingRecord {
 export interface TournamentRecord {
   id: string;
   organizerId?: string;
+  pitchIds?: string[];
+  galleryImages?: string[];
   title?: string;
   status?: TournamentStatus;
   city?: string;
@@ -261,6 +266,7 @@ export interface ClubRecord {
   id: string;
   name: string;
   logoUrl: string;
+  galleryImages?: string[];
   teams?: Array<{ id: string; name?: string; category?: string }>;
   [key: string]: unknown;
 }

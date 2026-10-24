@@ -23,6 +23,7 @@ export interface CreateTournamentInput {
   prizePool: number;
   bannerUrl: string;
   organizer: string;
+  pitchIds?: string[];
 }
 
 @Injectable()
@@ -67,9 +68,20 @@ export class TournamentsService {
       this.records.list<PitchRecord>('pitches'),
     ]);
     if (!tournament) return null;
-    const pitchIds = new Set(matches.filter((match) => match.tournamentId === id && typeof match.pitchId === 'string')
-      .map((match) => match.pitchId as string));
+    const pitchIds = new Set([
+      ...(tournament.pitchIds ?? []),
+      ...matches.filter((match) => match.tournamentId === id && typeof match.pitchId === 'string')
+        .map((match) => match.pitchId as string),
+    ]);
     return pitches.filter((pitch) => pitchIds.has(pitch.id));
+  }
+
+  async listOwnedPitches() {
+    const userId = this.userContext.userId;
+    if (!userId) throw new UnauthorizedException('Authentification requise.');
+    return (await this.records.list<PitchRecord>('pitches'))
+      .filter((pitch) => pitch.ownerId === userId)
+      .map(({ ownerId: _ownerId, ...pitch }) => pitch);
   }
 
   private withComputedDetails(tournament: TournamentRecord, teams: TeamRecord[], matches: MatchRecord[], pitches: PitchRecord[]) {
@@ -92,10 +104,17 @@ export class TournamentsService {
     const uniqueMatchStadiums = [...new Map(matchStadiums.filter((stadium) => stadium !== null)
       .map((stadium) => [stadium.id, stadium])).values()];
     const registrationOpen = tournament.status === TOURNAMENT_STATUSES.REGISTRATION_OPEN && !this.hasStarted(tournament.startDate);
-    const stadiums = uniqueMatchStadiums;
+    const selectedPitchIds = new Set(tournament.pitchIds ?? []);
+    const stadiums = [...new Map([
+      ...pitches.filter((pitch) => selectedPitchIds.has(pitch.id)).map((pitch) => ({
+        id: pitch.id, name: pitch.complexName || pitch.name, pitchId: pitch.id, city: pitch.city, address: pitch.address,
+      })),
+      ...uniqueMatchStadiums,
+    ].map((stadium) => [stadium.id, stadium])).values()];
 
     return {
       ...publicTournament,
+      canManageGallery: tournament.organizerId === this.userContext.userId,
       participantTeamIds,
       registeredTeams: participantTeamIds.length,
       remainingTeams: Math.max(0, Number(tournament.maxTeams || 0) - participantTeamIds.length),
@@ -113,6 +132,14 @@ export class TournamentsService {
     if (!organizerAccount?.roles?.includes('Organisateur Tournoi')) {
       throw new ForbiddenException('Le rôle Organisateur Tournoi est requis pour créer un tournoi.');
     }
+    const pitchIds = [...new Set(input.pitchIds ?? [])];
+    if (pitchIds.length) {
+      const ownedPitchIds = new Set((await this.records.list<PitchRecord>('pitches'))
+        .filter((pitch) => pitch.ownerId === organizerId).map((pitch) => pitch.id));
+      if (pitchIds.some((pitchId) => !ownedPitchIds.has(pitchId))) {
+        throw new ForbiddenException('Vous pouvez uniquement associer vos propres terrains à ce tournoi.');
+      }
+    }
     const formats = await this.catalogs.values('tournamentFormats');
     if (!formats.includes(input.format)) throw new BadRequestException('Le format du tournoi est invalide.');
     const id = `tourn_${randomUUID()}`;
@@ -123,6 +150,8 @@ export class TournamentsService {
     }
     const tournament: TournamentRecord = {
       ...input,
+      pitchIds,
+      galleryImages: [],
       title: sanitizePlainText(input.title, 120),
       city: sanitizePlainText(input.city, 100),
       venue: sanitizePlainText(input.venue, 200),

@@ -9,6 +9,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
+import { PhotoGallery } from '../../common/PhotoGallery';
 
 const MatchCard: React.FC<{ match: TeamMatch; onOpen: (id: string) => void }> = ({ match, onOpen }) => (
   <button
@@ -116,6 +117,8 @@ export const TeamDetailView: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {team.clubId && <PhotoGallery entity="clubs" id={team.clubId} />}
 
       <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
         <article className="min-w-0 rounded-2xl border border-pitch-line bg-white p-5 shadow-xs">

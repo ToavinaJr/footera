@@ -15,6 +15,7 @@ import { formatFiniteNumber } from '../../../utils/numberFormat';
 import { ImageUploadField } from '../../common/ImageUploadField';
 import { DatePickerField } from '../../common/DatePickerField';
 import { formatDateForDisplay, getTodayDateInputValue } from '../../../utils/date';
+import { PhotoGallery } from '../../common/PhotoGallery';
 
 const PITCH_IMAGE_PRESETS = [
   {
@@ -320,6 +321,7 @@ export const PitchesView: React.FC = () => {
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-pitch-primary">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
           </div>
         </section>
+        <PhotoGallery entity="pitches" id={detailPitch.id} />
 
         <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
           <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">

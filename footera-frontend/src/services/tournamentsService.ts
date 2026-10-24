@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/api/client';
-import type { Team, Tournament, TournamentStadium } from '../types';
+import type { Pitch, Team, Tournament, TournamentStadium } from '../types';
 
 export interface CreateTournamentInput {
   title: string;
@@ -13,11 +13,16 @@ export interface CreateTournamentInput {
   prizePool: number;
   bannerUrl: string;
   organizer: string;
+  pitchIds: string[];
 }
 
 export const tournamentsService = {
   list(): Promise<Tournament[]> {
     return apiClient<Tournament[]>('tournaments');
+  },
+
+  listMyPitches(): Promise<Pitch[]> {
+    return apiClient<Pitch[]>('tournaments/my-pitches');
   },
 
   getById(id: string): Promise<Tournament> {

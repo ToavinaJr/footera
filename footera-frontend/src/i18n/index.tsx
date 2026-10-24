@@ -5,6 +5,7 @@ export type Language = 'mg' | 'en' | 'fr';
 
 const messages = {
   fr: {
+    'gallery.title': 'Galerie photos', 'gallery.add': 'Ajouter une photo', 'gallery.replace': 'Remplacer cette photo', 'gallery.remove': 'Supprimer cette photo', 'gallery.openPhoto': 'Ouvrir la photo', 'gallery.photoAlt': 'Photo de la galerie', 'gallery.empty': 'Aucune photo dans cette galerie.', 'gallery.emptyOwner': 'Ajoutez des photos pour compléter cette galerie.', 'gallery.loadError': 'Impossible de charger la galerie.', 'gallery.removeError': 'Impossible de supprimer cette photo.', 'gallery.replaceError': 'Impossible de remplacer cette photo.',
     'common.loadOptionsError': 'Erreur lors du chargement des options', 'common.loadStatsError': 'Erreur lors du chargement des statistiques',
     'stats.competition': 'Compétition', 'stats.pro': 'PRO', 'stats.title': 'Statistiques & classements', 'stats.description': 'Classement des buteurs, passeurs et statistiques des clubs et joueurs.',
     'stats.season': 'Saison {year} en cours', 'stats.filterTournament': 'Filtrer par tournoi ou compétition', 'stats.allCompetitions': 'Toutes les compétitions et championnats',
@@ -119,6 +120,7 @@ const messages = {
     'landing.footer': 'Footera — Faites grandir le football, ensemble.',
   },
   en: {
+    'gallery.title': 'Photo gallery', 'gallery.add': 'Add a photo', 'gallery.replace': 'Replace this photo', 'gallery.remove': 'Remove this photo', 'gallery.openPhoto': 'Open photo', 'gallery.photoAlt': 'Gallery photo', 'gallery.empty': 'There are no photos in this gallery.', 'gallery.emptyOwner': 'Add photos to complete this gallery.', 'gallery.loadError': 'Could not load the gallery.', 'gallery.removeError': 'Could not remove this photo.', 'gallery.replaceError': 'Could not replace this photo.',
     'common.loadOptionsError': 'Could not load options', 'common.loadStatsError': 'Could not load statistics', 'stats.competition': 'Competition',
     'stats.pro': 'PRO',
     'stats.title': 'Statistics & rankings', 'stats.description': 'Rankings for scorers, assists and club and player statistics.',
@@ -231,6 +233,7 @@ const messages = {
     'landing.footer': 'Footera — Growing football together.',
   },
   mg: {
+    'gallery.title': 'Sary', 'gallery.add': 'Hanampy sary', 'gallery.replace': 'Hanolo ity sary ity', 'gallery.remove': 'Hamafa ity sary ity', 'gallery.openPhoto': 'Hijery ny sary', 'gallery.photoAlt': 'Sarin’ny galeria', 'gallery.empty': 'Tsy mbola misy sary ato.', 'gallery.emptyOwner': 'Ampio sary hamenoana ny galeria.', 'gallery.loadError': 'Tsy afaka naka ny galeria.', 'gallery.removeError': 'Tsy afaka namafa ity sary ity.', 'gallery.replaceError': 'Tsy afaka nanolo ity sary ity.',
     'common.loadOptionsError': 'Tsy afaka naka ireo safidy', 'common.loadStatsError': 'Tsy afaka naka ny antontanisa', 'stats.competition': 'Fifaninanana',
     'stats.pro': 'PRO', 'stats.title': 'Antontanisa sy filaharana', 'stats.description': 'Filaharan’ny mpanao baolina sy mpanome baolina ary antontanisan’ny ekipa sy mpilalao.',
     'stats.season': 'Mitohy ny taom-pilalaovana {year}', 'stats.filterTournament': 'Sivano araka ny fifaninanana', 'stats.allCompetitions': 'Fifaninanana rehetra',

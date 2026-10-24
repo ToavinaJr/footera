@@ -296,6 +296,7 @@ export interface Tournament {
   organizer: string;
   standings: TournamentStanding[];
   fixtures: TournamentMatchFixture[];
+  canManageGallery?: boolean;
 }
 
 export type SurfaceType = string;
@@ -342,6 +343,7 @@ export interface Pitch {
   myReview?: PitchReview;
   amenities: string[];
   availableSlots: PitchSlot[];
+  canManageGallery?: boolean;
 }
 
 export type BookingStatus = 'CONFIRMED' | 'PENDING' | 'CANCELLED';

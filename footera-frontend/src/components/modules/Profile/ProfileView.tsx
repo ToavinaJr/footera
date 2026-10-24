@@ -28,6 +28,7 @@ import { validateSportsCv, type SportsCvErrors } from './sportsCvValidation';
 import { ImageUploadField } from '../../common/ImageUploadField';
 import { catalogsService } from '../../../services/catalogsService';
 import { formatDateForDisplay } from '../../../utils/date';
+import { PhotoGallery } from '../../common/PhotoGallery';
 
 export const ProfileView: React.FC = () => {
   const { user, updateProfile, updateSportsCv, showToast, selectedResourceId } = useApp();
@@ -366,6 +367,7 @@ export const ProfileView: React.FC = () => {
           </div>
 
           {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
+          {displayedPlayer && <PhotoGallery entity="players" id={displayedPlayer.id} />}
           {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
             <h2 className="text-lg font-extrabold text-pitch-ink">Parcours en club</h2>
             {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">

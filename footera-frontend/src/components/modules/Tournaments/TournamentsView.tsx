@@ -17,6 +17,7 @@ import { formatDateForDisplay, getTodayDateInputValue } from '../../../utils/dat
 import { catalogsService } from '../../../services/catalogsService';
 import type { CatalogOptions } from '../../../types';
 import { ImageUploadField } from '../../common/ImageUploadField';
+import { PhotoGallery } from '../../common/PhotoGallery';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -54,6 +55,7 @@ export const TournamentsView: React.FC = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [registerTeamId, setRegisterTeamId] = useState('');
   const [teams, setTeams] = useState<Team[]>([]);
+  const [ownedPitches, setOwnedPitches] = useState<import('../../../types').Pitch[]>([]);
   const [tournamentTeams, setTournamentTeams] = useState<Team[]>([]);
   const [tournamentStadiums, setTournamentStadiums] = useState<TournamentStadium[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +65,7 @@ export const TournamentsView: React.FC = () => {
   const [formFormat, setFormFormat] = useState<Tournament['format'] | ''>('');
   const [formCity, setFormCity] = useState('');
   const [formVenue, setFormVenue] = useState('');
+  const [formPitchIds, setFormPitchIds] = useState<string[]>([]);
   const [formStartDate, setFormStartDate] = useState('');
   const [formEndDate, setFormEndDate] = useState('');
   const [formMaxTeams, setFormMaxTeams] = useState<number | ''>('');
@@ -83,6 +86,11 @@ export const TournamentsView: React.FC = () => {
       showToast(err instanceof Error ? err.message : 'Impossible de charger les options du tournoi.', 'error');
     });
   }, [showToast]);
+
+  useEffect(() => {
+    if (!user) return;
+    tournamentsService.listMyPitches().then(setOwnedPitches).catch(() => setOwnedPitches([]));
+  }, [user?.id]);
 
   useEffect(() => {
     async function loadTournaments() {
@@ -183,6 +191,7 @@ export const TournamentsView: React.FC = () => {
         prizePool: prize,
         bannerUrl: formBannerUrl,
         organizer: formOrganizer.trim(),
+        pitchIds: formPitchIds,
       };
 
       const created = await tournamentsService.create(input);
@@ -205,6 +214,7 @@ export const TournamentsView: React.FC = () => {
     setFormFormat('');
     setFormCity('');
     setFormVenue('');
+    setFormPitchIds([]);
     setFormStartDate('');
     setFormEndDate('');
     setFormMaxTeams('');
@@ -352,6 +362,7 @@ export const TournamentsView: React.FC = () => {
                 <h2 className="text-xl font-extrabold text-white">{selectedTournament.title}</h2>
               </div>
             </div>
+            <PhotoGallery entity="tournaments" id={selectedTournament.id} />
 
             {/* Tournament Navigation Tabs */}
             <div className="flex flex-wrap items-center gap-1.5 p-1 bg-pitch-panel border border-pitch-line rounded-2xl">
@@ -735,6 +746,29 @@ export const TournamentsView: React.FC = () => {
                 />
               </div>
             </div>
+
+            {ownedPitches.length > 0 && <fieldset className="rounded-2xl border border-pitch-line bg-pitch-panel p-4">
+              <legend className="px-1 text-xs font-bold text-pitch-ink">Vos terrains disponibles pour ce tournoi</legend>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {ownedPitches.map((pitch) => {
+                  const checked = formPitchIds.includes(pitch.id);
+                  return <label key={pitch.id} className="flex min-w-0 cursor-pointer items-start gap-2 rounded-xl border border-pitch-line bg-white p-3 text-xs">
+                    <input type="checkbox" checked={checked} onChange={(event) => {
+                      const nextIds = event.target.checked
+                        ? [...formPitchIds, pitch.id]
+                        : formPitchIds.filter((id) => id !== pitch.id);
+                      setFormPitchIds(nextIds);
+                      const selected = ownedPitches.filter((item) => nextIds.includes(item.id));
+                      if (selected.length) {
+                        setFormVenue(selected.map((item) => item.complexName || item.name).join(', '));
+                        setFormCity(selected[0]?.city ?? formCity);
+                      }
+                    }} className="mt-0.5 accent-pitch-primary" />
+                    <span className="min-w-0"><strong className="block truncate text-pitch-ink">{pitch.complexName || pitch.name}</strong><span className="text-slate-500">{pitch.name} · {pitch.city}</span></span>
+                  </label>;
+                })}
+              </div>
+            </fieldset>}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>

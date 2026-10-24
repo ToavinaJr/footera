@@ -14,6 +14,11 @@ export class TournamentsController {
     return this.tournaments.list();
   }
 
+  @Get('my-pitches')
+  listOwnedPitches() {
+    return this.tournaments.listOwnedPitches();
+  }
+
   @Get(':id')
   @Public()
   async getById(@Param('id') id: string) {
