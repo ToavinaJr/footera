@@ -24,6 +24,13 @@ model AuthSessionRecord {
   payload Json
   @@map("auth_sessions")
 }
+model AuthLoginAttemptRecord {
+  id        String   @id
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  @@index([expiresAt])
+  @@map("auth_login_attempts")
+}
 model PlayerRecord {
   id      String @id
   payload Json

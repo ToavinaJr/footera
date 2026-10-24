@@ -121,6 +121,25 @@ export class RecordRepository {
     });
   }
 
+  async getLoginFailureCount(id: string, now: Date): Promise<number> {
+    await this.prisma.authLoginAttemptRecord.deleteMany({ where: { expiresAt: { lte: now } } });
+    const attempt = await this.prisma.authLoginAttemptRecord.findUnique({ where: { id } });
+    return attempt && attempt.expiresAt > now ? attempt.attempts : 0;
+  }
+
+  async recordLoginFailure(id: string, now: Date, expiresAt: Date): Promise<number> {
+    const attempt = await this.prisma.authLoginAttemptRecord.upsert({
+      where: { id },
+      create: { id, attempts: 1, expiresAt },
+      update: { attempts: { increment: 1 } },
+    });
+    return attempt.attempts;
+  }
+
+  async clearLoginFailures(id: string): Promise<void> {
+    await this.prisma.authLoginAttemptRecord.deleteMany({ where: { id } });
+  }
+
   async createUserAccount<T>(id: string, email: string, user: T, credential: { userId: string; passwordHash: string }, player?: unknown): Promise<void> {
     await this.prisma.$transaction(async (transaction) => {
       const client = transaction as unknown as DynamicRecordClient;

@@ -45,6 +45,7 @@ describe('TournamentsService registration', () => {
 
   it('binds a newly created tournament to the authenticated organizer', async () => {
     const records = {
+      find: vi.fn(async () => ({ id: 'organizer-1', name: 'Compte organisateur', roles: ['Organisateur Tournoi'] })),
       create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
     const notifications = { add: vi.fn(async () => undefined) };
@@ -57,5 +58,21 @@ describe('TournamentsService registration', () => {
     });
 
     expect(records.create).toHaveBeenCalledWith('tournaments', created.id, expect.objectContaining({ organizerId: 'organizer-1' }));
+    expect(created.organizer).toBe('Compte organisateur');
+  });
+
+  it('rejects tournament creation for accounts without the organizer role', async () => {
+    const records = {
+      find: vi.fn(async () => ({ id: 'player-1', name: 'Joueur', roles: ['Joueur'] })),
+      create: vi.fn(),
+    };
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'player-1' } as unknown as never);
+
+    await expect(service.create({
+      title: 'Coupe test', format: '7v7', city: 'Antananarivo', venue: 'Terrain central',
+      startDate: '2026-11-01', endDate: '2026-11-02', maxTeams: 8, entryFee: 0, prizePool: 0,
+      bannerUrl: '', organizer: 'Organisateur spoofé',
+    })).rejects.toMatchObject({ status: 403 });
+    expect(records.create).not.toHaveBeenCalled();
   });
 });

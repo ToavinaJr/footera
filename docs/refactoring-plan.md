@@ -9,8 +9,8 @@ Les lots sont ordonnés selon l’exposition et l’impact. Le statut `En cours`
 | FT-003 | Autoriser l’inscription à un tournoi uniquement au propriétaire/responsable d’équipe | P0 | Corrigé et testé |
 | FT-004 | Réservation atomique des créneaux avec contrainte DB/idempotence | P0 | Réservation batch atomique + contrainte unique faites ; idempotence client à compléter |
 | FT-005 | Validation de toutes les entrées HTTP par DTO/ValidationPipe global | P1 | À faire ; inventaire des entrées requis |
-| FT-006 | Limitation des tentatives login/inscription et stratégie distribuée pour les uploads | P1 | À faire |
-| FT-007 | Revue d’autorisations des mutations (tournois, effectifs, scores et catalogue) | P1 | À faire ; la création de tournoi mérite notamment un contrôle de rôle |
+| FT-006 | Limitation des tentatives login/inscription et stratégie distribuée pour les uploads | P1 | Connexion persistée en PostgreSQL (10 échecs/15 min par e-mail + IP) ; uploads restent par instance |
+| FT-007 | Revue d’autorisations des mutations (tournois, effectifs, scores et catalogue) | P1 | Création tournoi limitée à `Organisateur Tournoi` et nom lié au compte ; revue restante |
 | FT-008 | Remplacer valeurs marketplace simulées par données persistées/calculées | P1 | À faire |
 | FT-009 | Migration progressive des payloads JSON vers schéma relationnel et contraintes | P1 | À planifier par agrégat, avec migrations rétrocompatibles |
 | FT-010 | Couverture de tests d’intégration des permissions et courses de concurrence | P1 | Tests unitaires de régression partiels ; intégration à faire |
@@ -23,7 +23,7 @@ Les lots sont ordonnés selon l’exposition et l’impact. Le statut `En cours`
 
 1. **Lot sécurité immédiate (réalisé en partie)** : empêcher la pollution de production par le seed, vérifier les permissions d’inscription, persister les demandes d’adhésion et tester les refus.
 2. **Lot intégrité réservation (réalisé en partie)** : la table de claims et la transaction garantissent un seul gagnant pour des réservations concurrentes ; il reste à définir une clé d’idempotence de requête et à vérifier les invariants d’effectif/classement.
-3. **Lot sécurité API** : DTOs stricts, ValidationPipe, limitation de débit partagée, revue des permissions par rôle et erreurs sans fuite d’information.
+3. **Lot sécurité API** : DTOs stricts, ValidationPipe, limitation de débit partagée pour uploads, revue des permissions par rôle et erreurs sans fuite d’information.
 4. **Lot données et architecture** : normaliser les agrégats prioritaires, garder les migrations additives et ajouter des contraintes/index après backfill vérifié.
 5. **Lot qualité produit** : internationalisation complète, retrait des données de démonstration hors seed et observabilité/restauration.
 

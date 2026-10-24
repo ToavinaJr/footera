@@ -9,7 +9,7 @@ import { isDateOnOrBeforeToday } from '../../utils/date.utils.js';
 import { normalizeSearchText, slugify, splitDelimitedText } from '../../utils/text.utils.js';
 import { isFiniteNumberInRange, isIntegerInRange } from '../../utils/number.utils.js';
 import { sanitizePlainText } from '../../utils/sanitize.utils.js';
-import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord } from '../../types/records.js';
+import type { MatchRecord, PitchRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
 
 export interface CreateTournamentInput {
   title: string;
@@ -100,6 +100,10 @@ export class TournamentsService {
   async create(input: CreateTournamentInput) {
     const organizerId = this.userContext.userId;
     if (!organizerId) throw new UnauthorizedException('Authentification requise pour créer un tournoi.');
+    const organizerAccount = await this.records.find<UserRecord>('users', organizerId);
+    if (!organizerAccount?.roles?.includes('Organisateur Tournoi')) {
+      throw new ForbiddenException('Le rôle Organisateur Tournoi est requis pour créer un tournoi.');
+    }
     const id = `tourn_${randomUUID()}`;
     if (!isIntegerInRange(input.maxTeams, 2, 128)
       || !isFiniteNumberInRange(input.entryFee, 0, 1_000_000_000)
@@ -111,7 +115,7 @@ export class TournamentsService {
       title: sanitizePlainText(input.title, 120),
       city: sanitizePlainText(input.city, 100),
       venue: sanitizePlainText(input.venue, 200),
-      organizer: sanitizePlainText(input.organizer, 120),
+      organizer: sanitizePlainText(organizerAccount.name, 120),
       id, organizerId, registeredTeams: 0, participantTeamIds: [], status: TOURNAMENT_STATUSES.REGISTRATION_OPEN, standings: [], fixtures: [],
     };
     await this.records.create('tournaments', id, tournament);

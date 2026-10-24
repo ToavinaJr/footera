@@ -22,8 +22,8 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: { email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
-    const result = await this.auth.login(body);
+  async login(@Body() body: { email?: unknown; password?: unknown }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const result = await this.auth.login(body, request.ip || request.socket.remoteAddress || 'unknown');
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };
   }

@@ -16,7 +16,7 @@ Le backend est NestJS + Prisma 7 + PostgreSQL. Les agrégats métier sont conser
 Constats à suivre :
 
 - `main.ts` ne configure pas de `ValidationPipe` global. Les DTOs et validations de services ne couvrent donc pas uniformément toutes les entrées.
-- Les tentatives de connexion ne disposent pas de limiteur applicatif dédié. Le limiteur des uploads est en mémoire, donc local à une instance.
+- Les échecs de connexion sont maintenant limités par couple e-mail/IP avec un compteur PostgreSQL partagé (10 échecs par fenêtre fixe de 15 minutes). Le limiteur des uploads reste en mémoire, donc local à une instance.
 - Les claims de créneaux sont maintenant protégés par une contrainte unique et une transaction batch. L’idempotence d’une même requête HTTP (rejeu après perte de réponse) reste à ajouter.
 - Le stockage JSON d’agrégats rend certaines mises à jour concurrentes (effectifs, inscriptions, compteurs) sensibles aux écritures perdues. Une migration vers des colonnes relationnelles/contraintes est un chantier distinct.
 - La documentation i18n frontend indique encore des textes français écrits directement dans certains écrans.
@@ -30,10 +30,12 @@ Constats à suivre :
 - Une demande pour rejoindre une équipe est maintenant enregistrée avec statut `PENDING`, sans ajout immédiat du joueur à l’effectif. Le staff propriétaire/responsable peut accepter ou refuser ; l’acceptation met à jour la demande, l’équipe et le joueur dans une transaction Prisma.
 - Une migration PostgreSQL additive crée la table dédiée `team_join_requests`.
 - Les réservations créent maintenant les réservations et leurs claims de créneau dans une transaction ; la contrainte unique garantit qu’une seule requête concurrente remporte le créneau. L’annulation libère le claim dans la même transaction que le changement de statut.
+- Les échecs de connexion sont comptés par clé hachée e-mail/IP dans PostgreSQL ; la clé ne contient pas de donnée brute, le compteur est partagé entre répliques et les entrées expirées sont nettoyées.
+- La création d’un tournoi exige maintenant le rôle `Organisateur Tournoi` et son nom public vient du profil authentifié plutôt que d’un champ arbitraire fourni par le client.
 
 ## Vérifications de référence
 
-Les commandes locales suivantes ont réussi après les changements : backend `npm run build`, `npm test`, `npm run lint`, `npm run test:e2e`, `npx prisma validate` et `npx prisma migrate status`. Un test direct sur PostgreSQL local a lancé deux claims concurrents sur le même créneau : exactement un a été accepté, puis les lignes de test ont été supprimées. Les migrations ont été appliquées uniquement à la base locale `127.0.0.1:55432` ; aucune base distante n’a été touchée.
+Les commandes locales suivantes ont réussi après les changements : backend `npm run build`, `npm test`, `npm run lint`, `npm run test:e2e`, `npx prisma validate` et `npx prisma migrate status`. Des tests directs sur PostgreSQL local ont vérifié un seul gagnant sur des claims de créneau concurrents et le comptage atomique de tentatives ; les lignes temporaires ont été supprimées. Les migrations ont été appliquées uniquement à la base locale `127.0.0.1:55432` ; aucune base distante n’a été touchée.
 
 Le frontend de référence avant ce lot passait `npm run lint`, `npm run test:unit` et `npm run build`.
 
