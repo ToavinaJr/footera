@@ -9,7 +9,7 @@ const MAX_IMAGE_DIMENSION = 6_000;
 const MAX_IMAGE_PIXELS = 20_000_000;
 const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
 const MAX_UPLOADS_PER_WINDOW = 20;
-const ALLOWED_PURPOSES = new Set(['avatar', 'marketplace', 'pitch', 'club-logo']);
+const ALLOWED_PURPOSES = new Set(['avatar', 'marketplace', 'pitch', 'club-logo', 'tournament']);
 
 interface ImageUpload {
   buffer: Buffer;
@@ -116,7 +116,8 @@ export class UploadsService {
     }
     const requiredRole = purpose === 'marketplace' ? 'Vendeur'
       : purpose === 'pitch' ? 'Gestionnaire Terrain'
-        : purpose === 'club-logo' ? 'Entraîneur' : undefined;
+        : purpose === 'club-logo' ? 'Entraîneur'
+          : purpose === 'tournament' ? 'Organisateur Tournoi' : undefined;
     if (requiredRole) {
       const user = await this.accounts.profile();
       if (!user?.roles?.includes(requiredRole)) {

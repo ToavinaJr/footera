@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { PlayersService } from '../players/players.service.js';
+import { PlayerMatchStatsService } from '../players/player-match-stats.service.js';
 import { TeamsService } from '../teams/teams.service.js';
 import { buildTournamentStandings } from '../tournaments/tournament-standings.js';
 import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord } from '../../types/records.js';
@@ -15,13 +16,14 @@ interface ContributionAccumulator {
   teamId: string;
   teamName: string;
   teamLogo: string;
-  tournamentId: string;
+  tournamentId?: string;
   tournamentTitle?: string;
   position?: string;
   goals: number;
   assists: number;
   penalties: number;
-  matchIds: Set<string>;
+  matchesPlayed: number;
+  minutesPlayed: number | null;
 }
 
 @Injectable()
@@ -30,6 +32,7 @@ export class StatsService {
     private readonly playersService: PlayersService,
     private readonly teamsService: TeamsService,
     private readonly records: RecordRepository,
+    private readonly playerMatchStats: PlayerMatchStatsService,
   ) {}
 
   async topScorers(filters: { tournamentId?: string; teamId?: string; limit?: number } = {}) {
@@ -41,7 +44,7 @@ export class StatsService {
         ...row,
         rank: index + 1,
         ratio: row.matchesPlayed ? Number((row.goals / row.matchesPlayed).toFixed(2)) : 0,
-        minutesPerGoal: 0,
+        minutesPerGoal: row.minutesPlayed === null ? null : Math.round(row.minutesPlayed / row.goals),
       }));
     return filters.limit ? ranked.slice(0, filters.limit) : ranked;
   }
@@ -61,58 +64,45 @@ export class StatsService {
   }
 
   private async aggregatePlayerContributions(tournamentId?: string) {
-    const [players, teams, matches, tournaments] = await Promise.all([
-      this.playersService.list(), this.teamsService.list(), this.records.list<MatchRecord>('matches'),
+    const [players, teams, tournaments] = await Promise.all([
+      this.playersService.list({ competitionId: tournamentId }), this.teamsService.list(),
       this.records.list<TournamentRecord>('tournaments'),
     ]);
-    const selectedTournaments = tournaments.filter((tournament) => !tournamentId || tournament.id === tournamentId);
     const totals = new Map<string, ContributionAccumulator>();
-    for (const tournament of selectedTournaments) {
-      const participantIds = new Set<string>(tournament.participantTeamIds ?? []);
-      if (!participantIds.size) continue;
-      const tournamentMatches = matches.filter((match) => match.tournamentId === tournament.id
-        && match.status === MATCH_STATUSES.FINISHED
-        && participantIds.has(match.homeTeam?.id)
-        && participantIds.has(match.awayTeam?.id));
-      for (const match of tournamentMatches) {
-        for (const event of Array.isArray(match.events) ? match.events : []) {
-          if ((event.type !== MATCH_EVENT_TYPES.GOAL && event.type !== MATCH_EVENT_TYPES.PENALTY) || !participantIds.has(event.teamId)
-            || (event.teamId !== match.homeTeam?.id && event.teamId !== match.awayTeam?.id)) continue;
-          const team = teams.find((item) => item.id === event.teamId);
-          const player = players.find((item) => item.id === event.playerId
-            || (!event.playerId && item.name === event.player
-              && (item.currentTeamId === event.teamId || item.currentTeam === team?.name)));
-          if (player && team) {
-            const key = `${player.id}:${team.id}`;
-            const row = totals.get(key) ?? this.newContributionRow(player, team, tournament);
-            row.goals += 1;
-            row.matchIds.add(match.id);
-            if (event.type === MATCH_EVENT_TYPES.PENALTY) row.penalties += 1;
-            totals.set(key, row);
-          }
-          const assister = players.find((item) => item.id === event.assistPlayerId
-            || (!event.assistPlayerId && item.name === event.assist
-              && (item.currentTeamId === event.teamId || item.currentTeam === team?.name)));
-          if (assister && team && event.assist) {
-            const key = `${assister.id}:${team.id}`;
-            const row = totals.get(key) ?? this.newContributionRow(assister, team, tournament);
-            row.assists += 1;
-            row.matchIds.add(match.id);
-            totals.set(key, row);
-          }
-        }
+    const tournament = tournamentId ? tournaments.find((item) => item.id === tournamentId) : undefined;
+    const statsByPlayer = await this.playerMatchStats.aggregate({ competitionId: tournamentId }, players);
+    for (const [playerId, stats] of statsByPlayer) {
+      for (const teamStats of stats.teamStats.values()) {
+        if (tournament && !tournament.participantTeamIds?.includes(teamStats.teamId)) continue;
+        if (!teamStats.goals && !teamStats.assists) continue;
+        const player = players.find((item) => item.id === playerId);
+        const team = teams.find((item) => item.id === teamStats.teamId);
+        if (!player || !team) continue;
+        const key = tournament ? `${player.id}:${team.id}:${tournament.id}` : `${player.id}:${team.id}`;
+        const existing = totals.get(key);
+        const current = existing ?? this.newContributionRow(player, team, tournament);
+        current.goals += teamStats.goals;
+        current.assists += teamStats.assists;
+        current.penalties += teamStats.penalties;
+        current.matchesPlayed += teamStats.appearances;
+        current.minutesPlayed = !existing
+          ? teamStats.minutesPlayed
+          : current.minutesPlayed === null || teamStats.minutesPlayed === null
+            ? null
+            : current.minutesPlayed + teamStats.minutesPlayed;
+        totals.set(key, current);
       }
     }
-    return [...totals.values()].map(({ matchIds, ...row }) => ({ ...row, matchesPlayed: matchIds.size }));
+    return [...totals.values()];
   }
 
-  private newContributionRow(player: PlayerRecord, team: TeamRecord, tournament: TournamentRecord): ContributionAccumulator {
+  private newContributionRow(player: PlayerRecord, team: TeamRecord, tournament?: TournamentRecord): ContributionAccumulator {
     return {
       playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl,
       teamId: team.id, teamName: team.name, teamLogo: team.logoUrl || FALLBACK_LOGO,
-      tournamentId: tournament.id, tournamentTitle: tournament.title,
+      ...(tournament ? { tournamentId: tournament.id, tournamentTitle: tournament.title } : {}),
       position: player.primaryPosition, goals: 0, assists: 0, penalties: 0,
-      matchIds: new Set<string>(),
+      matchesPlayed: 0, minutesPlayed: null,
     };
   }
 
@@ -154,7 +144,7 @@ export class StatsService {
         goalsAgainstPerMatch: played ? Number((goalsAgainst / played).toFixed(2)) : 0,
         cleanSheets: tournamentMatches.filter((match) => (match.homeTeam.id === team.id
           ? match.awayTeam.score : match.homeTeam.score) === 0).length,
-        possessionAvg: 0, passAccuracy: 0, shotsPerMatch: 0,
+        possessionAvg: null, passAccuracy: null, shotsPerMatch: null,
         yellowCards: events.filter((event) => event.teamId === team.id && event.type === MATCH_EVENT_TYPES.YELLOW_CARD).length,
         redCards: events.filter((event) => event.teamId === team.id && event.type === MATCH_EVENT_TYPES.RED_CARD).length,
         points: standing?.points ?? 0, recentForm: standing?.form ?? [],
@@ -180,8 +170,9 @@ export class StatsService {
         playerId: player.id, name: player.name, avatarUrl: player.avatarUrl, teamId: team.id,
         teamName: team.name, teamLogo: team.logoUrl, position: player.primaryPosition,
         strongFoot: player.strongFoot, age: player.age, appearances: player.appearances ?? 0,
-        minutesPlayed: 0, goals: player.goals ?? 0, assists: player.assists ?? 0,
-        rating: 0, shotsOnTarget: 0, passAccuracy: 0, yellowCards: player.yellowCards ?? 0,
+        minutesPlayed: typeof player.minutesPlayed === 'number' ? player.minutesPlayed : null,
+        goals: player.goals ?? 0, assists: player.assists ?? 0,
+        yellowCards: player.yellowCards ?? 0,
         redCards: player.redCards ?? 0,
       };
     });

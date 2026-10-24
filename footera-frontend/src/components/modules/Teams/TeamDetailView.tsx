@@ -150,7 +150,7 @@ export const TeamDetailView: React.FC = () => {
                   <SelectField value={rosterSort} onChange={(event) => setRosterSort(event.target.value as typeof rosterSort)} className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-white px-3 text-sm text-pitch-ink focus:border-pitch-primary">
                     <option value="goals">Buts</option>
                     <option value="assists">Passes décisives</option>
-                    <option value="appearances">Matchs joués*</option>
+                    <option value="appearances">Matchs joués</option>
                     <option value="yellowCards">Cartons jaunes</option>
                     <option value="redCards">Cartons rouges</option>
                   </SelectField>
@@ -159,7 +159,7 @@ export const TeamDetailView: React.FC = () => {
               <div className="mt-4 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
                 <table className="w-full min-w-160 text-left text-xs">
                   <thead className="border-b border-pitch-line text-slate-500">
-                    <tr><th className="py-3 pr-3">Joueur</th><th className="px-3 py-3 text-center">Matchs*</th><th className="px-3 py-3 text-center">Buts</th><th className="px-3 py-3 text-center">Passes D</th><th className="px-3 py-3 text-center">Jaunes</th><th className="px-3 py-3 text-center">Rouges</th><th className="px-3 py-3 text-center">Minutes</th></tr>
+                    <tr><th className="py-3 pr-3">Joueur</th><th className="px-3 py-3 text-center">Matchs</th><th className="px-3 py-3 text-center">Buts</th><th className="px-3 py-3 text-center">Passes D</th><th className="px-3 py-3 text-center">Jaunes</th><th className="px-3 py-3 text-center">Rouges</th><th className="px-3 py-3 text-center">Minutes</th></tr>
                   </thead>
                   <tbody className="divide-y divide-pitch-separator">
                     {team.members.map((member) => (
@@ -170,13 +170,13 @@ export const TeamDetailView: React.FC = () => {
                         <td className="px-3 py-3 text-center tabular-nums">{member.assists ?? 0}</td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.yellowCards ?? 0}</td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.redCards ?? 0}</td>
-                        <td className="px-3 py-3 text-center text-slate-400">—</td>
+                        <td className="px-3 py-3 text-center text-slate-400">{member.minutesPlayed ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-3 text-caption text-slate-500">* Les matchs joués sont comptabilisés à partir des événements enregistrés. Les feuilles de match et les minutes individuelles ne sont pas encore disponibles.</p>
+              <p className="mt-3 text-caption text-slate-500">Les statistiques sont calculées à partir des événements et feuilles de match enregistrés. Les minutes restent non renseignées si la composition ou la durée jouée manque.</p>
             </>
           ) : (
             <p className="mt-4 rounded-xl bg-pitch-panel p-4 text-sm text-slate-500">Aucun joueur n’est encore renseigné dans l’effectif.</p>

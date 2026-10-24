@@ -3,13 +3,28 @@ import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { TournamentsService } from './tournaments.service.js';
 
 describe('TournamentsService registration', () => {
+  it('lists only registered teams and pitches referenced by tournament matches', async () => {
+    const records = {
+      find: vi.fn().mockResolvedValue({ id: 'cup', participantTeamIds: ['team-1'] }),
+      list: vi.fn(async (collection: string) => ({
+        teams: [{ id: 'team-1', name: 'Registered', ownerId: 'private-owner' }, { id: 'team-2', name: 'Other' }],
+        matches: [{ id: 'match-1', tournamentId: 'cup', pitchId: 'pitch-1' }, { id: 'match-2', tournamentId: 'cup', pitchId: 'missing' }],
+        pitches: [{ id: 'pitch-1', name: 'Pitch One' }, { id: 'pitch-2', name: 'Unrelated Pitch' }],
+      }[collection] ?? [])),
+    };
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: null } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
+
+    await expect(service.listParticipatingTeams('cup')).resolves.toEqual([{ id: 'team-1', name: 'Registered' }]);
+    await expect(service.listPitches('cup')).resolves.toEqual([{ id: 'pitch-1', name: 'Pitch One' }]);
+  });
+
   it('rejects registration once a tournament has started', async () => {
     const records = {
       find: vi.fn().mockResolvedValue({ id: 'cup', status: 'EN_COURS', participantTeamIds: [], maxTeams: 8 }),
       list: vi.fn((collection: string) => Promise.resolve(collection === 'teams' ? [] : [])),
       save: vi.fn(),
     };
-    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'organizer-1' } as unknown as never);
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'organizer-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     await expect(service.register('cup', 'team-1')).rejects.toBeInstanceOf(ConflictException);
     expect(records.save).not.toHaveBeenCalled();
@@ -23,7 +38,7 @@ describe('TournamentsService registration', () => {
       list: vi.fn(async () => []),
       save: vi.fn(),
     };
-    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'attacker-1' } as unknown as never);
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'attacker-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     await expect(service.register('cup', 'team-1')).rejects.toBeInstanceOf(ForbiddenException);
     expect(records.save).not.toHaveBeenCalled();
@@ -37,7 +52,7 @@ describe('TournamentsService registration', () => {
       list: vi.fn(async () => []),
       save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
-    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'owner-1' } as unknown as never);
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'owner-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     await expect(service.register('cup', 'team-1')).resolves.toBe(true);
     expect(records.save).toHaveBeenCalledWith('tournaments', 'cup', expect.objectContaining({ participantTeamIds: ['team-1'] }));
@@ -49,7 +64,7 @@ describe('TournamentsService registration', () => {
       create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
     const notifications = { add: vi.fn(async () => undefined) };
-    const service = new TournamentsService(records as unknown as never, notifications as unknown as never, { userId: 'organizer-1' } as unknown as never);
+    const service = new TournamentsService(records as unknown as never, notifications as unknown as never, { userId: 'organizer-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     const created = await service.create({
       title: 'Coupe test', format: '7v7', city: 'Antananarivo', venue: 'Terrain central',
@@ -66,7 +81,7 @@ describe('TournamentsService registration', () => {
       find: vi.fn(async () => ({ id: 'player-1', name: 'Joueur', roles: ['Joueur'] })),
       create: vi.fn(),
     };
-    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'player-1' } as unknown as never);
+    const service = new TournamentsService(records as unknown as never, { add: vi.fn() } as unknown as never, { userId: 'player-1' } as unknown as never, { values: vi.fn(async (key: string) => key === 'tournamentFormats' ? ['7v7'] : ['8']) } as unknown as never);
 
     await expect(service.create({
       title: 'Coupe test', format: '7v7', city: 'Antananarivo', venue: 'Terrain central',

@@ -16,8 +16,8 @@ export interface EnrichedTeamMember extends TeamMemberRecord {
   assists: number;
   yellowCards: number;
   redCards: number;
-  minutesPlayed: null;
-  competitionStats: Array<{ competitionId: string; appearances: number; goals: number; assists: number; yellowCards: number; redCards: number; minutesPlayed: null }>;
+  minutesPlayed: number | null;
+  competitionStats: Array<{ competitionId: string; appearances: number; goals: number; assists: number; yellowCards: number; redCards: number; minutesPlayed: number | null }>;
 }
 
 @Injectable()
@@ -108,7 +108,7 @@ export class TeamsService {
           assists: competitionTotals?.assists ?? 0,
           yellowCards: competitionTotals?.yellowCards ?? 0,
           redCards: competitionTotals?.redCards ?? 0,
-          minutesPlayed: null,
+          minutesPlayed: competitionTotals?.minutesPlayed ?? null,
         };
       });
       membersByPlayerId.set(memberId, {
@@ -125,7 +125,7 @@ export class TeamsService {
         assists: stats?.assists ?? 0,
         yellowCards: stats?.yellowCards ?? 0,
         redCards: stats?.redCards ?? 0,
-        minutesPlayed: null,
+        minutesPlayed: stats?.minutesPlayed ?? null,
         competitionStats,
       } as EnrichedTeamMember);
     }
@@ -152,6 +152,11 @@ export class TeamsService {
       topScorers,
       stats: this.getComputedTeamStats(team, teams, matches, tournaments),
     };
+  }
+
+  async listPlayers(id: string, competitionId?: string) {
+    const detail = await this.getDetail(id, { competitionId });
+    return detail?.members ?? null;
   }
 
   private async ensureTeamMemberProfiles(team: TeamRecord, players: PlayerRecord[]) {

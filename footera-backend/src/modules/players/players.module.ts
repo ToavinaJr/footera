@@ -4,6 +4,7 @@ import { DatabaseModule } from '../database.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { TeamsModule } from '../teams/teams.module.js';
 import { PlayersService } from './players.service.js';
+import { PlayerMatchStatsService } from './player-match-stats.service.js';
 
-@Module({ imports: [DatabaseModule, NotificationsModule, TeamsModule], controllers: [PlayersController], providers: [PlayersService], exports: [PlayersService] })
+@Module({ imports: [DatabaseModule, NotificationsModule, TeamsModule], controllers: [PlayersController], providers: [PlayersService, PlayerMatchStatsService], exports: [PlayersService, PlayerMatchStatsService] })
 export class PlayersModule {}

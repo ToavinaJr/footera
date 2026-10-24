@@ -42,6 +42,14 @@ export class PlayersController {
     return player;
   }
 
+  @Get(':id/stats')
+  @Public()
+  async getStats(@Param('id') id: string, @Query('competitionId') competitionId?: string) {
+    const stats = await this.players.getMatchStats(id, competitionId);
+    if (!stats) throw new NotFoundException('Joueur introuvable');
+    return stats;
+  }
+
   @Post(':id/invite')
   invite(@Param('id') id: string, @Body('message') message?: string) {
     return this.teams.invitePlayer(id, message || 'Invitation à rejoindre notre équipe.');

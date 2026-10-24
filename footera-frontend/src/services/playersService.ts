@@ -33,6 +33,21 @@ export const playersService = {
     return apiClient<Player>(`players/${encodeURIComponent(id)}`);
   },
 
+  getMatchStats(id: string, competitionId?: string): Promise<{
+    appearances: number;
+    minutesPlayed: number | null;
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards: number;
+    teamStats: Array<{ teamId: string; appearances: number; minutesPlayed: number | null; goals: number; assists: number; yellowCards: number; redCards: number }>;
+  }> {
+    const params = new URLSearchParams();
+    if (competitionId) params.set('competitionId', competitionId);
+    const query = params.size ? `?${params.toString()}` : '';
+    return apiClient(`players/${encodeURIComponent(id)}/stats${query}`);
+  },
+
   invite(id: string, message: string): Promise<{ success: boolean; invitation: TeamInvitation; message: string }> {
     return apiClient(`players/${encodeURIComponent(id)}/invite`, { method: 'POST', body: JSON.stringify({ message }) });
   },

@@ -4,6 +4,7 @@ import { BookingsService } from './bookings.service.js';
 
 const catalogOptions = {
   pitchSurfaces: ['Indoor Five', 'Synthétique dernière génération'],
+  pitchFormats: ['11v11', '9v9', '7v7', '5v5', '4v4'],
   pitchAmenities: ['Lighting'],
 };
 
@@ -21,7 +22,7 @@ function makeService(profile: { activeRole: string; roles: string[] }) {
 describe('BookingsService pitch permissions', () => {
   const pitch = {
     name: 'Terrain test', complexName: 'Complexe test', city: 'Antananarivo', address: 'Centre',
-    surface: 'Synthétique dernière génération', dimensions: '5v5', imageUrl: 'https://images.unsplash.com/photo-123', hourlyRate: 50, amenities: [],
+    surface: 'Synthétique dernière génération', gameFormat: '5v5', dimensions: '5v5', imageUrl: 'https://images.unsplash.com/photo-123', hourlyRate: 50, amenities: [],
   };
 
   it('allows pitch creation when Gestionnaire Terrain is assigned, regardless of active mode', async () => {
@@ -38,7 +39,7 @@ describe('BookingsService pitch permissions', () => {
 
   it('exposes surface and amenity options from the database catalog', async () => {
     const { service } = makeService({ activeRole: 'Joueur', roles: ['Joueur'] });
-    await expect(service.getPitchOptions()).resolves.toEqual({ surfaces: catalogOptions.pitchSurfaces, amenities: catalogOptions.pitchAmenities });
+    await expect(service.getPitchOptions()).resolves.toEqual({ surfaces: catalogOptions.pitchSurfaces, formats: catalogOptions.pitchFormats, amenities: catalogOptions.pitchAmenities });
   });
 });
 

@@ -10,6 +10,7 @@ import {
   SEED_PLAYERS_EXTRA,
   SEED_TEAMS,
   SEED_TOURNAMENTS,
+  SEED_CATALOGS,
   SEED_USER,
 } from './seeds.js';
 import { validateSeedRelations } from './seed-data.js';
@@ -22,6 +23,13 @@ function idOf(value: unknown): string | undefined {
 }
 
 describe('seed reference integrity', () => {
+  it('includes marketplace, tournament, and pitch form catalogs', () => {
+    const catalogValues = new Map(SEED_CATALOGS.map((catalog) => [catalog.id, catalog.values]));
+    expect(catalogValues.get('marketplace-conditions')).toContain('Bon état');
+    expect(catalogValues.get('pitch-formats')).toEqual(['11v11', '9v9', '7v7', '5v5', '4v4']);
+    expect(catalogValues.get('tournament-formats')).toContain('9v9');
+    expect(catalogValues.get('tournament-team-counts')).toContain('16');
+  });
   const players = [...SEED_PLAYERS, ...SEED_PLAYERS_EXTRA];
   const playerIds = new Set(players.map((player) => player.id));
   const playersById = new Map(players.map((player) => [player.id, player]));
@@ -105,10 +113,10 @@ describe('seed reference integrity', () => {
       SEED_TOURNAMENTS as TournamentRecord[],
     );
 
-    expect(stats.get('ply_mika')).toEqual({ appearances: 1, goals: 2, assists: 0, yellowCards: 0, redCards: 0 });
-    expect(stats.get('ply_tahina')).toEqual({ appearances: 1, goals: 1, assists: 1, yellowCards: 0, redCards: 0 });
-    expect(stats.get('ply_malik')).toEqual({ appearances: 1, goals: 1, assists: 0, yellowCards: 0, redCards: 0 });
-    expect(stats.get('ply_05')).toEqual({ appearances: 1, goals: 0, assists: 0, yellowCards: 1, redCards: 0 });
+    expect(stats.get('ply_mika')).toMatchObject({ appearances: 1, goals: 2, assists: 0, yellowCards: 0, redCards: 0, minutesPlayed: 90 });
+    expect(stats.get('ply_tahina')).toMatchObject({ appearances: 1, goals: 1, assists: 1, yellowCards: 0, redCards: 0, minutesPlayed: 90 });
+    expect(stats.get('ply_malik')).toMatchObject({ appearances: 1, goals: 1, assists: 0, yellowCards: 0, redCards: 0, minutesPlayed: 90 });
+    expect(stats.get('ply_05')).toMatchObject({ appearances: 1, goals: 0, assists: 0, yellowCards: 1, redCards: 0, minutesPlayed: 90 });
   });
 
   it('limits player contributions to their team matches and selected competition', () => {
@@ -139,7 +147,7 @@ describe('seed reference integrity', () => {
 
     const stats = aggregatePlayerMatchStats(scopedPlayers, scopedMatches, { teamId: 'team-1', competitionId: 'cup-1' }, scopedTournaments);
 
-    expect(stats.get('player-1')).toEqual({ appearances: 1, goals: 1, assists: 0, yellowCards: 1, redCards: 0 });
+    expect(stats.get('player-1')).toMatchObject({ appearances: 1, goals: 1, assists: 0, yellowCards: 1, redCards: 0, minutesPlayed: null });
     expect(stats.has('player-2')).toBe(false);
   });
 });

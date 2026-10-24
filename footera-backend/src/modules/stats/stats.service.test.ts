@@ -15,6 +15,9 @@ describe('StatsService tournament leaderboards', () => {
       { list: vi.fn().mockResolvedValue(players) } as unknown as never,
       { list: vi.fn().mockResolvedValue(teams) } as unknown as never,
       { list: vi.fn((collection: string) => Promise.resolve(collection === 'matches' ? matches : [tournament])) } as unknown as never,
+      { aggregate: vi.fn().mockResolvedValue(new Map([['player-1', { teamStats: new Map([['team-1', {
+        teamId: 'team-1', appearances: 1, goals: 1, assists: 0, yellowCards: 0, redCards: 0, minutesPlayed: 90,
+      }]]) }]])) } as unknown as never,
     );
 
     await expect(service.topScorers({ tournamentId: 'cup-1' })).resolves.toMatchObject([
@@ -27,6 +30,7 @@ describe('StatsService tournament leaderboards', () => {
       { list: vi.fn().mockResolvedValue([{ id: 'player-1', name: 'A. Striker' }]) } as unknown as never,
       { list: vi.fn().mockResolvedValue([]) } as unknown as never,
       { list: vi.fn((collection: string) => Promise.resolve(collection === 'matches' ? [] : [{ id: 'cup-1', participantTeamIds: [] }])) } as unknown as never,
+      { aggregate: vi.fn().mockResolvedValue(new Map()) } as unknown as never,
     );
 
     await expect(service.topScorers({ tournamentId: 'cup-1' })).resolves.toEqual([]);
@@ -40,6 +44,7 @@ describe('StatsService tournament leaderboards', () => {
       { list: listPlayers } as unknown as never,
       { list: vi.fn().mockResolvedValue([{ id: 'team-1', name: 'Team One', logoUrl: '/team.png' }]) } as unknown as never,
       { list: vi.fn().mockResolvedValue([]) } as unknown as never,
+      { aggregate: vi.fn().mockResolvedValue(new Map()) } as unknown as never,
     );
 
     await expect(service.playerStats({ teamId: 'team-1', tournamentId: 'cup-1' })).resolves.toMatchObject([

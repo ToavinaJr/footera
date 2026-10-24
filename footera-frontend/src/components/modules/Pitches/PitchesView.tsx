@@ -82,6 +82,8 @@ export const PitchesView: React.FC = () => {
   const [formCity, setFormCity] = useState('');
   const [formAddress, setFormAddress] = useState('');
   const [formSurface, setFormSurface] = useState<SurfaceType>('');
+  const [formGameFormat, setFormGameFormat] = useState('');
+  const [gameFormatOptions, setGameFormatOptions] = useState<string[]>([]);
   const [formDimensions, setFormDimensions] = useState('');
   const [formHourlyRate, setFormHourlyRate] = useState('');
   const [formAmenities, setFormAmenities] = useState<string[]>([]);
@@ -92,6 +94,7 @@ export const PitchesView: React.FC = () => {
     pitchesService.getOptions()
       .then((options) => {
         setSurfaceOptions(options.surfaces);
+        setGameFormatOptions(options.formats);
         setAmenityOptions(options.amenities);
       })
       .catch((err: unknown) => showToast(err instanceof Error ? err.message : 'Impossible de charger les options des terrains.', 'error'));
@@ -182,6 +185,7 @@ export const PitchesView: React.FC = () => {
     setFormCity('');
     setFormAddress('');
     setFormSurface('');
+    setFormGameFormat('');
     setFormDimensions('');
     setFormHourlyRate('');
     setFormAmenities([]);
@@ -234,7 +238,7 @@ export const PitchesView: React.FC = () => {
 
   const handleCreatePitch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formComplexName.trim() || !formCity.trim() || !formAddress.trim() || !formSurface || !formDimensions.trim() || !formImageUrl) {
+    if (!formName.trim() || !formComplexName.trim() || !formCity.trim() || !formAddress.trim() || !formSurface || !formGameFormat || !formDimensions.trim() || !formImageUrl) {
       showToast('Veuillez remplir tous les champs obligatoires du terrain.', 'info');
       return;
     }
@@ -253,6 +257,7 @@ export const PitchesView: React.FC = () => {
         city: formCity.trim(),
         address: formAddress.trim(),
         surface: formSurface,
+        gameFormat: formGameFormat,
         dimensions: formDimensions.trim(),
         imageUrl: formImageUrl,
         hourlyRate: rate,
@@ -306,6 +311,7 @@ export const PitchesView: React.FC = () => {
           </div>
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 md:p-7">
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Surface</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.surface}</strong></div>
+            {detailPitch.gameFormat && <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Format</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.gameFormat}</strong></div>}
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Dimensions</span><strong className="mt-1 block text-sm text-pitch-ink">{detailPitch.dimensions}</strong></div>
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Évaluation</span><strong className="mt-1 flex items-center gap-1 text-sm text-pitch-ink">{detailPitch.reviewsCount > 0 && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}{detailPitch.reviewsCount > 0 ? `${formatFiniteNumber(detailPitch.rating, 1)} (${formatFiniteNumber(detailPitch.reviewsCount)} avis)` : 'Pas encore noté'}</strong></div>
             <div className="rounded-2xl border border-pitch-line bg-pitch-panel p-4"><span className="text-xs text-slate-500">Tarif indicatif</span><strong className="mt-1 block text-sm text-pitch-primary">À partir de {formatFiniteNumber(detailPitch.hourlyRate)} € / séance</strong></div>
@@ -471,7 +477,7 @@ export const PitchesView: React.FC = () => {
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
                     <span className="text-xs font-bold text-lime-volt block mb-0.5">
-                      {pitch.surface} · {pitch.dimensions}
+                      {pitch.surface} · {pitch.gameFormat ? `${pitch.gameFormat} · ` : ''}{pitch.dimensions}
                     </span>
                     <h3 className="text-lg font-extrabold text-white truncate">
                       {pitch.name}
@@ -697,6 +703,14 @@ export const PitchesView: React.FC = () => {
                 >
                   <option value="" disabled>Choisir un type de surface</option>
                   {surfaceOptions.map((surface) => <option key={surface} value={surface}>{surface}</option>)}
+                </SelectField>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Format du terrain *</label>
+                <SelectField value={formGameFormat} onChange={(event) => setFormGameFormat(event.target.value)} required disabled={gameFormatOptions.length === 0} className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden">
+                  <option value="" disabled>Choisir un format</option>
+                  {gameFormatOptions.map((format) => <option key={format} value={format}>{format}</option>)}
                 </SelectField>
               </div>
 

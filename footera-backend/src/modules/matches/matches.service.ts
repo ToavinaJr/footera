@@ -127,7 +127,7 @@ export class MatchesService {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       throw new BadRequestException('Les modifications du match sont invalides.');
     }
-    const allowedFields = new Set(['date', 'time', 'scheduledAt', 'venue', 'pitchId', 'city', 'events']);
+    const allowedFields = new Set(['date', 'time', 'scheduledAt', 'venue', 'pitchId', 'city', 'events', 'lineups']);
     if (!Object.keys(input).length || Object.keys(input).some((field) => !allowedFields.has(field))) {
       throw new BadRequestException('Le formulaire contient des champs non autorisés ou aucune modification.');
     }
@@ -162,6 +162,7 @@ export class MatchesService {
         score: events.filter((event) => event.teamId === match.awayTeam.id && isScoringEvent(event.type)).length,
       };
     }
+    if (input.lineups !== undefined) nextMatch.lineups = await this.validateMatchLineups(input.lineups, match);
     const saved = await this.records.save('matches', id, nextMatch);
     return (await this.ensureEventPlayerProfiles([saved]))[0] ?? saved;
   }
@@ -228,6 +229,17 @@ export class MatchesService {
       if (event.assistPlayerId && (!assist || !isScoringEvent(event.type) || assist.id === player.id)) {
         throw new BadRequestException('La passe décisive sélectionnée est invalide.');
       }
+      const substitutedPlayer = event.substitutedPlayerId
+        ? players.find((candidate) => candidate.id === event.substitutedPlayerId
+          && (candidate.currentTeamId === event.teamId || rosterPlayerIds.has(candidate.id)
+            || (candidate.userId ? rosterPlayerIds.has(candidate.userId) : false)))
+        : undefined;
+      if (event.substitutedPlayerId && (!substitutedPlayer || event.type !== MATCH_EVENT_TYPES.SUBSTITUTION || substitutedPlayer.id === player.id)) {
+        throw new BadRequestException('Le joueur remplacé est invalide.');
+      }
+      if (event.type === MATCH_EVENT_TYPES.SUBSTITUTION && !substitutedPlayer) {
+        throw new BadRequestException('Une substitution doit identifier le joueur remplacé.');
+      }
       return {
         minute: event.minute,
         type: event.type,
@@ -235,10 +247,40 @@ export class MatchesService {
         playerId: player.id,
         player: player.name,
         ...(assist ? { assistPlayerId: assist.id, assist: assist.name } : {}),
+        ...(substitutedPlayer ? { substitutedPlayerId: substitutedPlayer.id } : {}),
         ...(typeof event.description === 'string' && sanitizePlainText(event.description, 300)
           ? { description: sanitizePlainText(event.description, 300) } : {}),
       };
     }).sort((left, right) => left.minute - right.minute);
+  }
+
+  private async validateMatchLineups(lineups: NonNullable<UpdateMatchInput['lineups']>, match: MatchRecord) {
+    if (!Array.isArray(lineups) || lineups.length > 2) throw new BadRequestException('Les compositions du match sont invalides.');
+    const teamIds = new Set([match.homeTeam.id, match.awayTeam.id]);
+    const seenTeams = new Set<string>();
+    const seenPlayers = new Set<string>();
+    const [players, teams] = await Promise.all([
+      this.records.list<PlayerRecord>('players'),
+      this.records.list<TeamRecord>('teams'),
+    ]);
+    return lineups.map((lineup) => {
+      if (!lineup || !teamIds.has(lineup.teamId) || seenTeams.has(lineup.teamId)
+        || !Array.isArray(lineup.playerIds) || lineup.playerIds.length > 30
+        || new Set(lineup.playerIds).size !== lineup.playerIds.length) {
+        throw new BadRequestException('Une composition contient des données invalides ou dupliquées.');
+      }
+      seenTeams.add(lineup.teamId);
+      const team = teams.find((candidate) => candidate.id === lineup.teamId);
+      for (const playerId of lineup.playerIds) {
+        const player = players.find((candidate) => candidate.id === playerId);
+        const rosterHasPlayer = team?.members?.some((member) => member.playerId === playerId || member.playerId === player?.userId) ?? false;
+        if (!player || (player.currentTeamId !== lineup.teamId && !rosterHasPlayer) || seenPlayers.has(playerId)) {
+          throw new BadRequestException('Un joueur de la composition ne fait pas partie de cette équipe ou est dupliqué.');
+        }
+        seenPlayers.add(playerId);
+      }
+      return { teamId: lineup.teamId, playerIds: [...lineup.playerIds] };
+    });
   }
 
   activityFeed() { return this.records.list('activity'); }

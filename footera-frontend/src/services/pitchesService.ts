@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/api/client';
-import type { Pitch, PitchOptions, SurfaceType } from '../types';
+import type { CatalogOptions, Pitch, PitchOptions, SurfaceType } from '../types';
 
 export interface CreatePitchInput {
   name: string;
@@ -7,6 +7,7 @@ export interface CreatePitchInput {
   city: string;
   address: string;
   surface: SurfaceType;
+  gameFormat: string;
   dimensions: string;
   imageUrl: string;
   hourlyRate: number;
@@ -19,8 +20,9 @@ export interface RatePitchInput {
 }
 
 export const pitchesService = {
-  getOptions(): Promise<PitchOptions> {
-    return apiClient<PitchOptions>('pitches/options');
+  async getOptions(): Promise<PitchOptions> {
+    const catalogs = await apiClient<CatalogOptions>('catalogs');
+    return { surfaces: catalogs.pitchSurfaces, formats: catalogs.pitchFormats, amenities: catalogs.pitchAmenities };
   },
 
   async list(filters?: { city?: string; surface?: SurfaceType | 'Toutes'; date?: string }): Promise<Pitch[]> {

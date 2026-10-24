@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@nestjs/common';
 import { BookingsService } from '../modules/bookings/bookings.service.js';
 import type { CreatePitchInput } from '../modules/bookings/bookings.service.js';
+import { createPitchBodyPipe } from '../modules/bookings/pitch-request.validation.js';
 
 @Controller('pitches')
 export class PitchesController {
@@ -29,7 +30,7 @@ export class PitchesController {
   }
 
   @Post()
-  create(@Body() body: CreatePitchInput) {
+  create(@Body(createPitchBodyPipe) body: CreatePitchInput) {
     return this.bookings.createPitch(body);
   }
 }

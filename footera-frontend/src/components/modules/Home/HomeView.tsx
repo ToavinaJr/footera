@@ -9,7 +9,6 @@ import {
   Activity, 
   ChevronRight,
   Shield,
-  Star,
   Clock,
   Send,
   Zap,
@@ -263,10 +262,6 @@ export const HomeView: React.FC = () => {
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-lg text-white text-xs font-bold flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-lime-volt text-lime-volt" />
-                      <span>{player.rating && player.rating > 0 ? player.rating : '—'}</span>
-                    </div>
                   </div>
 
                   <div className="p-4 space-y-3">

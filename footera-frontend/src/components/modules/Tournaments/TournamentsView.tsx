@@ -3,7 +3,7 @@ import { SelectField } from '../../common/SelectField';
 import { Trophy, Calendar, MapPin, Users, Award, Shield, CheckCircle2, Plus, Sparkles, Building2, Layers, Target } from 'lucide-react';
 import { tournamentsService, CreateTournamentInput } from '../../../services/tournamentsService';
 import { statsService } from '../../../services/statsService';
-import { Tournament, TopScorerItem, TopAssisterItem, Team, Pitch } from '../../../types';
+import { Tournament, TopScorerItem, TopAssisterItem, Team, TournamentStadium } from '../../../types';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
 import { CardSkeleton } from '../../common/Skeleton';
@@ -14,7 +14,9 @@ import { useRouteModal } from '../../../hooks/useRouteModal';
 import { teamsService } from '../../../services/teamsService';
 import { DatePickerField } from '../../common/DatePickerField';
 import { formatDateForDisplay, getTodayDateInputValue } from '../../../utils/date';
-import { pitchesService } from '../../../services/pitchesService';
+import { catalogsService } from '../../../services/catalogsService';
+import type { CatalogOptions } from '../../../types';
+import { ImageUploadField } from '../../common/ImageUploadField';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
@@ -36,9 +38,10 @@ const TOURNAMENT_BANNER_PRESETS = [
 ];
 
 export const TournamentsView: React.FC = () => {
-  const { showToast, selectedResourceId } = useApp();
+  const { showToast, selectedResourceId, user } = useApp();
   const tournamentModal = useRouteModal('/tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [catalogOptions, setCatalogOptions] = useState<CatalogOptions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Detail Modal
@@ -51,7 +54,8 @@ export const TournamentsView: React.FC = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [registerTeamId, setRegisterTeamId] = useState('');
   const [teams, setTeams] = useState<Team[]>([]);
-  const [pitches, setPitches] = useState<Pitch[]>([]);
+  const [tournamentTeams, setTournamentTeams] = useState<Team[]>([]);
+  const [tournamentStadiums, setTournamentStadiums] = useState<TournamentStadium[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Create Tournament Modal
@@ -67,6 +71,12 @@ export const TournamentsView: React.FC = () => {
   const [formOrganizer, setFormOrganizer] = useState('');
   const [formBannerUrl, setFormBannerUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    catalogsService.getOptions().then(setCatalogOptions).catch((err: unknown) => {
+      showToast(err instanceof Error ? err.message : 'Impossible de charger les options du tournoi.', 'error');
+    });
+  }, [showToast]);
 
   useEffect(() => {
     async function loadTournaments() {
@@ -90,11 +100,8 @@ export const TournamentsView: React.FC = () => {
   }, [selectedResourceId, showToast, tournamentModal.resourceId]);
 
   useEffect(() => {
-    Promise.all([teamsService.list(), pitchesService.list()]).then(([teamList, pitchList]) => {
-      setTeams(teamList);
-      setPitches(pitchList);
-    }).catch((err) => {
-      showToast(err.message || 'Erreur lors du chargement des équipes', 'error');
+    teamsService.list().then(setTeams).catch((err: unknown) => {
+      showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des équipes', 'error');
     });
   }, [showToast]);
 
@@ -103,8 +110,17 @@ export const TournamentsView: React.FC = () => {
       setTournModalTab('overview');
       statsService.getTopScorers({ tournamentId: selectedTournament.id }).then(setTournScorers);
       statsService.getTopAssisters({ tournamentId: selectedTournament.id }).then(setTournAssisters);
+      Promise.all([
+        tournamentsService.listParticipatingTeams(selectedTournament.id),
+        tournamentsService.listPitches(selectedTournament.id),
+      ]).then(([participatingTeams, stadiums]) => {
+        setTournamentTeams(participatingTeams);
+        setTournamentStadiums(stadiums);
+      }).catch((error: unknown) => {
+        showToast(error instanceof Error ? error.message : 'Erreur lors du chargement des détails du tournoi', 'error');
+      });
     }
-  }, [selectedTournament?.id]);
+  }, [selectedTournament?.id, showToast]);
 
   const handleRegister = async () => {
     if (!selectedTournament || !registerTeamId) return;
@@ -448,9 +464,9 @@ export const TournamentsView: React.FC = () => {
             {tournModalTab === 'teams' && (
               <section className="space-y-3">
                 <h3 className="text-sm font-bold text-pitch-ink">Équipes participantes</h3>
-                {(selectedTournament.participatingTeams ?? teams.filter((team) => (selectedTournament.participantTeamIds ?? []).includes(team.id))).length ? (
+                {tournamentTeams.length ? (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {(selectedTournament.participatingTeams ?? teams.filter((team) => (selectedTournament.participantTeamIds ?? []).includes(team.id))).map((team) => {
+                    {tournamentTeams.map((team) => {
                       const standing = selectedTournament.standings.find((row) => row.teamId === team.id);
                       return <article key={team.id} className="flex items-center gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
                         <img src={team.logoUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
@@ -468,13 +484,12 @@ export const TournamentsView: React.FC = () => {
             {tournModalTab === 'stadiums' && (
               <section className="space-y-3">
                 <h3 className="text-sm font-bold text-pitch-ink">Stades et complexes d’accueil</h3>
-                {selectedTournament.stadiums?.length ? <div className="grid gap-3 sm:grid-cols-2">
-                  {selectedTournament.stadiums.map((stadium) => {
-                    const pitch = pitches.find((item) => item.id === stadium.pitchId || item.id === stadium.id);
+                {tournamentStadiums.length ? <div className="grid gap-3 sm:grid-cols-2">
+                  {tournamentStadiums.map((stadium) => {
                     return <article key={stadium.id} className="flex items-start gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-4">
                       <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-pitch-primary" />
                       <div>
-                        {pitch ? <EntityLink section="pitches" id={pitch.id} className="font-bold text-pitch-ink">{stadium.name}</EntityLink>
+                        {stadium.pitchId ? <EntityLink section="pitches" id={stadium.pitchId} className="font-bold text-pitch-ink">{stadium.name}</EntityLink>
                           : <h4 className="font-bold text-pitch-ink">{stadium.name}</h4>}
                         <p className="mt-1 text-xs text-slate-500">{stadium.address || stadium.city || selectedTournament.city}</p>
                       </div>
@@ -669,10 +684,7 @@ export const TournamentsView: React.FC = () => {
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value="">Choisir un format</option>
-                  <option value="11v11">11 contre 11 (Grand terrain)</option>
-                  <option value="7v7">Foot à 7</option>
-                  <option value="5v5 (Five)">Five (5v5)</option>
-                  <option value="Futsal">Futsal officiel</option>
+                  {(catalogOptions?.tournamentFormats ?? []).map((format) => <option key={format} value={format}>{format}</option>)}
                 </SelectField>
               </div>
 
@@ -685,11 +697,7 @@ export const TournamentsView: React.FC = () => {
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
                   <option value="">Choisir un nombre d’équipes</option>
-                  <option value={8}>8 équipes (Quarts, Demis, Finale)</option>
-                  <option value={12}>12 équipes (Poules + Finales)</option>
-                  <option value={16}>16 équipes (Format standard mondial)</option>
-                  <option value={24}>24 équipes (Grande compétition)</option>
-                  <option value={32}>32 équipes (Mondial des clubs)</option>
+                  {(catalogOptions?.tournamentTeamCounts ?? []).map((count) => <option key={count} value={count}>{count} équipes</option>)}
                 </SelectField>
               </div>
             </div>
@@ -777,7 +785,8 @@ export const TournamentsView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Visuel officiel du tournoi *
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <ImageUploadField purpose="tournament" label="Importer un visuel du tournoi" onUploaded={setFormBannerUrl} disabled={isCreating || !user?.roles?.includes('Organisateur Tournoi')} disabledHint="Le rôle Organisateur Tournoi doit être attribué à votre compte pour importer une image." />
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {TOURNAMENT_BANNER_PRESETS.map((preset) => {
                   const isSelected = formBannerUrl === preset.url;
                   return (

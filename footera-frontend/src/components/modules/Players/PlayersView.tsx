@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SelectField } from '../../common/SelectField';
-import { Search, Filter, Shield, Trophy, UserPlus, Star, Heart } from 'lucide-react';
+import { Search, Filter, Shield, Trophy, UserPlus, Heart } from 'lucide-react';
 import { playersService, PlayerFilters } from '../../../services/playersService';
 import { Player, Position, Team, TeamInvitationStatus } from '../../../types';
 import { Badge } from '../../common/Badge';
@@ -243,12 +243,6 @@ export const PlayersView: React.FC = () => {
                       className="w-full h-full object-cover object-center"
                       referrerPolicy="no-referrer"
                     />
-                    {/* Star Rating bottom left */}
-                    <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-xl text-white text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
-                      <Star className="w-3.5 h-3.5 fill-lime-volt text-lime-volt" />
-                      <span>{player.rating && player.rating > 0 ? player.rating : '—'}</span>
-                    </div>
-
                     {/* Heart button top right */}
                     <button
                       onClick={(event) => {

@@ -20,6 +20,7 @@ export interface CreatePitchInput {
   city: string;
   address: string;
   surface: string;
+  gameFormat: string;
   dimensions: string;
   imageUrl: string;
   hourlyRate: number;
@@ -32,7 +33,7 @@ export class BookingsService {
   constructor(private readonly records: RecordRepository, private readonly accounts: AccountsService, private readonly notifications: NotificationsService, private readonly catalogs: CatalogsService) {}
   async getPitchOptions() {
     const options = await this.catalogs.options();
-    return { surfaces: options.pitchSurfaces, amenities: options.pitchAmenities };
+    return { surfaces: options.pitchSurfaces, formats: options.pitchFormats, amenities: options.pitchAmenities };
   }
 
   async listPitches(filters: { city?: string; surface?: string; date?: string } = {}) {
@@ -208,11 +209,13 @@ export class BookingsService {
     if (!user?.roles?.includes('Gestionnaire Terrain')) {
       throw new ForbiddenException('Votre compte doit disposer du rôle Gestionnaire Terrain pour publier un terrain.');
     }
-    const [surfaces, amenities] = await Promise.all([
+    const [surfaces, formats, amenities] = await Promise.all([
       this.catalogs.values('pitchSurfaces'),
+      this.catalogs.values('pitchFormats'),
       this.catalogs.values('pitchAmenities'),
     ]);
     if (!surfaces.includes(input?.surface)) throw new BadRequestException('Type de surface invalide.');
+    if (!formats.includes(input?.gameFormat)) throw new BadRequestException('Format de jeu du terrain invalide.');
     if (!Array.isArray(input?.amenities) || input.amenities.some((amenity: unknown) => !amenities.includes(amenity as string))) {
       throw new BadRequestException('La liste des équipements et commodités est invalide.');
     }

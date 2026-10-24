@@ -4,7 +4,10 @@ import { toCamelCase } from '../../utils/text.utils.js';
 
 export interface CatalogOptions {
   pitchSurfaces: string[];
+  pitchFormats: string[];
   pitchAmenities: string[];
+  tournamentFormats: string[];
+  tournamentTeamCounts: string[];
   marketplaceCategories: string[];
   marketplaceConditions: string[];
   marketplaceBrands: string[];
@@ -25,8 +28,9 @@ export class CatalogsService {
       Array.isArray(values) ? values.filter((value) => typeof value === 'string' && value.trim()) : [],
     ])) as unknown as Partial<CatalogOptions>;
     return {
-      pitchSurfaces: [], pitchAmenities: [], marketplaceCategories: [], marketplaceConditions: [],
-      marketplaceBrands: [], playerPositions: [], recruitmentPositions: [], playerLevels: [], strongFeet: [],
+      pitchSurfaces: [], pitchFormats: [], pitchAmenities: [], tournamentFormats: [], tournamentTeamCounts: [],
+      marketplaceCategories: [], marketplaceConditions: [], marketplaceBrands: [], playerPositions: [],
+      recruitmentPositions: [], playerLevels: [], strongFeet: [],
       ...persisted,
     };
   }

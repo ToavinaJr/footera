@@ -8,10 +8,14 @@ export async function parseSuccessfulResponse<T>(response: Response, apiBaseUrl:
     return JSON.parse(body) as T;
   } catch {
     const excerpt = body.slice(0, 160);
+    const isHtml = /<\s*!doctype\s+html|<\s*html[\s>]/i.test(body)
+      || response.headers.get('content-type')?.toLowerCase().includes('text/html') === true;
     throw new AppApiError(
-      `L’API a renvoyé une réponse non JSON (${response.status}). Vérifiez que le backend répond sur ${apiBaseUrl}. ${excerpt}`,
+      isHtml
+        ? `L’API ${apiBaseUrl} a renvoyé une page HTML (${response.status}) au lieu de JSON. Vérifiez l’URL de déploiement du backend et son routage /api/v1.`
+        : `L’API a renvoyé une réponse non JSON (${response.status}). Vérifiez que le backend répond sur ${apiBaseUrl}. ${excerpt}`,
       response.status,
-      'INVALID_API_RESPONSE',
+      isHtml ? 'API_ROUTE_RETURNED_HTML' : 'INVALID_API_RESPONSE',
     );
   }
 }

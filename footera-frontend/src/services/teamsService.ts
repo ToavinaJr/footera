@@ -21,6 +21,13 @@ export const teamsService = {
     return apiClient<TeamDetail>(`teams/${encodeURIComponent(id)}/detail?${params.toString()}`);
   },
 
+  listPlayers(id: string, competitionId?: string): Promise<TeamDetail['members']> {
+    const params = new URLSearchParams();
+    if (competitionId) params.set('competitionId', competitionId);
+    const query = params.size ? `?${params.toString()}` : '';
+    return apiClient<TeamDetail['members']>(`teams/${encodeURIComponent(id)}/players${query}`);
+  },
+
   async getMyTeam(): Promise<Team | null> {
     const response = await apiClient<{ team: Team | null }>('teams/my-team');
     return response.team;

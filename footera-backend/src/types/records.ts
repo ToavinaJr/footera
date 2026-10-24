@@ -53,12 +53,22 @@ export interface PlayerRecord {
   assists?: number;
   yellowCards?: number;
   redCards?: number;
+  minutesPlayed?: number | null;
+  teamHistoryStats?: Array<{
+    teamId?: string;
+    teamName: string;
+    appearances: number;
+    minutesPlayed?: number | null;
+    goals: number;
+    assists: number;
+    yellowCards: number;
+    redCards: number;
+  }>;
   experienceYears?: number;
   isAvailableForTransfer?: boolean;
   rating?: number;
   bio?: string;
   previousClubs?: string[];
-  teamHistoryStats?: Array<Record<string, unknown>>;
   [key: string]: unknown;
 }
 
@@ -97,6 +107,8 @@ export interface MatchEventRecord {
   playerId?: string;
   player: string;
   assistPlayerId?: string;
+  /** Player leaving the pitch; playerId identifies the player entering on substitutions. */
+  substitutedPlayerId?: string;
   assist?: string;
   description?: string;
 }
@@ -130,6 +142,7 @@ export interface UpdateMatchInput {
   pitchId?: string;
   city?: string;
   events?: MatchEventRecord[];
+  lineups?: Array<{ teamId: string; playerIds: string[] }>;
 }
 
 export interface PitchRecord {

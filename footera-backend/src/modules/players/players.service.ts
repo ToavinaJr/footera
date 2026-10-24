@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
-import { aggregatePlayerMatchStats } from './player-match-stats.js';
-import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
+import type { PlayerRecord, TeamRecord, UserRecord } from '../../types/records.js';
+import { PlayerMatchStatsService } from './player-match-stats.service.js';
 import { calculateAge } from '../accounts/calculate-age.js';
 
 @Injectable()
 export class PlayersService {
-  constructor(private readonly records: RecordRepository, private readonly catalogs: CatalogsService) {}
+  constructor(
+    private readonly records: RecordRepository,
+    private readonly catalogs: CatalogsService,
+    private readonly matchStats: PlayerMatchStatsService,
+  ) {}
 
   async options() {
     const options = await this.catalogs.options();
@@ -15,22 +19,14 @@ export class PlayersService {
   }
 
   async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean; competitionId?: string } = {}) {
-    const [players, matches, users, tournaments, teams] = await Promise.all([
+    const [players, users, teams] = await Promise.all([
       this.records.list<PlayerRecord>('players'),
-      this.records.list<MatchRecord>('matches'),
       this.records.list<UserRecord>('users'),
-      this.records.list<TournamentRecord>('tournaments'),
       this.records.list<TeamRecord>('teams'),
     ]);
-    const matchStatsByTeam = new Map<string, ReturnType<typeof aggregatePlayerMatchStats>>();
-    for (const teamId of new Set(players.flatMap((player) => player.currentTeamId ? [player.currentTeamId] : []))) {
-      matchStatsByTeam.set(teamId, aggregatePlayerMatchStats(players, matches, {
-        competitionId: filters.competitionId,
-        teamId,
-      }, tournaments));
-    }
+    const matchStats = await this.matchStats.aggregate({ competitionId: filters.competitionId }, players);
     const enrichedPlayers = players.map((player) => {
-      const stats = player.currentTeamId ? matchStatsByTeam.get(player.currentTeamId)?.get(player.id) : undefined;
+      const stats = matchStats.get(player.id);
       const user = users.find((record) => record.id === player.userId);
       const sportsCv = user?.sportsCv;
       const currentTeam = typeof sportsCv?.currentTeam === 'string' ? sportsCv.currentTeam : player.currentTeam;
@@ -57,6 +53,17 @@ export class PlayersService {
         yellowCards: stats?.yellowCards ?? 0,
         redCards: stats?.redCards ?? 0,
         ...(stats ? { appearances: stats.appearances } : { appearances: 0 }),
+        minutesPlayed: stats?.minutesPlayed ?? null,
+        teamHistoryStats: stats ? [...stats.teamStats.values()].map((teamStats) => ({
+          teamId: teamStats.teamId,
+          teamName: teams.find((team) => team.id === teamStats.teamId)?.name ?? 'Équipe historique',
+          appearances: teamStats.appearances,
+          minutesPlayed: teamStats.minutesPlayed,
+          goals: teamStats.goals,
+          assists: teamStats.assists,
+          yellowCards: teamStats.yellowCards,
+          redCards: teamStats.redCards,
+        })) : [],
       };
     });
     return enrichedPlayers.filter((player) => {
@@ -80,6 +87,10 @@ export class PlayersService {
       ...(user?.email ? { email: user.email } : {}),
       ...(user?.phone?.trim() ? { phone: user.phone } : {}),
     };
+  }
+
+  async getMatchStats(id: string, competitionId?: string) {
+    return competitionId ? this.matchStats.competition(id, competitionId) : this.matchStats.career(id);
   }
 
 }

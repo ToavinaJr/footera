@@ -22,6 +22,22 @@ export class TournamentsController {
     return tournament;
   }
 
+  @Get(':id/teams')
+  @Public()
+  async listParticipatingTeams(@Param('id') id: string) {
+    const teams = await this.tournaments.listParticipatingTeams(id);
+    if (!teams) throw new NotFoundException('Tournoi introuvable');
+    return teams;
+  }
+
+  @Get(':id/pitches')
+  @Public()
+  async listPitches(@Param('id') id: string) {
+    const pitches = await this.tournaments.listPitches(id);
+    if (!pitches) throw new NotFoundException('Tournoi introuvable');
+    return pitches;
+  }
+
   @Post()
   create(@Body(createTournamentBodyPipe) body: CreateTournamentInput) {
     return this.tournaments.create(body);

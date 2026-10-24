@@ -17,7 +17,7 @@ test('keeps rejecting an HTML page returned where JSON is expected', async () =>
   await assert.rejects(parseSuccessfulResponse(response, '/api/v1'), (error: unknown) => {
     assert.ok(error instanceof AppApiError);
     assert.equal(error.statusCode, 200);
-    assert.equal(error.code, 'INVALID_API_RESPONSE');
+    assert.equal(error.code, 'API_ROUTE_RETURNED_HTML');
     return true;
   });
 });

@@ -456,7 +456,7 @@ export const StatsView: React.FC = () => {
                             {item.ratio}
                           </td>
                           <td className="py-3 px-4 text-center text-slate-500 tabular-nums font-medium">
-                            {item.minutesPerGoal > 0 ? `${item.minutesPerGoal} ${t('stats.minutes')}` : '-'}
+                            {typeof item.minutesPerGoal === 'number' ? `${item.minutesPerGoal} ${t('stats.minutes')}` : t('stats.notRecorded')}
                           </td>
                         </tr>
                       ))}
@@ -787,7 +787,7 @@ export const StatsView: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-3 px-3 text-center tabular-nums font-medium text-slate-600">
-                            {team.possessionAvg}%
+                            {team.possessionAvg === null ? t('stats.notRecorded') : `${team.possessionAvg}%`}
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className="font-bold text-pitch-primary block truncate max-w-32.5">
@@ -873,9 +873,6 @@ export const StatsView: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="px-2.5 py-1 rounded-xl bg-[#f2faee] border border-[#d4e7d4] text-pitch-primary font-black text-xs tabular-nums shadow-2xs">
-                          ★ {formatFiniteNumber(player.rating, 1)}
-                        </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-pitch-separator text-center text-xs">
@@ -984,11 +981,8 @@ export const StatsView: React.FC = () => {
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
                 <span className="text-caption text-slate-500 block font-medium">{t('stats.averagePossession')}</span>
                 <strong className="text-base font-black text-pitch-ink tabular-nums">
-                  {selectedTeamModal.possessionAvg}%
+                  {selectedTeamModal.possessionAvg === null ? t('stats.notRecorded') : `${selectedTeamModal.possessionAvg}%`}
                 </strong>
-                <span className="text-micro text-slate-400 block mt-0.5">
-                  {t('stats.accuracy', { value: selectedTeamModal.passAccuracy })}
-                </span>
               </div>
             </div>
 
@@ -1069,9 +1063,6 @@ export const StatsView: React.FC = () => {
                   <h3 className="text-base font-black text-pitch-ink">
                     {selectedPlayerModal.name}
                   </h3>
-                  <span className="px-2.5 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-xs">
-                    ★ {formatFiniteNumber(selectedPlayerModal.rating, 1)} / 10
-                  </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   {selectedPlayerModal.age ? t('stats.yearsOld', { age: selectedPlayerModal.age }) : t('stats.ageUnknown')} · {selectedPlayerModal.strongFoot} · {selectedPlayerModal.teamName}
@@ -1086,7 +1077,7 @@ export const StatsView: React.FC = () => {
                   {selectedPlayerModal.appearances}
                 </strong>
                 <span className="text-micro text-slate-400 block mt-0.5">
-                  {selectedPlayerModal.minutesPlayed} {t('stats.minutes')}
+                  {selectedPlayerModal.minutesPlayed === null ? t('stats.notRecorded') : `${selectedPlayerModal.minutesPlayed} ${t('stats.minutes')}`}
                 </span>
               </div>
 
@@ -1095,9 +1086,6 @@ export const StatsView: React.FC = () => {
                 <strong className="text-base font-black text-pitch-primary tabular-nums">
                   {selectedPlayerModal.goals}
                 </strong>
-                <span className="text-micro text-slate-500 block mt-0.5">
-                  {t('stats.shotsOnTarget', { count: selectedPlayerModal.shotsOnTarget })}
-                </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
@@ -1105,9 +1093,6 @@ export const StatsView: React.FC = () => {
                 <strong className="text-base font-black text-pitch-ink tabular-nums">
                   {selectedPlayerModal.assists}
                 </strong>
-                <span className="text-micro text-slate-400 block mt-0.5">
-                  {selectedPlayerModal.passAccuracy}% préc.
-                </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">

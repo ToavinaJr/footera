@@ -14,6 +14,7 @@ interface EventDraft {
   type: EditableEventType;
   teamId: string;
   playerId: string;
+  substitutedPlayerId: string;
   assistPlayerId: string;
   description: string;
 }
@@ -33,6 +34,7 @@ function toEventDraft(event: MatchEvent, index: number): EventDraft {
     type: supportedType,
     teamId: event.teamId,
     playerId: event.playerId,
+    substitutedPlayerId: event.substitutedPlayerId ?? '',
     assistPlayerId: event.assistPlayerId ?? '',
     description: event.description ?? '',
   };
@@ -47,6 +49,9 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
   const [time, setTime] = useState(match.time);
   const [venue, setVenue] = useState(match.venue);
   const [events, setEvents] = useState<EventDraft[]>(match.events.map(toEventDraft));
+  const [lineups, setLineups] = useState<Record<string, string[]>>(() => Object.fromEntries(
+    [match.homeTeam.id, match.awayTeam.id].map((teamId) => [teamId, match.lineups?.find((lineup) => lineup.teamId === teamId)?.playerIds ?? []]),
+  ));
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -65,6 +70,9 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
     setTime(match.time);
     setVenue(match.venue);
     setEvents(match.events.map(toEventDraft));
+    setLineups(Object.fromEntries(
+      [match.homeTeam.id, match.awayTeam.id].map((teamId) => [teamId, match.lineups?.find((lineup) => lineup.teamId === teamId)?.playerIds ?? []]),
+    ));
   }, [match]);
 
   const updateEvent = (key: string, updates: Partial<EventDraft>) => {
@@ -97,12 +105,16 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
       type: item.type,
       teamId: item.teamId,
       playerId: item.playerId,
+      ...(item.type === 'sub' && item.substitutedPlayerId ? { substitutedPlayerId: item.substitutedPlayerId } : {}),
       ...(item.assistPlayerId ? { assistPlayerId: item.assistPlayerId } : {}),
       ...(item.description.trim() ? { description: item.description.trim() } : {}),
     }));
     setIsSaving(true);
     try {
-      const updated = await matchesService.update(match.id, { date, time, venue, events: payloadEvents });
+      const updated = await matchesService.update(match.id, {
+        date, time, venue, events: payloadEvents,
+        lineups: [match.homeTeam.id, match.awayTeam.id].map((teamId) => ({ teamId, playerIds: lineups[teamId] ?? [] })),
+      });
       onMatchUpdated(updated);
       setIsEditing(false);
       showToast(t('matches.saved'));
@@ -160,6 +172,48 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
             </label>
           </div>
 
+          <section className="space-y-3">
+            <div>
+              <h4 className="text-xs font-bold text-pitch-ink">{t('matches.lineups')}</h4>
+              <p className="mt-1 text-xs text-slate-500">{t('matches.selectStartingPlayers')}</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[match.homeTeam, match.awayTeam].map((team) => {
+                const teamPlayers = players.filter((player) => player.currentTeamId === team.id);
+                const selectedIds = lineups[team.id] ?? [];
+                return (
+                  <fieldset key={team.id} className="min-w-0 space-y-2 rounded-xl border border-pitch-line bg-white p-3">
+                    <legend className="px-1 text-xs font-bold text-pitch-ink">{team.name}</legend>
+                    {teamPlayers.length ? (
+                      <div className="max-h-48 space-y-1 overflow-y-auto">
+                        {teamPlayers.map((player) => {
+                          const checked = selectedIds.includes(player.id);
+                          return (
+                            <label key={player.id} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-lg px-2 text-xs text-pitch-ink hover:bg-pitch-panel">
+                              <input
+                                type="checkbox"
+                                name={`lineup-${team.id}`}
+                                value={player.id}
+                                checked={checked}
+                                disabled={!checked && selectedIds.length >= 30}
+                                onChange={() => setLineups((current) => ({
+                                  ...current,
+                                  [team.id]: checked ? selectedIds.filter((id) => id !== player.id) : [...selectedIds, player.id],
+                                }))}
+                                className="h-4 w-4 accent-pitch-primary"
+                              />
+                              <span className="truncate">{player.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : <p className="text-xs text-slate-500">{t('matches.noEligiblePlayers')}</p>}
+                  </fieldset>
+                );
+              })}
+            </div>
+          </section>
+
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-xs font-bold text-pitch-ink">{t('matches.events')}</h4>
@@ -167,7 +221,7 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
                 type="button"
                 onClick={() => setEvents((current) => [...current, {
                   key: `new-${Date.now()}-${current.length}`, minute: '', type: 'goal', teamId: match.homeTeam.id,
-                  playerId: '', assistPlayerId: '', description: '',
+                  playerId: '', substitutedPlayerId: '', assistPlayerId: '', description: '',
                 }])}
                 className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-pitch-line bg-white px-3 text-xs font-semibold text-pitch-primary"
               >
@@ -210,6 +264,15 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
                         <span>{t('matches.assist')}</span>
                         <select id={`event-assist-${item.key}`} name={`event-assist-${item.key}`} value={item.assistPlayerId} onChange={(event) => updateEvent(item.key, { assistPlayerId: event.target.value })} className="min-h-10 w-full rounded-lg border border-pitch-line bg-white px-2 text-pitch-ink">
                           <option value="">{t('matches.noAssist')}</option>
+                          {teamPlayers.filter((player) => player.id !== item.playerId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}
+                        </select>
+                      </label>
+                    )}
+                    {item.type === 'sub' && (
+                      <label className="space-y-1 text-xs font-semibold text-slate-700">
+                        <span>{t('matches.playerReplaced')}</span>
+                        <select id={`event-substituted-player-${item.key}`} name={`event-substituted-player-${item.key}`} required value={item.substitutedPlayerId} onChange={(event) => updateEvent(item.key, { substitutedPlayerId: event.target.value })} className="min-h-10 w-full rounded-lg border border-pitch-line bg-white px-2 text-pitch-ink">
+                          <option value="">{t('matches.selectPlayer')}</option>
                           {teamPlayers.filter((player) => player.id !== item.playerId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}
                         </select>
                       </label>

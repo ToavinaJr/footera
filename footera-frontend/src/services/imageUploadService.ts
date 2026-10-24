@@ -3,7 +3,7 @@ import { validateImageFile } from '../utils/imageValidation';
 
 export { validateImageFile } from '../utils/imageValidation';
 export { MAX_IMAGE_UPLOAD_BYTES } from '../utils/imageValidation';
-export type ImageUploadPurpose = 'avatar' | 'marketplace' | 'pitch' | 'club-logo';
+export type ImageUploadPurpose = 'avatar' | 'marketplace' | 'pitch' | 'club-logo' | 'tournament';
 
 export async function uploadImage(file: File, purpose: ImageUploadPurpose): Promise<string> {
   await validateImageFile(file);

@@ -49,6 +49,14 @@ export class TeamsController {
     return team;
   }
 
+  @Get(':id/players')
+  @Public()
+  async listPlayers(@Param('id') id: string, @Query('competitionId') competitionId?: string) {
+    const players = await this.teams.listPlayers(id, competitionId);
+    if (!players) throw new NotFoundException('Équipe introuvable');
+    return players;
+  }
+
   @Get(':id')
   @Public()
   async getById(@Param('id') id: string) {
