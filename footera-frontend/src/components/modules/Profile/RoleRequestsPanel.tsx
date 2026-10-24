@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { CheckCircle2, Clock3, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Clock3, ShieldCheck, X } from 'lucide-react';
 import { SelectField } from '../../common/SelectField';
 import { useTranslation } from '../../../i18n';
 import { roleRequestsService, type RequestableRole, type RoleRequest, type RoleRequestsData } from '../../../services/roleRequestsService';
@@ -28,6 +28,7 @@ export function RoleRequestsPanel() {
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -68,6 +69,23 @@ export function RoleRequestsPanel() {
     }
   };
 
+  const cancelRequest = async (request: RoleRequest) => {
+    if (request.status !== 'PENDING' || cancellingId) return;
+    setCancellingId(request.id);
+    setError('');
+    setNotice('');
+    try {
+      const updatedData = await roleRequestsService.cancel(request.id);
+      setData(updatedData);
+      setSelectedRole((current) => current || updatedData.availableRoles.find((role) => role === request.role) || request.role);
+      setNotice(t('roles.cancelled'));
+    } catch (cancelError: unknown) {
+      setError(cancelError instanceof Error ? cancelError.message : t('roles.cancelError'));
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   return <section className="overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-sm">
     <div className="flex items-start gap-4 border-b border-pitch-line bg-linear-to-br from-pitch-light/70 via-white to-white px-5 py-5 md:px-7 md:py-6">
       <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-pitch-primary shadow-sm ring-1 ring-pitch-line"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></span>
@@ -97,6 +115,9 @@ export function RoleRequestsPanel() {
           {request.status === 'PENDING' && <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />}
           {t(request.status === 'APPROVED' ? 'roles.approved' : request.status === 'REJECTED' ? 'roles.rejected' : 'roles.pending')}
         </span>
+        {request.status === 'PENDING' && <button type="button" onClick={() => void cancelRequest(request)} disabled={cancellingId !== null} className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60" aria-label={`${t('roles.cancel')} — ${roleLabel(request.role, t)}`}>
+          <X className="h-3.5 w-3.5" aria-hidden="true" />{cancellingId === request.id ? t('roles.cancelling') : t('roles.cancel')}
+        </button>}
       </li>)}</ul> : <p className="mt-2 text-sm text-slate-500">{t('roles.historyEmpty')}</p>}
     </div>
     </div>

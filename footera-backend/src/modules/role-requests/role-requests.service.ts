@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
 import { ROLE_REQUESTABLE_ROLES, ROLE_REQUEST_STATUSES } from '../../types/domain.js';
@@ -40,6 +40,17 @@ export class RoleRequestsService {
     };
     await this.records.create('roleRequests', request.id, request);
     return request;
+  }
+
+  async cancel(id: string) {
+    const user = await this.requireUser();
+    const request = await this.records.find<RoleRequestRecord>('roleRequests', id);
+    if (!request || request.userId !== user.id) throw new NotFoundException('Demande introuvable.');
+    if (request.status !== ROLE_REQUEST_STATUSES.PENDING) {
+      throw new ConflictException('Seules les demandes en attente peuvent être annulées.');
+    }
+    await this.records.deleteOne('roleRequests', id);
+    return this.listMine();
   }
 
   private async requireUser() {

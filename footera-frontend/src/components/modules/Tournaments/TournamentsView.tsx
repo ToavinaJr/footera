@@ -281,7 +281,7 @@ export const TournamentsView: React.FC = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-transparent" />
                   <div className="absolute top-3 right-3">
                     <span className="px-3 py-1 rounded-full bg-lime-volt text-pitch-ink font-extrabold text-xs shadow-xs">
                       {tourn.status === 'INSCRIPTIONS_OUVERTES' ? t('tournaments.open') : t('tournaments.inProgress')}
@@ -357,7 +357,7 @@ export const TournamentsView: React.FC = () => {
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 text-white">
                 <span className="text-xs font-bold text-lime-volt uppercase tracking-wider block">
                   Organisé par {selectedTournament.organizer}

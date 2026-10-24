@@ -79,6 +79,11 @@ export class RecordRepository {
     return record.payload as T;
   }
 
+  async deleteOne(collection: RecordCollection, id: string): Promise<boolean> {
+    const result = await this.delegate(collection).deleteMany({ where: { id } });
+    return result.count === 1;
+  }
+
   async resolveTeamJoinRequest(
     requestId: string,
     request: Record<string, unknown>,

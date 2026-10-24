@@ -24,4 +24,7 @@ export const roleRequestsService = {
   create(input: { role: RequestableRole; reason?: string }): Promise<RoleRequest> {
     return apiClient<RoleRequest>('role-requests', { method: 'POST', body: JSON.stringify(input) });
   },
+  cancel(id: string): Promise<RoleRequestsData> {
+    return apiClient<RoleRequestsData>(`role-requests/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
 };

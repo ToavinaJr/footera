@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { createRoleRequestPipe, type CreateRoleRequestInput } from '../modules/role-requests/role-request.validation.js';
 import { RoleRequestsService } from '../modules/role-requests/role-requests.service.js';
 
@@ -14,5 +14,10 @@ export class RoleRequestsController {
   @Post()
   create(@Body(createRoleRequestPipe) body: CreateRoleRequestInput) {
     return this.roleRequests.create(body);
+  }
+
+  @Delete(':id')
+  cancel(@Param('id') id: string) {
+    return this.roleRequests.cancel(id);
   }
 }
