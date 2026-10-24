@@ -11,6 +11,8 @@ Date de référence : 24 octobre 2026. Cet audit est une photographie du dépôt
 
 ## État observé
 
+Une garde globale des corps JSON a été ajoutée : elle refuse les corps non objet, les clés dangereuses, les chaînes/listes/objets trop volumineux et les structures trop profondes. Elle complète les contrôles déjà présents dans les services, mais ne remplace pas encore les DTO métier stricts pour chaque endpoint ; FT-005 reste donc en cours.
+
 Le backend est NestJS + Prisma 7 + PostgreSQL. Les agrégats métier sont conservés sous forme de `id` et `payload Json` dans des tables distinctes. Cinq migrations existaient au début de l’audit. Les contrôles de session utilisent un jeton signé, un cookie `HttpOnly`, une session persistée sous forme de hash et une consommation à usage unique. Les uploads vérifient le type déclaré et la signature du fichier. Les notifications sont filtrées par destinataire.
 
 Constats à suivre :
