@@ -10,8 +10,10 @@ import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
 import { useRouteModal } from '../../../hooks/useRouteModal';
 import { MatchManagementPanel } from './MatchManagementPanel';
+import { useTranslation } from '../../../i18n';
 
 export const MatchesView: React.FC = () => {
+  const { t } = useTranslation();
   const { showToast, selectedResourceId, navigateToResource, user } = useApp();
   const matchModal = useRouteModal('/matches');
   const [matches, setMatches] = useState<Match[]>([]);
@@ -42,22 +44,22 @@ export const MatchesView: React.FC = () => {
         setManageableMatchIds(manageableIds);
 
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des matchs', 'error');
+        showToast(err instanceof Error ? err.message : t('matches.loadError'), 'error');
       } finally {
         setIsLoading(false);
       }
     }
     loadMatches();
-  }, [statusFilter, selectedResourceId, showToast, user?.id]);
+  }, [statusFilter, selectedResourceId, showToast, user?.id, t]);
 
   const handleToggleFollow = async () => {
     if (!selectedMatch) return;
     try {
       const res = await matchesService.toggleFollow(selectedMatch.id);
       setIsFollowing(res);
-      showToast(res ? 'Match ajouté à vos favoris' : 'Match retiré de vos favoris');
+      showToast(res ? t('matches.favoriteAdded') : t('matches.favoriteRemoved'));
     } catch {
-      showToast('Erreur lors du suivi', 'error');
+      showToast(t('matches.followError'), 'error');
     }
   };
 
@@ -67,20 +69,20 @@ export const MatchesView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
-            Matchs & Compétitions
+            {t('matches.pageTitle')}
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Résultats en direct, chronologie des buts et classement officiel de la division.
+            {t('matches.pageDescription')}
           </p>
         </div>
 
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1 p-1 bg-white border border-pitch-line rounded-2xl self-start md:self-auto overflow-x-auto shadow-2xs">
           {[
-            { label: 'Tous', value: 'ALL' },
-            { label: 'En direct', value: 'LIVE' },
-            { label: 'À venir', value: 'SCHEDULED' },
-            { label: 'Terminés', value: 'FINISHED' },
+            { label: t('matches.filterAll'), value: 'ALL' },
+            { label: t('matches.filterLive'), value: 'LIVE' },
+            { label: t('matches.filterUpcoming'), value: 'SCHEDULED' },
+            { label: t('matches.filterFinished'), value: 'FINISHED' },
           ].map((tab) => (
             <button
               key={tab.value}
@@ -106,9 +108,9 @@ export const MatchesView: React.FC = () => {
       ) : matches.length === 0 ? (
         <EmptyState
           icon={Calendar}
-          title="Aucun match trouvé"
-          description="Il n'y a aucun match correspondant au statut sélectionné."
-          actionLabel="Voir tous les matchs"
+          title={t('matches.emptyTitle')}
+          description={t('matches.emptyDescription')}
+          actionLabel={t('matches.viewAll')}
           onAction={() => setStatusFilter('ALL')}
         />
       ) : (
@@ -127,16 +129,16 @@ export const MatchesView: React.FC = () => {
                     {match.status === 'LIVE' && (
                       <span className="inline-flex items-center gap-1.5 text-[#059669] font-extrabold tabular-nums bg-[#ecfdf5] px-2.5 py-0.5 rounded-full border border-[#a7f3d0]">
                         <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-                        {match.minute ? `${match.minute}'` : 'LIVE'}
+                        {match.minute ? t('matches.liveStatus', { minute: match.minute }) : t('matches.filterLive')}
                       </span>
                     )}
                     {match.status === 'SCHEDULED' && (
                       <span className="text-slate-600 font-semibold">
-                        {match.date} · {match.time}
+                        {t('matches.scheduledStatus', { date: match.date, time: match.time })}
                       </span>
                     )}
                     {match.status === 'FINISHED' && (
-                      <span className="text-slate-500 font-semibold">Score final</span>
+                        <span className="text-slate-500 font-semibold">{t('matches.finalScore')}</span>
                     )}
                   </div>
                 </div>
@@ -155,7 +157,7 @@ export const MatchesView: React.FC = () => {
                       <h3 className="text-sm sm:text-base font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors truncate">
                         <EntityLink section="teams" id={match.homeTeam.id}>{match.homeTeam.name}</EntityLink>
                       </h3>
-                      <span className="text-caption text-slate-400">Domicile</span>
+                      <span className="text-caption text-slate-400">{t('matches.home')}</span>
                     </div>
                   </div>
 
@@ -178,7 +180,7 @@ export const MatchesView: React.FC = () => {
                       <h3 className="text-sm sm:text-base font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors truncate">
                         <EntityLink section="teams" id={match.awayTeam.id}>{match.awayTeam.name}</EntityLink>
                       </h3>
-                      <span className="text-caption text-slate-400">Extérieur</span>
+                      <span className="text-caption text-slate-400">{t('matches.away')}</span>
                     </div>
                     <img
                       src={match.awayTeam.logoUrl}
@@ -205,7 +207,7 @@ export const MatchesView: React.FC = () => {
                     </button>
                   </div>
                   <span className="text-xs font-bold text-pitch-primary group-hover:translate-x-0.5 transition-transform shrink-0">
-                    Détails & Temps forts →
+                    {t('matches.details')}
                   </span>
                 </div>
               </div>
@@ -217,8 +219,8 @@ export const MatchesView: React.FC = () => {
             <div className="p-5 rounded-3xl bg-white border border-pitch-line shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-extrabold text-pitch-ink">Classement Officiel</h2>
-                  <p className="text-caption text-slate-500">Régional 2 (Saison 2026)</p>
+                  <h2 className="text-sm font-extrabold text-pitch-ink">{t('matches.standings')}</h2>
+                  <p className="text-caption text-slate-500">{t('matches.leagueSeason')}</p>
                 </div>
                 <Trophy className="w-4 h-4 text-pitch-primary" />
               </div>
@@ -228,9 +230,9 @@ export const MatchesView: React.FC = () => {
                   <thead className="text-micro text-slate-400 border-b border-pitch-separator uppercase font-bold">
                     <tr>
                       <th className="pb-2">#</th>
-                      <th className="pb-2">Équipe</th>
-                      <th className="pb-2 text-center">MJ</th>
-                      <th className="pb-2 text-right">Pts</th>
+                      <th className="pb-2">{t('matches.teamLabel')}</th>
+                      <th className="pb-2 text-center">{t('matches.playedShort')}</th>
+                      <th className="pb-2 text-right">{t('matches.pointsShort')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-pitch-separator tabular-nums font-medium text-slate-700">
@@ -273,15 +275,15 @@ export const MatchesView: React.FC = () => {
               <div className="flex items-center justify-center gap-2 text-xs">
                 {selectedMatch.status === 'LIVE' ? (
                   <Badge variant="emerald" size="sm">
-                    ● En direct ({selectedMatch.minute}&apos;)
+                    {t('matches.liveStatus', { minute: selectedMatch.minute ?? 0 })}
                   </Badge>
                 ) : selectedMatch.status === 'FINISHED' ? (
                   <Badge variant="slate" size="sm">
-                    Terminé
+                    {t('matches.finishedStatus')}
                   </Badge>
                 ) : (
                   <Badge variant="amber" size="sm">
-                    Prévu le {selectedMatch.date} à {selectedMatch.time}
+                    {t('matches.scheduledStatus', { date: selectedMatch.date, time: selectedMatch.time })}
                   </Badge>
                 )}
               </div>
@@ -326,7 +328,7 @@ export const MatchesView: React.FC = () => {
             {/* Events Timeline */}
             {selectedMatch.events && selectedMatch.events.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-pitch-ink">Temps forts</h4>
+                <h4 className="text-xs font-bold text-pitch-ink">{t('matches.highlights')}</h4>
                 <div className="space-y-1.5">
                   {selectedMatch.events.map((ev, idx) => {
                     const isHomeEvent = ev.teamId === selectedMatch.homeTeam.id;
@@ -334,13 +336,13 @@ export const MatchesView: React.FC = () => {
                     const eventDetails = (
                       <div className={`min-w-0 space-y-1 ${isAwayEvent ? 'text-right' : 'text-left'}`}>
                         <div className={`flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ${isAwayEvent ? 'justify-end' : 'justify-start'}`}>
-                          <span>{ev.type === 'goal' || ev.type === 'penalty' ? '⚽ But' : '🟨 Carton'}</span>
+                          <span>{ev.type === 'goal' || ev.type === 'penalty' ? `⚽ ${t('matches.goalEvent')}` : `🟨 ${t('matches.cardEvent')}`}</span>
                           <EntityLink section="players" id={ev.playerId} className="wrap-break-word font-extrabold text-pitch-ink">
                             {ev.player}
                           </EntityLink>
                           {ev.assist && (
                             <span className="text-slate-500 text-caption">
-                              (Passe de{' '}
+                              ({t('matches.assistBy')}{' '}
                               <EntityLink section="players" id={ev.assistPlayerId} className="font-semibold">
                                 {ev.assist}
                               </EntityLink>)
@@ -377,12 +379,12 @@ export const MatchesView: React.FC = () => {
             {/* Match Stats */}
             {selectedMatch.stats && (
               <div className="space-y-3 p-4 rounded-2xl bg-pitch-panel border border-pitch-line text-xs">
-                <h4 className="font-bold text-pitch-ink mb-2">Statistiques de la rencontre</h4>
+                <h4 className="font-bold text-pitch-ink mb-2">{t('matches.statsTitle')}</h4>
 
                 <div>
                   <div className="flex justify-between text-slate-600 mb-1 tabular-nums font-semibold">
                     <span>{selectedMatch.stats.possession[0]}%</span>
-                    <span>Possession</span>
+                    <span>{t('matches.possession')}</span>
                     <span>{selectedMatch.stats.possession[1]}%</span>
                   </div>
                   <div className="h-2 w-full bg-slate-200 rounded-full flex overflow-hidden">
@@ -406,7 +408,7 @@ export const MatchesView: React.FC = () => {
                   className="w-full py-3 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
                   <Star className={`w-4 h-4 ${isFollowing ? 'text-lime-volt fill-lime-volt' : ''}`} />
-                  <span>{isFollowing ? 'Match suivi (Favoris)' : 'Suivre les alertes de ce match'}</span>
+                  <span>{isFollowing ? t('matches.following') : t('matches.followAlerts')}</span>
                 </button>
               </div>
             )}

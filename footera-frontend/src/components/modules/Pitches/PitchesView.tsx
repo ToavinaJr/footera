@@ -20,22 +20,22 @@ import { useTranslation } from '../../../i18n';
 
 const PITCH_IMAGE_PRESETS = [
   {
-    name: 'Synthétique Pro FIFA',
+    name: 'synthetic',
     url: 'https://images.unsplash.com/photo-1529900240041-22f1a66a3d6d?auto=format&fit=crop&w=1000&q=80',
   },
   {
-    name: 'Pelouse naturelle d\'honneur',
+    name: 'natural',
     url: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=80',
   },
   {
-    name: 'Arène Five Indoor',
+    name: 'indoor',
     url: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1000&q=80',
   },
   {
-    name: 'Nocturne sous projecteurs',
+    name: 'night',
     url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1000&q=80',
   },
-];
+] as const;
 
 interface SelectedPitchSlot {
   slot: PitchSlot;
@@ -441,7 +441,7 @@ export const PitchesView: React.FC = () => {
           >
             {surfaces.map((s) => (
               <option key={s} value={s}>
-                {s === 'Toutes' ? 'Toutes les surfaces' : s}
+                {s === 'Toutes' ? t('pitch.allSurfaces') : s}
               </option>
             ))}
           </SelectField>
@@ -490,7 +490,7 @@ export const PitchesView: React.FC = () => {
               }}
               role="link"
               tabIndex={0}
-              aria-label={`Voir le terrain ${pitch.name} et réserver`}
+              aria-label={t('pitch.viewAndBook', { pitch: pitch.name })}
               className="rounded-3xl bg-white border border-pitch-line hover:border-pitch-primary/50 overflow-hidden transition-all cursor-pointer group shadow-xs flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-pitch-primary"
             >
               <div>
@@ -545,7 +545,7 @@ export const PitchesView: React.FC = () => {
                   <span className="text-lg font-extrabold text-pitch-primary tabular-nums">
                     {formatFiniteNumber(pitch.hourlyRate)} €
                   </span>
-                  <span className="text-xs text-slate-500 font-medium"> / séance</span>
+                  <span className="text-xs text-slate-500 font-medium"> {t('pitch.perSession')}</span>
                 </div>
                 <button
                   type="button"
@@ -555,7 +555,7 @@ export const PitchesView: React.FC = () => {
                   }}
                   className="px-4 py-2 bg-pitch-action group-hover:bg-pitch-action-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
-                  Réserver créneau
+                  {t('pitch.reserveButton')}
                 </button>
               </div>
             </div>
@@ -571,21 +571,21 @@ export const PitchesView: React.FC = () => {
             navigate(`/pitches/${encodeURIComponent(selectedPitch.id)}`, { replace: true });
             setSelectedSlots([]);
           }}
-          title={`Réserver ${selectedPitch.name}`}
+          title={t('pitch.reserveTitle', { pitch: selectedPitch.name })}
           subtitle={`${selectedPitch.complexName} · ${selectedPitch.address}, ${selectedPitch.city}`}
           maxWidth="lg"
         >
           <div className="space-y-6">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Sélectionnez une date
+                {t('pitch.selectBookingDate')}
               </label>
-              <DatePickerField id="pitch-booking-date" label="Date de réservation" value={bookingDate} onChange={handleBookingDateChange} min={getTodayDateInputValue()} required />
+              <DatePickerField id="pitch-booking-date" label={t('pitch.bookingDate')} value={bookingDate} onChange={handleBookingDateChange} min={getTodayDateInputValue()} required />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Créneaux disponibles (1h30)
+                {t('pitch.availableSlotsDuration')}
               </label>
               {bookingDate ? <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {selectedPitch.availableSlots.map((slot) => {
@@ -618,9 +618,9 @@ export const PitchesView: React.FC = () => {
             {selectedSlotsForCurrentDate.length > 0 && (
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-slate-500 block font-medium">{selectedSlotsForCurrentDate.length} créneau(x) · total</span>
+                  <span className="text-slate-500 block font-medium">{t('pitch.selectedSlotsTotal', { count: selectedSlotsForCurrentDate.length })}</span>
                   <span className="text-xl font-extrabold text-pitch-primary tabular-nums">
-                    {isQuotingBooking ? 'Calcul…' : `${currentDateTotal} € TTC`}
+                    {isQuotingBooking ? t('pitch.calculatingShort') : `${currentDateTotal} € TTC`}
                   </span>
                 </div>
                 <div className="text-right text-slate-500">
@@ -630,10 +630,10 @@ export const PitchesView: React.FC = () => {
               </div>
             )}
 
-            {selectedSlots.length > 0 && <aside className="rounded-2xl border border-pitch-line bg-white p-4" aria-label="Récapitulatif des créneaux sélectionnés">
+            {selectedSlots.length > 0 && <aside className="rounded-2xl border border-pitch-line bg-white p-4" aria-label={t('pitch.selectedSlotsLabel')}>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-extrabold text-pitch-ink">{t('pitch.selectionSummary')}</p>
-                <p className="text-xs font-bold text-pitch-primary">{selectedSlots.length} créneau(x) · {isQuotingBooking ? 'Calcul du devis…' : `${selectedSlotsTotal} €`}</p>
+                <p className="text-xs font-bold text-pitch-primary">{t('pitch.selectionReminder', { count: selectedSlots.length })} · {isQuotingBooking ? t('pitch.calculatingQuote') : `${selectedSlotsTotal} €`}</p>
               </div>
               <ul className="mt-2 space-y-1.5">
                 {Object.entries(selectedSlotsByDate).map(([date, slots]) => <li key={date} className="flex flex-wrap justify-between gap-x-3 text-xs text-slate-600">
@@ -648,7 +648,7 @@ export const PitchesView: React.FC = () => {
                 disabled={!selectedSlots.length || !bookingQuote || isSubmitting || isQuotingBooking}
                 className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isSubmitting ? 'Validation...' : `Valider ${selectedSlots.length} créneau(x)`}
+                {isSubmitting ? t('common.loading') : t('pitch.validateSelectedSlots', { count: selectedSlots.length })}
               </button>
             </div>
           </div>
@@ -807,7 +807,7 @@ export const PitchesView: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Photo principale du terrain *
               </label>
-              <ImageUploadField purpose="pitch" label="Importer une photo du terrain" onUploaded={setFormImageUrl} disabled={isCreating} />
+              <ImageUploadField purpose="pitch" label={t('pitch.uploadImage')} onUploaded={setFormImageUrl} disabled={isCreating} />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {PITCH_IMAGE_PRESETS.map((preset) => {
                   const isSelected = formImageUrl === preset.url;
@@ -820,10 +820,10 @@ export const PitchesView: React.FC = () => {
                         isSelected ? 'border-pitch-primary ring-2 ring-lime-volt' : 'border-transparent hover:opacity-90'
                       }`}
                     >
-                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
+                      <img src={preset.url} alt={t(`pitch.imagePreset.${preset.name}`)} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 flex items-end p-2">
                         <span className="text-caption font-bold text-white leading-tight">
-                          {preset.name}
+                          {t(`pitch.imagePreset.${preset.name}`)}
                         </span>
                       </div>
                       {isSelected && (

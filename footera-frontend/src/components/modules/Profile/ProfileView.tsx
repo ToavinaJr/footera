@@ -84,7 +84,7 @@ export const ProfileView: React.FC = () => {
         setPositionOptions(options.playerPositions);
         setStrongFootOptions(options.strongFeet);
       })
-      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les options du CV sportif.', 'error'));
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : t('common.loadOptionsError'), 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -166,12 +166,12 @@ export const ProfileView: React.FC = () => {
     event.preventDefault();
     const name = contactName.trim();
     if (name.length < 2 || name.length > 80) {
-      setPersonalInfoError('Le nom doit contenir entre 2 et 80 caractères.');
+      setPersonalInfoError(t('profile.nameValidation'));
       return;
     }
     const phone = contactPhone.trim();
     if (phone && !/^[+()\d.\-\s]{7,32}$/.test(phone)) {
-      setPersonalInfoError('Saisissez un numéro de téléphone valide.');
+      setPersonalInfoError(t('profile.phoneValidation'));
       return;
     }
     if (dateOfBirth) {
@@ -179,7 +179,7 @@ export const ProfileView: React.FC = () => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) || Number.isNaN(parsed.valueOf())
         || parsed.toISOString().slice(0, 10) !== dateOfBirth
         || dateOfBirth > new Date().toISOString().slice(0, 10)) {
-        setPersonalInfoError('Saisissez une date de naissance valide.');
+        setPersonalInfoError(t('profile.birthDateValidation'));
         return;
       }
     }
@@ -192,19 +192,19 @@ export const ProfileView: React.FC = () => {
     try {
       const ok = await bookingsService.cancelBooking(bookingId);
       if (ok) {
-        showToast('Réservation annulée avec succès');
+        showToast(t('profile.bookingCancelled'), 'success');
         setBookings((current) => current.map((booking) =>
           booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking,
         ));
       } else {
-        showToast('Réservation introuvable ou déjà supprimée.', 'error');
+        showToast(t('profile.bookingNotFound'), 'error');
       }
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, 'error');
         return;
       }
-      showToast('Erreur lors de l’annulation', 'error');
+      showToast(t('profile.bookingCancelError'), 'error');
     }
   };
 
@@ -247,8 +247,8 @@ export const ProfileView: React.FC = () => {
             setPersonalInfoError('');
             setIsEditInfoOpen(true);
           }}
-          aria-label="Modifier mes informations personnelles"
-          title="Modifier mes informations"
+          aria-label={t('profile.editInfoLabel')}
+          title={t('profile.editInfoTitle')}
           className="absolute right-4 top-5 z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pitch-line bg-white text-pitch-primary shadow-xs transition-colors hover:bg-pitch-panel-hover sm:right-6 sm:top-6"
         >
           <Edit3 className="h-4 w-4" />
@@ -264,7 +264,7 @@ export const ProfileView: React.FC = () => {
               />
               {isOwner && <ImageUploadField
                 purpose="avatar"
-                label="Changer la photo"
+                label={t('profile.changePhoto')}
                 variant="avatar"
                 onUploaded={(avatarUrl) => { void updateProfile({ avatarUrl }); }}
               />}
@@ -277,7 +277,7 @@ export const ProfileView: React.FC = () => {
                   onClick={() => navigate(`/profile/${encodeURIComponent(myPlayer.id)}`)}
                   className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pitch-line px-3 text-xs font-bold text-pitch-primary transition-colors hover:bg-pitch-panel-hover"
                 >
-                  <ExternalLink className="h-4 w-4" /> Voir le profil public
+                  <ExternalLink className="h-4 w-4" /> {t('profile.publicProfile')}
                 </button>}
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -309,9 +309,9 @@ export const ProfileView: React.FC = () => {
       {/* Tabs */}
       {isOwner && <div className="flex items-center gap-2 border-b border-pitch-line pb-2">
         {[
-          { label: 'CV Sportif & Infos', tab: 'profile' },
-          { label: `Mes Réservations (${bookings.length})`, tab: 'bookings' },
-          { label: `Mes Candidatures (${applications.length})`, tab: 'applications' },
+          { label: t('profile.sportsCv'), tab: 'profile' },
+          { label: t('profile.bookingsTab', { count: bookings.length }), tab: 'bookings' },
+          { label: t('profile.applicationsTab', { count: applications.length }), tab: 'applications' },
         ].map((t) => (
           <button
             key={t.tab}
@@ -375,7 +375,7 @@ export const ProfileView: React.FC = () => {
                     ? `${user!.sportsCv.experienceYears} ans`
                     : Number.isInteger(publicPlayer!.experienceYears) && publicPlayer!.experienceYears! > 0
                       ? `${publicPlayer!.experienceYears} ans`
-                      : 'Non renseigné'}
+                      : t('profile.experienceUnknown')}
                 </strong>
               </div>
             </div>
@@ -400,7 +400,7 @@ export const ProfileView: React.FC = () => {
               })}
             </ol> : <p className="mt-3 text-sm text-slate-500">{t('profile.noPreviousClubs')}</p>}
             {displayedPlayer.currentTeam && <p className="mt-3 text-sm font-bold text-pitch-primary">
-              <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">(actuel)</span>
+              <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">{t('profile.currentSuffix')}</span>
             </p>}
           </section>}
           {!isOwner && <p className="text-center text-xs text-slate-400">{t('profile.publicPrivacyNotice')}</p>}
@@ -412,7 +412,7 @@ export const ProfileView: React.FC = () => {
         <div className="space-y-4">
           {bookings.length === 0 ? (
             <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-pitch-line">
-              Aucune réservation active.
+              {t('profile.bookingEmpty')}
             </div>
           ) : (
             bookings.map((b) => (
@@ -427,14 +427,14 @@ export const ProfileView: React.FC = () => {
                       variant={b.status === 'CONFIRMED' ? 'emerald' : b.status === 'PENDING' ? 'amber' : 'rose'}
                       size="sm"
                     >
-                      {b.status === 'CONFIRMED' ? 'Confirmée' : b.status === 'PENDING' ? 'En attente' : 'Annulée'}
+                      {b.status === 'CONFIRMED' ? t('profile.bookingConfirmed') : b.status === 'PENDING' ? t('profile.bookingPending') : t('profile.bookingCancelledStatus')}
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
                     {b.complexName} · <strong className="text-pitch-ink">{formatDateForDisplay(b.date)}</strong> à{' '}
                     <strong className="text-pitch-primary">{b.time}</strong>
                   </p>
-                  <p className="text-xs text-slate-600">Montant total : {b.totalPrice} € TTC</p>
+                  <p className="text-xs text-slate-600">{t('profile.bookingTotal', { amount: b.totalPrice })}</p>
                 </div>
 
                 {b.status !== 'CANCELLED' && (
@@ -443,7 +443,7 @@ export const ProfileView: React.FC = () => {
                     className="px-4 py-2 min-h-11 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
-                    <span>Annuler</span>
+                    <span>{t('profile.cancelBooking')}</span>
                   </button>
                 )}
               </div>
@@ -457,7 +457,7 @@ export const ProfileView: React.FC = () => {
         <div className="space-y-4">
           {applications.length === 0 ? (
             <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-pitch-line">
-              Aucune candidature transmise.
+              {t('profile.applicationEmpty')}
             </div>
           ) : (
             applications.map((app) => (
@@ -473,7 +473,7 @@ export const ProfileView: React.FC = () => {
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Club : <EntityLink section="teams" id={teams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink> · Candidat : {app.applicantName} ({app.applicantPosition})
+                    {t('profile.applicationClub')} <EntityLink section="teams" id={teams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink> · {t('profile.applicationCandidate')} {app.applicantName} ({app.applicantPosition})
                   </p>
                   <p className="text-xs text-slate-600 italic mt-1">« {app.message} »</p>
                 </div>
@@ -489,13 +489,13 @@ export const ProfileView: React.FC = () => {
       {isEditInfoOpen && isOwner && <Modal
         isOpen={isEditInfoOpen}
         onClose={() => setIsEditInfoOpen(false)}
-        title="Mes informations personnelles"
-        subtitle="Votre date de naissance reste privée. Elle sert uniquement à calculer votre âge."
+        title={t('profile.personalInfoTitle')}
+        subtitle={t('profile.birthDatePrivacy')}
         maxWidth="md"
       >
         <form onSubmit={handleSavePersonalInfo} className="space-y-4">
           <label className="block text-xs font-bold text-slate-700">
-            Nom affiché
+            {t('profile.displayName')}
             <input
               type="text"
               autoComplete="name"
@@ -508,19 +508,19 @@ export const ProfileView: React.FC = () => {
             />
           </label>
           <label className="block text-xs font-bold text-slate-700">
-            Numéro de téléphone
+            {t('profile.phoneLabel')}
             <input
               type="tel"
               autoComplete="tel"
               maxLength={32}
               value={contactPhone}
               onChange={(event) => setContactPhone(event.target.value)}
-              placeholder="Ex. +261 34 00 000 00"
+              placeholder={t('profile.phoneExample')}
               className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
             />
           </label>
           <label className="block text-xs font-bold text-slate-700">
-            Date de naissance
+            {t('profile.birthDate')}
             <input
               type="date"
               max={new Date().toISOString().slice(0, 10)}

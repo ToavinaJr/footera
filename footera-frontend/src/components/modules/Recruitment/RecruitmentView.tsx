@@ -60,7 +60,7 @@ export const RecruitmentView: React.FC = () => {
   useEffect(() => {
     catalogsService.getOptions()
       .then((options) => setPositionOptions(options.recruitmentPositions))
-      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les postes recherchés.', 'error'));
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : t('recruitment.optionsError'), 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export const RecruitmentView: React.FC = () => {
         setMyApplications(appsData);
 
       } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement du Mercato', 'error');
+        showToast(err instanceof Error ? err.message : t('recruitment.loadError'), 'error');
       } finally {
         setIsLoading(false);
       }
@@ -93,7 +93,7 @@ export const RecruitmentView: React.FC = () => {
         message: applyMessage,
         phone: applicantPhone,
       });
-      showToast(`Candidature transmise à ${applicationAd.teamName} !`);
+      showToast(t('recruitment.applicationSent', { team: applicationAd.teamName }));
       closeApplication();
       setApplyMessage('');
       const [availableAds, applications] = await Promise.all([
@@ -104,7 +104,7 @@ export const RecruitmentView: React.FC = () => {
       setMyApplications(applications);
       setActiveTab('my-applications');
     } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : 'Erreur lors de la candidature', 'error');
+      showToast(error instanceof Error ? error.message : t('recruitment.submitError'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -131,10 +131,10 @@ export const RecruitmentView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
-            Mercato & Recrutement
+            {t('recruitment.pageTitle')}
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Recherchez des opportunités officielles ou postulez directement auprès des clubs.
+            {t('recruitment.pageDescription')}
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export const RecruitmentView: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Offres ({ads.length})
+            {t('recruitment.offersTab', { count: ads.length })}
           </button>
           <button
             onClick={() => setActiveTab('my-applications')}
@@ -157,7 +157,7 @@ export const RecruitmentView: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Mes candidatures ({myApplications.length})
+            {t('recruitment.applicationsTab', { count: myApplications.length })}
           </button>
         </div>
       </div>
@@ -171,7 +171,7 @@ export const RecruitmentView: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher par poste, club, ville..."
+                placeholder={t('recruitment.searchPlaceholder')}
                 className="w-full bg-pitch-input border border-pitch-line rounded-full pl-10 pr-4 py-2.5 text-xs md:text-sm text-pitch-ink placeholder-slate-400 focus:border-pitch-primary focus:bg-white outline-hidden"
               />
             </div>
@@ -179,10 +179,10 @@ export const RecruitmentView: React.FC = () => {
               <SelectField
                 value={positionFilter}
                 onChange={(e) => setPositionFilter(e.target.value)}
-                aria-label="Filtrer par poste recherché"
+                aria-label={t('recruitment.filterPosition')}
                 className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
               >
-                <option value="Tous">Tous les postes</option>
+                <option value="Tous">{t('recruitment.allPositions')}</option>
                 {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
               </SelectField>
             </div>
@@ -196,8 +196,8 @@ export const RecruitmentView: React.FC = () => {
           ) : ads.length === 0 ? (
             <EmptyState
               icon={Briefcase}
-              title="Aucune annonce trouvée"
-              description="Modifiez vos filtres de recherche."
+              title={t('recruitment.noAds')}
+              description={t('recruitment.changeFilters')}
             />
           ) : (
             <div className="space-y-4">
@@ -230,7 +230,7 @@ export const RecruitmentView: React.FC = () => {
 
                   <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-0 border-pitch-separator">
                     <span className="text-xs font-bold text-pitch-primary">
-                      {ad.candidatesCount} candidatures
+                      {t('recruitment.candidateCount', { count: ad.candidatesCount })}
                     </span>
                     <button
                       onClick={(e) => {
@@ -239,7 +239,7 @@ export const RecruitmentView: React.FC = () => {
                       }}
                       className="px-5 py-2.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
                     >
-                      Postuler
+                      {t('recruitment.apply')}
                     </button>
                   </div>
                 </div>
@@ -252,9 +252,9 @@ export const RecruitmentView: React.FC = () => {
           {myApplications.length === 0 ? (
             <EmptyState
               icon={Briefcase}
-              title="Aucune candidature active"
-              description="Vous n'avez pas encore postulé à une offre."
-              actionLabel="Voir les offres du Mercato"
+              title={t('recruitment.noApplications')}
+              description={t('recruitment.noApplicationsDescription')}
+              actionLabel={t('recruitment.viewOffers')}
               onAction={() => setActiveTab('ads')}
             />
           ) : (
@@ -272,7 +272,7 @@ export const RecruitmentView: React.FC = () => {
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-500">
-                      Club : <strong className="text-slate-800"><EntityLink section="teams" id={ads.find((ad) => ad.id === app.adId)?.teamId}>{app.teamName}</EntityLink></strong> · Téléphone : {app.phone}
+                      {t('recruitment.club')} <strong className="text-slate-800"><EntityLink section="teams" id={ads.find((ad) => ad.id === app.adId)?.teamId}>{app.teamName}</EntityLink></strong> · {t('recruitment.phone')} {app.phone}
                     </p>
                     <p className="text-xs text-slate-600 italic mt-1">« {app.message} »</p>
                   </div>
@@ -318,7 +318,7 @@ export const RecruitmentView: React.FC = () => {
               className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <Send className="w-4 h-4" />
-              <span>Postuler à cette opportunité</span>
+              <span>{t('recruitment.applyOpportunity')}</span>
             </button>
           </div>
         </Modal>
@@ -329,14 +329,14 @@ export const RecruitmentView: React.FC = () => {
         <Modal
           isOpen={isApplyModalOpen}
           onClose={closeApplication}
-          title={`Candidater — ${applicationAd.positionSought}`}
+          title={t('recruitment.applyTitle', { position: applicationAd.positionSought })}
           subtitle={applicationAd.teamName}
           maxWidth="md"
         >
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Numéro de téléphone *
+                {t('recruitment.phoneRequired')}
               </label>
               <input
                 type="tel"
@@ -347,13 +347,13 @@ export const RecruitmentView: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Message & Disponibilités *
+                {t('recruitment.messageRequired')}
               </label>
               <textarea
                 rows={4}
                 value={applyMessage}
                 onChange={(e) => setApplyMessage(e.target.value)}
-                placeholder="Présentez brièvement vos atouts et disponibilités..."
+                placeholder={t('recruitment.messagePlaceholder')}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
               />
             </div>
@@ -362,14 +362,14 @@ export const RecruitmentView: React.FC = () => {
                 onClick={closeApplication}
                 className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
               >
-                Annuler
+                {t('recruitment.cancel')}
               </button>
               <button
                 onClick={handleApply}
                 disabled={!applyMessage.trim() || !applicantPhone.trim() || isSubmitting}
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isSubmitting ? 'Envoi...' : 'Envoyer ma candidature'}
+                {isSubmitting ? t('recruitment.sendingApplication') : t('recruitment.submitApplication')}
               </button>
             </div>
           </div>

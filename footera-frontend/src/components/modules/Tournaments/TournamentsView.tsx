@@ -22,22 +22,22 @@ import { useTranslation } from '../../../i18n';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {
-    name: 'Nuit & Projecteurs',
+    name: 'night',
     url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1000&q=80',
   },
   {
-    name: 'Pelouse de Finale',
+    name: 'final',
     url: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=80',
   },
   {
-    name: 'Arène Five & Futsal',
+    name: 'futsal',
     url: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1000&q=80',
   },
   {
-    name: 'Coupe & Gloire',
+    name: 'cup',
     url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1000&q=80',
   },
-];
+] as const;
 
 export const TournamentsView: React.FC = () => {
   const { showToast, selectedResourceId, user } = useApp();
@@ -198,7 +198,7 @@ export const TournamentsView: React.FC = () => {
       };
 
       const created = await tournamentsService.create(input);
-      showToast(`Tournoi "${created.title}" créé et publié avec succès !`);
+      showToast(t('tournaments.created', { title: created.title }), 'success');
       resetCreateTournamentForm();
 
       // Refresh list and select the new tournament
@@ -206,7 +206,7 @@ export const TournamentsView: React.FC = () => {
       setTournaments(allUpdated);
       tournamentModal.openDetail(created.id, true);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erreur lors de la création du tournoi', 'error');
+      showToast(err instanceof Error ? err.message : t('tournaments.createError'), 'error');
     } finally {
       setIsCreating(false);
     }
@@ -404,7 +404,7 @@ export const TournamentsView: React.FC = () => {
                 }`}
               >
                 <Target className="w-3.5 h-3.5" />
-                <span>Buteurs ({tournScorers.length})</span>
+                <span>{t('tournaments.scorersTab', { count: tournScorers.length })}</span>
               </button>
               <button
                 type="button"
@@ -416,7 +416,7 @@ export const TournamentsView: React.FC = () => {
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Passeurs ({tournAssisters.length})</span>
+                <span>{t('tournaments.assistersTab', { count: tournAssisters.length })}</span>
               </button>
             </div>
 
@@ -424,19 +424,19 @@ export const TournamentsView: React.FC = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-3 text-center text-xs">
                   <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
-                    <span className="text-slate-500 text-caption block">Prize Pool</span>
+                    <span className="text-slate-500 text-caption block">{t('tournaments.prizePoolLabel')}</span>
                     <strong className="text-pitch-primary text-base font-extrabold tabular-nums">
                       {selectedTournament.prizePool.toLocaleString()} €
                     </strong>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
-                    <span className="text-slate-500 text-caption block">Frais d&apos;inscription</span>
+                    <span className="text-slate-500 text-caption block">{t('tournaments.feeLabel')}</span>
                     <strong className="text-pitch-ink text-base font-extrabold tabular-nums">
                       {selectedTournament.entryFee} €
                     </strong>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-pitch-panel border border-pitch-line">
-                    <span className="text-slate-500 text-caption block">Places</span>
+                    <span className="text-slate-500 text-caption block">{t('tournaments.places')}</span>
                     <strong className="text-[#059669] text-base font-extrabold tabular-nums">
                       {selectedTournament.remainingTeams ?? 0} restantes
                     </strong>
@@ -445,15 +445,15 @@ export const TournamentsView: React.FC = () => {
 
                 <div className="p-4 rounded-2xl bg-pitch-panel border border-border-subtle space-y-2 text-xs text-slate-700">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-500">Dates de la compétition :</span>
+                    <span className="font-semibold text-slate-500">{t('tournaments.datesLabel')}</span>
                     <span className="font-bold text-pitch-ink">{formatDateForDisplay(selectedTournament.startDate)} au {formatDateForDisplay(selectedTournament.endDate)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-500">Lieu & Infrastructure :</span>
+                    <span className="font-semibold text-slate-500">{t('tournaments.venueLabel')}</span>
                     <span className="font-bold text-pitch-ink">{selectedTournament.venue}, {selectedTournament.city}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-500">Format de jeu :</span>
+                    <span className="font-semibold text-slate-500">{t('tournaments.formatLabel')}</span>
                     <span className="font-bold text-pitch-primary">{selectedTournament.format}</span>
                   </div>
                 </div>
@@ -467,7 +467,7 @@ export const TournamentsView: React.FC = () => {
                     className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
                   >
                     <Shield className="w-4 h-4" />
-                    <span>Inscrire mon équipe au tournoi ({selectedTournament.entryFee} €)</span>
+                    <span>{t('tournaments.registerTeam', { fee: selectedTournament.entryFee })}</span>
                   </button>
                 ) : selectedTournament.status !== 'INSCRIPTIONS_OUVERTES' || selectedTournament.registrationOpen === false ? (
                   <div className="p-3.5 text-center text-xs font-bold text-slate-600 bg-slate-100 rounded-2xl border border-pitch-line">
@@ -483,7 +483,7 @@ export const TournamentsView: React.FC = () => {
 
             {tournModalTab === 'teams' && (
               <section className="space-y-3">
-                <h3 className="text-sm font-bold text-pitch-ink">Équipes participantes</h3>
+                <h3 className="text-sm font-bold text-pitch-ink">{t('tournaments.participatingTeams')}</h3>
                 {tournamentTeams.length ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {tournamentTeams.map((team) => {
@@ -497,13 +497,13 @@ export const TournamentsView: React.FC = () => {
                       </article>;
                     })}
                   </div>
-                ) : <p className="rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">Aucune équipe inscrite pour le moment.</p>}
+                ) : <p className="rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">{t('tournaments.noTeams')}</p>}
               </section>
             )}
 
             {tournModalTab === 'stadiums' && (
               <section className="space-y-3">
-                <h3 className="text-sm font-bold text-pitch-ink">Stades et complexes d’accueil</h3>
+                <h3 className="text-sm font-bold text-pitch-ink">{t('tournaments.stadiums')}</h3>
                 {tournamentStadiums.length ? <div className="grid gap-3 sm:grid-cols-2">
                   {tournamentStadiums.map((stadium) => {
                     return <article key={stadium.id} className="flex items-start gap-3 rounded-2xl border border-pitch-line bg-pitch-panel p-4">
@@ -515,14 +515,14 @@ export const TournamentsView: React.FC = () => {
                       </div>
                     </article>;
                   })}
-                </div> : <p className="rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">Aucun stade renseigné pour le moment.</p>}
+                </div> : <p className="rounded-2xl bg-pitch-panel p-4 text-sm text-slate-500">{t('tournaments.noStadiums')}</p>}
               </section>
             )}
 
             {tournModalTab === 'scorers' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700">Classement des buteurs dans ce tournoi</span>
+                  <span className="font-bold text-slate-700">{t('tournaments.scorerRanking')}</span>
                   <span className="text-slate-400 font-semibold">{tournScorers.length} joueurs</span>
                 </div>
                 <div className="rounded-2xl border border-pitch-line overflow-hidden">
@@ -530,11 +530,11 @@ export const TournamentsView: React.FC = () => {
                     <thead>
                       <tr className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-line">
                         <th className="py-2.5 px-3 text-center w-8">#</th>
-                        <th className="py-2.5 px-3">Buteur</th>
-                        <th className="py-2.5 px-3">Club</th>
-                        <th className="py-2.5 px-3 text-center">MJ</th>
-                        <th className="py-2.5 px-3 text-center text-pitch-primary font-black">Buts</th>
-                        <th className="py-2.5 px-3 text-center">Ratio</th>
+                        <th className="py-2.5 px-3">{t('tournaments.scorer')}</th>
+                        <th className="py-2.5 px-3">{t('tournaments.club')}</th>
+                        <th className="py-2.5 px-3 text-center">{t('tournaments.playedShort')}</th>
+                        <th className="py-2.5 px-3 text-center text-pitch-primary font-black">{t('tournaments.goals')}</th>
+                        <th className="py-2.5 px-3 text-center">{t('tournaments.ratio')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pitch-separator">
@@ -574,7 +574,7 @@ export const TournamentsView: React.FC = () => {
             {tournModalTab === 'assists' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700">Classement des passeurs dans ce tournoi</span>
+                  <span className="font-bold text-slate-700">{t('tournaments.assisterRanking')}</span>
                   <span className="text-slate-400 font-semibold">{tournAssisters.length} joueurs</span>
                 </div>
                 <div className="rounded-2xl border border-pitch-line overflow-hidden">
@@ -582,11 +582,11 @@ export const TournamentsView: React.FC = () => {
                     <thead>
                       <tr className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-line">
                         <th className="py-2.5 px-3 text-center w-8">#</th>
-                        <th className="py-2.5 px-3">Passeur</th>
-                        <th className="py-2.5 px-3">Club</th>
-                        <th className="py-2.5 px-3 text-center">MJ</th>
-                        <th className="py-2.5 px-3 text-center text-pitch-primary font-black">Passes</th>
-                        <th className="py-2.5 px-3 text-center">Clés</th>
+                        <th className="py-2.5 px-3">{t('tournaments.assister')}</th>
+                        <th className="py-2.5 px-3">{t('tournaments.club')}</th>
+                        <th className="py-2.5 px-3 text-center">{t('tournaments.playedShort')}</th>
+                        <th className="py-2.5 px-3 text-center text-pitch-primary font-black">{t('tournaments.assists')}</th>
+                        <th className="py-2.5 px-3 text-center">{t('tournaments.keyPasses')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pitch-separator">
@@ -631,21 +631,19 @@ export const TournamentsView: React.FC = () => {
         <Modal
           isOpen={isRegisterOpen}
           onClose={() => setIsRegisterOpen(false)}
-          title="Inscription d'équipe"
+          title={t('tournaments.registerTitle')}
           subtitle={selectedTournament.title}
           maxWidth="md"
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Équipe participante *
-              </label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.participantTeam')}</label>
               <SelectField
                 value={registerTeamId}
                 onChange={(e) => setRegisterTeamId(e.target.value)}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               >
-                <option value="">Sélectionner une équipe existante</option>
+                <option value="">{t('tournaments.chooseExistingTeam')}</option>
                 {teams.filter((team) => !(selectedTournament.participantTeamIds ?? []).includes(team.id)).map((team) => (
                   <option key={team.id} value={team.id}>{team.name}</option>
                 ))}
@@ -655,15 +653,13 @@ export const TournamentsView: React.FC = () => {
               <button
                 onClick={() => setIsRegisterOpen(false)}
                 className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
-              >
-                Annuler
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={handleRegister}
                 disabled={!registerTeamId || isSubmitting}
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isSubmitting ? 'Validation...' : 'Confirmer l’inscription'}
+                {isSubmitting ? t('common.loading') : t('tournaments.confirmRegistration')}
               </button>
             </div>
           </div>
@@ -675,8 +671,8 @@ export const TournamentsView: React.FC = () => {
         <Modal
           isOpen={tournamentModal.mode === 'create'}
           onClose={tournamentModal.close}
-          title="Organiser un tournoi"
-          subtitle="Configurez et lancez une nouvelle compétition officielle"
+          title={t('tournaments.createTitle')}
+          subtitle={t('tournaments.createSubtitle')}
           maxWidth="lg"
         >
           <form onSubmit={handleCreateTournament} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
@@ -689,27 +685,27 @@ export const TournamentsView: React.FC = () => {
                 required
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Ex: Tournoi National des Éperviers 2026"
+                placeholder={t('tournaments.titleExample')}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Format de jeu *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.formatRequired')}</label>
                 <SelectField
                   value={formFormat}
                   onChange={(e) => setFormFormat(e.target.value as Tournament['format'] | '')}
                   required
                   className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
                 >
-                  <option value="">Choisir un format</option>
+                  <option value="">{t('tournaments.chooseFormat')}</option>
                   {(catalogOptions?.tournamentFormats ?? []).map((format) => <option key={format} value={format}>{format}</option>)}
                 </SelectField>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nombre d&apos;équipes max *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.maxTeamsLabel')}</label>
                 <input
                   type="number"
                   min={2}
@@ -726,7 +722,7 @@ export const TournamentsView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Ville hôte *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.hostCity')}</label>
                 <input
                   type="text"
                   required
@@ -738,7 +734,7 @@ export const TournamentsView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Stade ou Complexe d&apos;accueil *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.hostStadium')}</label>
                 <SelectField
                   name="tournament-pitch"
                   value={formPitchIds[0] ?? ''}
@@ -761,17 +757,17 @@ export const TournamentsView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <DatePickerField id="tournament-start-date" label="Date de début *" value={formStartDate} onChange={setFormStartDate} min={getTodayDateInputValue()} required />
+                <DatePickerField id="tournament-start-date" label={t('tournaments.startDate')} value={formStartDate} onChange={setFormStartDate} min={getTodayDateInputValue()} required />
               </div>
 
               <div>
-                <DatePickerField id="tournament-end-date" label="Date de fin / Finales *" value={formEndDate} onChange={setFormEndDate} min={formStartDate || getTodayDateInputValue()} required />
+                <DatePickerField id="tournament-end-date" label={t('tournaments.endDate')} value={formEndDate} onChange={setFormEndDate} min={formStartDate || getTodayDateInputValue()} required />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Dotation Vainqueur / Prize Pool (€) *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.prizePoolRequired')}</label>
                 <input
                   type="number"
                   required
@@ -785,7 +781,7 @@ export const TournamentsView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Frais d&apos;inscription par équipe (€) *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.entryFeeRequired')}</label>
                 <input
                   type="number"
                   required
@@ -800,23 +796,21 @@ export const TournamentsView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Organisateur / Comité responsable *</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">{t('tournaments.organizerRequired')}</label>
               <input
                 type="text"
                 required
                 value={formOrganizer}
                 onChange={(e) => setFormOrganizer(e.target.value)}
-                placeholder="Ex: Ligue Régionale de Football Matsiatra"
+                placeholder={t('tournaments.organizerExample')}
                 className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
               />
             </div>
 
             {/* Banner Theme Presets */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Visuel officiel du tournoi *
-              </label>
-              <ImageUploadField purpose="tournament" label="Importer un visuel du tournoi" onUploaded={setFormBannerUrl} disabled={isCreating || !user?.roles?.includes('Organisateur Tournoi')} disabledHint="Le rôle Organisateur Tournoi doit être attribué à votre compte pour importer une image." />
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">{t('tournaments.bannerLabel')}</label>
+              <ImageUploadField purpose="tournament" label={t('tournaments.uploadBanner')} onUploaded={setFormBannerUrl} disabled={isCreating || !user?.roles?.includes('Organisateur Tournoi')} disabledHint={t('tournaments.bannerRoleHint')} />
               <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {TOURNAMENT_BANNER_PRESETS.map((preset) => {
                   const isSelected = formBannerUrl === preset.url;
@@ -829,10 +823,10 @@ export const TournamentsView: React.FC = () => {
                         isSelected ? 'border-pitch-primary ring-2 ring-lime-volt' : 'border-transparent hover:opacity-90'
                       }`}
                     >
-                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
+                      <img src={preset.url} alt={t(`tournaments.bannerPreset.${preset.name}`)} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 flex items-end p-2">
                         <span className="text-caption font-bold text-white leading-tight">
-                          {preset.name}
+                          {t(`tournaments.bannerPreset.${preset.name}`)}
                         </span>
                       </div>
                       {isSelected && (
@@ -851,15 +845,13 @@ export const TournamentsView: React.FC = () => {
                 type="button"
                 onClick={tournamentModal.close}
                 className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
-              >
-                Annuler
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 type="submit"
                 disabled={isCreating || !canCreateTournament}
                 className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isCreating ? 'Création en cours...' : 'Publier et ouvrir le tournoi'}
+                {isCreating ? t('tournaments.creating') : t('tournaments.publishTournament')}
               </button>
             </div>
           </form>
