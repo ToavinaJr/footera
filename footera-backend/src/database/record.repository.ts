@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from './prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { RecordPayloadMap } from '../types/records.js';
@@ -91,6 +92,35 @@ export class RecordRepository {
     });
   }
 
+  async reserveBookingsAtomically(
+    entries: Array<{ id: string; pitchId: string; dateKey: string; time: string; payload: Record<string, unknown> }>,
+  ): Promise<boolean> {
+    try {
+      await this.prisma.$transaction(async (transaction) => {
+        for (const entry of entries) {
+          await transaction.bookingSlotClaimRecord.create({
+            data: {
+              id: randomUUID(), pitchId: entry.pitchId, dateKey: entry.dateKey,
+              time: entry.time, bookingId: entry.id,
+            },
+          });
+          await transaction.bookingRecord.create({ data: { id: entry.id, payload: asJson(entry.payload) } });
+        }
+      });
+      return true;
+    } catch (error) {
+      if (isUniqueConstraintViolation(error)) return false;
+      throw error;
+    }
+  }
+
+  async cancelBookingAndReleaseSlot(id: string, payload: Record<string, unknown>): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.bookingRecord.update({ where: { id }, data: { payload: asJson(payload) } });
+      await transaction.bookingSlotClaimRecord.deleteMany({ where: { bookingId: id } });
+    });
+  }
+
   async createUserAccount<T>(id: string, email: string, user: T, credential: { userId: string; passwordHash: string }, player?: unknown): Promise<void> {
     await this.prisma.$transaction(async (transaction) => {
       const client = transaction as unknown as DynamicRecordClient;
@@ -112,4 +142,8 @@ export class RecordRepository {
   async count(collection: RecordCollection): Promise<number> {
     return this.delegate(collection).count();
   }
+}
+
+function isUniqueConstraintViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
 }

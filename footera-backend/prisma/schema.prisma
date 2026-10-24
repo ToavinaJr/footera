@@ -59,6 +59,15 @@ model BookingRecord {
   payload Json
   @@map("bookings")
 }
+model BookingSlotClaimRecord {
+  id        String @id
+  pitchId   String
+  dateKey   String
+  time      String
+  bookingId String @unique
+  @@unique([pitchId, dateKey, time])
+  @@map("booking_slot_claims")
+}
 model RecruitmentAdRecord {
   id      String @id
   payload Json

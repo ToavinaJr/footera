@@ -104,7 +104,7 @@ export class BookingsService {
         || typeof selection?.time !== 'string' || !selection.time.trim() || selection.time.length > 40) {
         throw new BadRequestException('Date ou horaire de créneau invalide.');
       }
-      const key = `${selection.date}:${selection.time}`;
+      const key = `${normalizeDateKey(selection.date)}:${selection.time}`;
       if (seen.has(key)) throw new ConflictException('Un créneau est sélectionné plusieurs fois.');
       seen.add(key);
       const slot = pitch.availableSlots?.find((candidate) => candidate.time === selection.time && candidate.isAvailable);
@@ -150,13 +150,24 @@ export class BookingsService {
       };
     });
 
-    for (const booking of bookings) await this.records.create('bookings', booking.id, booking);
+    const reserved = await this.records.reserveBookingsAtomically(bookings.map((booking) => ({
+      id: booking.id,
+      pitchId: booking.pitchId,
+      dateKey: normalizeDateKey(booking.date),
+      time: booking.time,
+      payload: booking,
+    })));
+    if (!reserved) throw new ConflictException('Un ou plusieurs créneaux viennent d’être réservés. Actualisez les disponibilités.');
     for (const booking of bookings) {
-      await this.notifications.add({
-        title: 'Réservation confirmée',
-        message: `Créneau validé le ${booking.date} à ${booking.time} (${booking.pitchName}).`,
-        type: NOTIFICATION_TYPES.BOOKING, targetSection: APP_SECTIONS.BOOKINGS, targetId: booking.id,
-      });
+      try {
+        await this.notifications.add({
+          title: 'Réservation confirmée',
+          message: `Créneau validé le ${booking.date} à ${booking.time} (${booking.pitchName}).`,
+          type: NOTIFICATION_TYPES.BOOKING, targetSection: APP_SECTIONS.BOOKINGS, targetId: booking.id,
+        });
+      } catch (error) {
+        this.logger.warn(`Booking ${booking.id} was saved, but its notification could not be created: ${String(error)}`);
+      }
     }
     return bookings;
   }
@@ -241,7 +252,7 @@ export class BookingsService {
     const user = await this.accounts.profile();
     if (!booking || booking.userId !== user?.id) return false;
     if (booking.status === BOOKING_STATUSES.CANCELLED) return true;
-    await this.records.save('bookings', id, { ...booking, status: BOOKING_STATUSES.CANCELLED });
+    await this.records.cancelBookingAndReleaseSlot(id, { ...booking, status: BOOKING_STATUSES.CANCELLED });
     try {
       await this.notifications.add({
         title: 'Réservation annulée',
