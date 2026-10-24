@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
@@ -23,6 +23,7 @@ export const Modal: React.FC<ModalProps> = ({
   overlayClassName = 'bg-black/60 backdrop-blur-xs',
 }) => {
   const { t } = useTranslation();
+  const contentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -32,6 +33,10 @@ export const Modal: React.FC<ModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) contentRef.current?.scrollTo({ top: 0 });
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -69,7 +74,7 @@ export const Modal: React.FC<ModalProps> = ({
             <X className="w-5 h-5 stroke-[2.2]" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto space-y-4 text-[#12281e]">{children}</div>
+        <div ref={contentRef} className="min-h-0 overflow-y-auto space-y-4 p-6 text-[#12281e]">{children}</div>
       </div>
     </div>
   , document.body);

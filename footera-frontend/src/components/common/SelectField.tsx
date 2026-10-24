@@ -14,6 +14,7 @@ interface SelectFieldProps {
   disabled?: boolean;
   required?: boolean;
   name?: string;
+  id?: string;
   'aria-label'?: string;
 }
 
@@ -45,9 +46,11 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   disabled = false,
   required = false,
   name,
+  id: providedId,
   'aria-label': ariaLabel,
 }) => {
-  const id = useId();
+  const generatedId = useId();
+  const id = providedId ?? generatedId;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -227,6 +230,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   return (
     <div className="relative w-full min-w-0">
       <button
+        id={id}
         ref={buttonRef}
         type="button"
         role="combobox"

@@ -31,6 +31,7 @@ import { formatDateForDisplay } from '../../../utils/date';
 import { PhotoGallery } from '../../common/PhotoGallery';
 import { RoleRequestsPanel } from './RoleRequestsPanel';
 import { ProfileTeamPanel } from './ProfileTeamPanel';
+import { CurrentTeamSelectField } from './CurrentTeamSelectField';
 import { useTranslation } from '../../../i18n';
 
 export const ProfileView: React.FC = () => {
@@ -541,31 +542,36 @@ export const ProfileView: React.FC = () => {
         <Modal
           isOpen={isEditCvOpen}
           onClose={closeEditCv}
-          title="Modifier mon CV Sportif"
-          subtitle="Mettez à jour vos informations visibles par les recruteurs"
+          title={t('profile.editCv')}
+          subtitle={t('profile.editCvSubtitle')}
           maxWidth="md"
         >
-          <form onSubmit={handleSaveCv} className="space-y-4">
+          <form onSubmit={handleSaveCv} className="min-w-0 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Poste principal *
+              <label htmlFor="sports-cv-position" className="mb-1 block text-sm font-bold text-slate-700">
+                {t('profile.primaryPosition')} <span aria-hidden="true">*</span>
               </label>
               <SelectField
+                id="sports-cv-position"
+                name="sportsCvPosition"
                 value={cvPosition}
                 onChange={(e) => setCvPosition(e.target.value as Position)}
                 required
                 disabled={!positionOptions.length}
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                aria-label={t('profile.primaryPosition')}
+                className="w-full rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary"
               >
                 <option value="" disabled>{t('profile.choosePosition')}</option>
                 {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
               </SelectField>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.height')}</label>
+                <label htmlFor="sports-cv-height" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.height')}</label>
                 <input
+                  id="sports-cv-height"
+                  name="sportsCvHeight"
                   type="number"
                   min={100}
                   max={250}
@@ -573,13 +579,15 @@ export const ProfileView: React.FC = () => {
                   value={cvHeight}
                   onChange={(e) => setCvHeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.height}
-                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                  className="min-h-11 w-full min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
                 />
                 {cvErrors.height && <p className="mt-1 text-xs text-rose-600">{cvErrors.height}</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.weight')}</label>
+                <label htmlFor="sports-cv-weight" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.weight')}</label>
                 <input
+                  id="sports-cv-weight"
+                  name="sportsCvWeight"
                   type="number"
                   min={30}
                   max={250}
@@ -587,18 +595,21 @@ export const ProfileView: React.FC = () => {
                   value={cvWeight}
                   onChange={(e) => setCvWeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.weight}
-                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                  className="min-h-11 w-full min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
                 />
                 {cvErrors.weight && <p className="mt-1 text-xs text-rose-600">{cvErrors.weight}</p>}
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.strongFoot')}</label>
+              <div className="col-span-2 sm:col-span-1">
+                <label htmlFor="sports-cv-foot" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.strongFoot')}</label>
                 <SelectField
+                  id="sports-cv-foot"
+                  name="sportsCvFoot"
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as StrongFoot)}
                   required
                   disabled={!strongFootOptions.length}
-                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                  aria-label={t('profile.strongFoot')}
+                  className="w-full rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary"
                 >
                   <option value="" disabled>{t('profile.chooseStrongFoot')}</option>
                   {strongFootOptions.map((foot) => <option key={foot} value={foot}>{foot}</option>)}
@@ -607,28 +618,22 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.currentClub')}</label>
-              <input
-                type="text"
-                value={cvCurrentTeam}
-                onChange={(e) => setCvCurrentTeam(e.target.value)}
-                maxLength={80}
-                aria-invalid={!!cvErrors.currentTeam}
-                placeholder="Ex: Betsileo FC"
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
-              />
+              <label htmlFor="sports-cv-current-team" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.currentClub')}</label>
+              <CurrentTeamSelectField id="sports-cv-current-team" name="sportsCvCurrentTeam" value={cvCurrentTeam} onChange={setCvCurrentTeam} />
               {cvErrors.currentTeam && <p className="mt-1 text-xs text-rose-600">{cvErrors.currentTeam}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('profile.sportsBio')}</label>
+              <label htmlFor="sports-cv-bio" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.sportsBio')}</label>
               <textarea
+                id="sports-cv-bio"
+                name="sportsCvBio"
                 rows={3}
                 value={cvBio}
                 onChange={(e) => setCvBio(e.target.value)}
                 maxLength={1000}
                 aria-invalid={!!cvErrors.bio}
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                className="min-h-24 w-full min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary"
               />
               {cvErrors.bio && <p className="mt-1 text-xs text-rose-600">{cvErrors.bio}</p>}
             </div>
@@ -637,9 +642,9 @@ export const ProfileView: React.FC = () => {
               <button
                 type="button"
                 onClick={closeEditCv}
-                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
+                className="min-h-11 rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-600 hover:bg-slate-200"
               >
-                Annuler
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
@@ -647,7 +652,7 @@ export const ProfileView: React.FC = () => {
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
               >
                 <Check className="w-4 h-4" />
-                <span>{isSavingCv ? 'Enregistrement…' : 'Enregistrer mon CV'}</span>
+                <span>{isSavingCv ? t('profile.savingCv') : t('profile.saveCv')}</span>
               </button>
             </div>
           </form>
