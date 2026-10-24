@@ -332,6 +332,35 @@ export class TeamsService {
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }
 
+  async listMyJoinRequests() {
+    const user = await this.accounts.profile();
+    if (!user) throw new ForbiddenException('Connectez-vous pour consulter vos demandes.');
+    const requests = await this.records.list<TeamJoinRequestRecord>('teamJoinRequests');
+    return requests.filter((request) => request.userId === user.id)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  }
+
+  async leaveCurrentTeam() {
+    const user = await this.accounts.profile();
+    if (!user) throw new ForbiddenException('Connectez-vous pour quitter une équipe.');
+    const players = await this.records.list<PlayerRecord>('players');
+    const player = players.find((candidate) => candidate.userId === user.id);
+    if (!player?.currentTeamId) throw new ConflictException('Vous ne faites actuellement partie d’aucune équipe.');
+    const team = await this.records.find<TeamRecord>('teams', player.currentTeamId);
+    if (!team) throw new NotFoundException('Votre équipe actuelle est introuvable.');
+    const members = (team.members ?? []).filter((member) => member.playerId !== player.id && member.playerId !== user.id);
+    const playerWithoutTeam = { ...player };
+    delete playerWithoutTeam.currentTeam;
+    delete playerWithoutTeam.currentTeamId;
+    const updatedUser = { ...user, sportsCv: { ...user.sportsCv, currentTeam: '' } };
+    await this.records.leaveTeamAtomically(
+      { id: team.id, payload: { ...team, members, membersCount: members.length } },
+      { id: player.id, payload: playerWithoutTeam },
+      { id: user.id, payload: updatedUser },
+    );
+    return { success: true, teamId: team.id, teamName: team.name };
+  }
+
   async respondToJoinRequest(requestId: string, accept: boolean) {
     const [team, request] = await Promise.all([
       this.myTeam(), this.records.find<TeamJoinRequestRecord>('teamJoinRequests', requestId),

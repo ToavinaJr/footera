@@ -30,6 +30,7 @@ import { catalogsService } from '../../../services/catalogsService';
 import { formatDateForDisplay } from '../../../utils/date';
 import { PhotoGallery } from '../../common/PhotoGallery';
 import { RoleRequestsPanel } from './RoleRequestsPanel';
+import { ProfileTeamPanel } from './ProfileTeamPanel';
 import { useTranslation } from '../../../i18n';
 
 export const ProfileView: React.FC = () => {
@@ -387,6 +388,7 @@ export const ProfileView: React.FC = () => {
           {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
           {displayedPlayer && <PhotoGallery entity="players" id={displayedPlayer.id} />}
           {isOwner && <RoleRequestsPanel />}
+          {isOwner && <ProfileTeamPanel currentTeamId={myPlayer?.currentTeamId} currentTeamName={myPlayer?.currentTeam ?? user?.sportsCv.currentTeam} />}
           {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
             <h2 className="text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
             {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">

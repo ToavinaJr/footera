@@ -1,6 +1,19 @@
 import { apiClient } from '../lib/api/client';
 import type { Club, Team, TeamDetail, TeamInvitation } from '../types';
 
+export interface TeamJoinRequest {
+  id: string;
+  teamId: string;
+  teamName: string;
+  playerId: string;
+  playerName: string;
+  userId: string;
+  message: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const teamsService = {
   async list(filters?: { query?: string; category?: string; city?: string }): Promise<Team[]> {
     const params = new URLSearchParams();
@@ -47,5 +60,22 @@ export const teamsService = {
 
   joinTeam(teamId: string, message: string): Promise<{ success: boolean; message: string }> {
     return apiClient<{ success: boolean; message: string }>(`teams/${encodeURIComponent(teamId)}/join`, { method: 'POST', body: JSON.stringify({ message }) });
+  },
+
+  listMyJoinRequests(): Promise<TeamJoinRequest[]> {
+    return apiClient<TeamJoinRequest[]>('teams/my-join-requests');
+  },
+
+  listMyTeamJoinRequests(): Promise<TeamJoinRequest[]> {
+    return apiClient<TeamJoinRequest[]>('teams/my-team/join-requests');
+  },
+
+  respondToJoinRequest(requestId: string, accept: boolean): Promise<{ success: boolean; request: TeamJoinRequest }> {
+    const action = accept ? 'accept' : 'decline';
+    return apiClient<{ success: boolean; request: TeamJoinRequest }>(`teams/my-team/join-requests/${encodeURIComponent(requestId)}/${action}`, { method: 'POST' });
+  },
+
+  leaveCurrentTeam(): Promise<{ success: boolean; teamId: string; teamName: string }> {
+    return apiClient<{ success: boolean; teamId: string; teamName: string }>('teams/my-team/membership', { method: 'DELETE' });
   },
 };

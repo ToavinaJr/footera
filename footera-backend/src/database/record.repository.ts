@@ -127,6 +127,19 @@ export class RecordRepository {
     });
   }
 
+  async leaveTeamAtomically(
+    team: { id: string; payload: Record<string, unknown> },
+    player: { id: string; payload: Record<string, unknown> },
+    user: { id: string; payload: Record<string, unknown> },
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const client = transaction as unknown as DynamicRecordClient;
+      await client.teamRecord.update({ where: { id: team.id }, data: { payload: asJson(team.payload) } });
+      await client.playerRecord.update({ where: { id: player.id }, data: { payload: asJson(player.payload) } });
+      await client.userRecord.update({ where: { id: user.id }, data: { payload: asJson(user.payload) } });
+    });
+  }
+
   async getLoginFailureCount(id: string, now: Date): Promise<number> {
     await this.prisma.authLoginAttemptRecord.deleteMany({ where: { expiresAt: { lte: now } } });
     const attempt = await this.prisma.authLoginAttemptRecord.findUnique({ where: { id } });
