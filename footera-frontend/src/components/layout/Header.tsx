@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type SubmitEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, Bell, User, X, BarChart3, LogOut } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     else navigate('/home', { replace: true });
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (headerSearch.trim()) {
       navigate(`/players?query=${encodeURIComponent(headerSearch.trim())}`);
@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <button
               onClick={onMenuClick}
               aria-label={t('nav.open')}
-              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer"
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer md:hidden"
             >
               <Menu className="w-6 h-6 stroke-[2.2]" />
             </button>

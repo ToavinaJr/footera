@@ -1,5 +1,5 @@
-import { MapPin,Plus,Search,ShoppingBag } from 'lucide-react';
-import React from 'react';
+import { ChevronDown, MapPin,Plus,Search,ShoppingBag } from 'lucide-react';
+import React, { useState } from 'react';
 import { EmptyState } from '../../common/EmptyState';
 import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
 import { ListToolbar } from '../../common/ListToolbar';
@@ -11,7 +11,7 @@ import { useMarketplaceViewModel } from './useMarketplaceViewModel';
 
 export const MarketplaceView: React.FC = () => {
   const model = useMarketplaceViewModel();
-  const { t, itemModal, categories, conditions, brands, categoryFilter, setCategoryFilter, searchQuery, setSearchQuery, mine, setMine, sort, setSort, maxPrice, setMaxPrice, condition, setCondition, brand, setBrand, list, items, isLoading, page, detail, selectedItem, handleOpenCreateListing } = model;
+  const { t, itemModal, categories, conditions, brands, categoryFilter, setCategoryFilter, searchQuery, setSearchQuery, mine, setMine, sort, setSort, minPrice, setMinPrice, maxPrice, setMaxPrice, condition, setCondition, brand, setBrand, list, items, isLoading, page, detail, selectedItem, handleOpenCreateListing } = model;
 
   return (
     <ListPageLayout>
@@ -36,7 +36,7 @@ export const MarketplaceView: React.FC = () => {
       </div>
 
       {/* Filter and Search */}
-      <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
+      <div className="relative z-50 p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
           <input
@@ -49,28 +49,20 @@ export const MarketplaceView: React.FC = () => {
         </div>
 
         <div>
-          <SelectField
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            aria-label={t('market.filter')}
-            className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c === 'Toutes' ? t('market.allCategories') : c}
-              </option>
-            ))}
-          </SelectField>
+          <MarketplaceMultiSelect label={t('market.allCategories')} options={categories.filter((category) => category !== 'Toutes')} value={categoryFilter} onChange={setCategoryFilter} />
         </div>
       </div>
 
       {/* Items Grid */}
-      <ListToolbar mine={mine} onMine={setMine}>
-        <SelectField value={condition} onChange={(event) => setCondition(event.target.value)} aria-label={t('market.condition')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.condition')}</option>{conditions.map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
-        <SelectField value={brand} onChange={(event) => setBrand(event.target.value)} aria-label={t('market.brand')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.brand')}</option>{brands.map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
-        <input type="number" min="0" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} aria-label={t('market.price')} placeholder={t('market.price')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
-        <SelectField value={sort} onChange={(event) => setSort(event.target.value)} aria-label={t('list.sort')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="recent">{t('list.recent')}</option><option value="price">{t('market.price')}</option><option value="name">{t('list.name')}</option></SelectField>
-      </ListToolbar>
+      <div className="relative z-40">
+        <ListToolbar mine={mine} onMine={setMine}>
+          <MarketplaceMultiSelect label={t('market.condition')} options={conditions} value={condition} onChange={setCondition} />
+          <MarketplaceMultiSelect label={t('market.brand')} options={brands} value={brand} onChange={setBrand} />
+          <input type="number" min="0" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} aria-label={t('market.minPrice')} placeholder={t('market.minPrice')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
+          <input type="number" min="0" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} aria-label={t('market.maxPrice')} placeholder={t('market.maxPrice')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
+          <SelectField value={sort} onChange={(event) => setSort(event.target.value)} aria-label={t('list.sort')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="recent">{t('list.recent')}</option><option value="price">{t('market.price')}</option><option value="name">{t('list.name')}</option></SelectField>
+        </ListToolbar>
+      </div>
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <CardSkeleton />
@@ -159,3 +151,47 @@ export const MarketplaceView: React.FC = () => {
     </ListPageLayout>
   );
 };
+
+function MarketplaceMultiSelect({ label, options, value, onChange }: {
+  label: string;
+  options: string[];
+  value: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const summary = value.length ? `${label} (${value.length})` : label;
+
+  return (
+    <div className="relative min-w-0">
+      <button
+        type="button"
+        aria-label={label}
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
+        className="flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-pitch-line bg-white px-3 text-left text-sm text-pitch-ink transition-colors hover:border-pitch-primary focus-visible:outline-2 focus-visible:outline-pitch-primary"
+      >
+        <span className="truncate">{summary}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-pitch-primary transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full z-30 mt-2 max-h-60 w-full min-w-48 overflow-y-auto rounded-xl border border-pitch-line bg-white p-2 shadow-xl">
+          {options.map((option) => {
+            const checked = value.includes(option);
+            return (
+              <label key={option} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-pitch-ink hover:bg-pitch-panel">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onChange(checked ? value.filter((item) => item !== option) : [...value, option])}
+                  className="h-4 w-4 accent-pitch-primary"
+                />
+                <span className="min-w-0 flex-1">{option}</span>
+              </label>
+            );
+          })}
+          {options.length === 0 && <p className="px-2 py-3 text-xs text-slate-500">{label}</p>}
+        </div>
+      )}
+    </div>
+  );
+}

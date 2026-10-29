@@ -1,5 +1,5 @@
 import React,{ useEffect,useState } from 'react';
-import { useLocation,useNavigate,useParams } from 'react-router-dom';
+import { useLocation,useNavigate,useParams,useSearchParams } from 'react-router-dom';
 import { useApp } from '../../../context/useApp';
 import { useResource } from '../../../hooks/useResource';
 import { useRouteModal } from '../../../hooks/useRouteModal';
@@ -36,6 +36,7 @@ interface SelectedPitchSlot {
 
 /** Data, URL state and mutations shared by the list and its routed dialogs. */
 export function usePitchesViewModel() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { showToast, selectedResourceId } = useApp();
   const navigate = useNavigate();
@@ -45,18 +46,23 @@ export function usePitchesViewModel() {
   const pitchModal = useRouteModal('/pitches');
   const [surfaceOptions, setSurfaceOptions] = useState<SurfaceType[]>([]);
   const [amenityOptions, setAmenityOptions] = useState<string[]>([]);
-  const [surfaceFilter, setSurfaceFilter] = useUrlState<string>('surface', 'Toutes');
-  const [cityFilter, setCityFilter] = useUrlState<string>('city', 'Toutes');
+  const surfaceFilter = searchParams.getAll('surface').filter((surface) => surface !== 'Toutes');
+  const cityFilter = searchParams.getAll('city').filter((city) => city !== 'Toutes');
+  const setSurfaceFilter = (values: string[]) => setMultiFilter(setSearchParams, 'surface', values);
+  const setCityFilter = (values: string[]) => setMultiFilter(setSearchParams, 'city', values);
   const [bookingDate, setBookingDate] = useUrlState<string>('date', '');
   const [query, setQuery] = useUrlState<string>('query', '');
   const [mine, setMine] = useUrlState<boolean>('mine', false);
-  const list = useResource<Pitch[]>(JSON.stringify([surfaceFilter, cityFilter, bookingDate]), () => pitchesService.list({ surface: surfaceFilter, city: cityFilter, date: bookingDate || undefined }), []);
+  const list = useResource<Pitch[]>(JSON.stringify([bookingDate]), () => pitchesService.list({ date: bookingDate || undefined }), []);
   const pitches = list.data;
   const setPitches = list.setData;
   const isLoading = list.loading && !pitches.length;
   const detail = useResource<Pitch | null>(JSON.stringify([routePitchId, bookingDate]), () => pitchesService.getById(routePitchId!, bookingDate || undefined), null, !!routePitchId && routePitchId !== 'new');
   const routePitch = detail.data?.id === routePitchId ? detail.data : null;
-  const page = useListPagination(pitches.filter((pitch) => (!mine || pitch.canManageGallery) && (!query || (pitch.name + ' ' + pitch.city + ' ' + pitch.complexName).toLocaleLowerCase().includes(query.toLocaleLowerCase()))));
+  const page = useListPagination(pitches.filter((pitch) => (!mine || pitch.canManageGallery)
+    && (!surfaceFilter.length || surfaceFilter.includes(pitch.surface))
+    && (!cityFilter.length || cityFilter.includes(pitch.city))
+    && (!query || (pitch.name + ' ' + pitch.city + ' ' + pitch.complexName).toLocaleLowerCase().includes(query.toLocaleLowerCase()))));
 
   // Selected Pitch for booking
   const selectedPitch = isBookingRoute && routePitchId
@@ -263,7 +269,7 @@ export function usePitchesViewModel() {
     }
   };
 
-  const surfaces: (SurfaceType | 'Toutes')[] = ['Toutes', ...surfaceOptions];
+  const surfaces: SurfaceType[] = surfaceOptions;
 
   const selectedSlotsByDate = selectedSlots.reduce<Record<string, PitchSlot[]>>((groups, selection) => {
     (groups[selection.date] ??= []).push(selection.slot);
@@ -273,4 +279,14 @@ export function usePitchesViewModel() {
   const selectedSlotsTotal = bookingQuote?.total ?? 0;
   const currentDateTotal = bookingQuote?.perDate[bookingDate] ?? 0;
   return { t, navigate, routePitchId, isBookingRoute, pitchModal, surfaceFilter, setSurfaceFilter, cityFilter, setCityFilter, bookingDate, setBookingDate, query, setQuery, mine, setMine, list, isLoading, detail, page, selectedPitch, detailPitch, selectedSlots, bookingQuote, isQuotingBooking, reviewRating, setReviewRating, reviewComment, setReviewComment, isSubmittingReview, toggleSlot, handleBookingDateChange, handleOpenBooking, handleOpenCreatePitch, handleRatePitch, surfaces, selectedSlotsByDate, selectedSlotsTotal, surfaceOptions, amenityOptions, setSelectedSlots, isSubmitting, formName, setFormName, formComplexName, setFormComplexName, formCity, setFormCity, formAddress, setFormAddress, formSurface, setFormSurface, formGameFormat, setFormGameFormat, gameFormatOptions, formDimensions, setFormDimensions, formHourlyRate, setFormHourlyRate, formAmenities, formImageUrl, setFormImageUrl, isCreating, canCreatePitch, handleConfirmBooking, toggleAmenity, handleCreatePitch, selectedSlotsForCurrentDate, currentDateTotal };
+}
+
+function setMultiFilter(setSearchParams: ReturnType<typeof useSearchParams>[1], key: string, values: string[]) {
+  setSearchParams((current) => {
+    const updated = new URLSearchParams(current);
+    updated.delete(key);
+    values.forEach((value) => updated.append(key, value));
+    updated.delete('page');
+    return updated;
+  });
 }

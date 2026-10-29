@@ -25,28 +25,30 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
     { label: t('nav.marketplace'), section: 'marketplace', icon: ShoppingBag },
     { label: t('nav.pitches'), section: 'pitches', icon: MapPin },
     { label: t('nav.mercato'), section: 'mercato', icon: Briefcase },
-    { label: t('nav.settings'), section: 'settings', icon: Settings },
     { label: t('nav.stats'), section: 'stats', icon: BarChart3 },
+    { label: t('nav.settings'), section: 'settings', icon: Settings },
   ];
 
   const content = (collapsed: boolean, mobile = false) => (
     <div className="pitch-tactical-grid flex h-full min-h-0 flex-col text-white">
-      <div className={`flex shrink-0 items-center border-b border-[#144f2f] ${collapsed && !mobile ? 'justify-center px-2' : 'justify-between px-4'} py-3`}>
-        <button
-          type="button"
-          onClick={() => { setActiveSection('home'); if (mobile) onClose(); }}
-          title="Footera"
-          className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg text-left"
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lime-volt font-display text-lg font-extrabold text-pitch-ink">F</span>
-          {(!collapsed || mobile) && <span className="font-display text-xl font-extrabold tracking-tight">Footera</span>}
-        </button>
+      <div className={`flex shrink-0 items-center border-b border-[#144f2f] ${mobile ? 'justify-between px-4' : 'justify-center px-2'} py-3`}>
         {mobile ? (
-          <button type="button" onClick={onClose} aria-label={t('nav.closeMenu')} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-[#124227] hover:text-white">
-            <X className="h-5 w-5" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => { setActiveSection('home'); onClose(); }}
+              title="Footera"
+              className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg text-left"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lime-volt font-display text-lg font-extrabold text-pitch-ink">F</span>
+              <span className="font-display text-xl font-extrabold tracking-tight">Footera</span>
+            </button>
+            <button type="button" onClick={onClose} aria-label={t('nav.closeMenu')} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-[#124227] hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
+          </>
         ) : (
-          <button type="button" onClick={onToggleCollapsed} aria-label={collapsed ? t('nav.open') : t('nav.closeMenu')} title={collapsed ? t('nav.open') : t('nav.closeMenu')} className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-[#124227] hover:text-white md:flex">
+          <button type="button" onClick={onToggleCollapsed} aria-label={collapsed ? t('nav.open') : t('nav.closeMenu')} title={collapsed ? t('nav.open') : t('nav.closeMenu')} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-[#124227] hover:text-white">
             {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
         )}

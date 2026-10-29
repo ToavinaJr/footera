@@ -9,6 +9,7 @@ import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
 import { ListToolbar } from '../../common/ListToolbar';
 import { PhotoGallery } from '../../common/PhotoGallery';
 import { SelectField } from '../../common/SelectField';
+import { MultiSelectField } from '../../common/MultiSelectField';
 import { CardSkeleton } from '../../common/Skeleton';
 import { PitchesDialogs } from './PitchesDialogs';
 import { usePitchesViewModel } from './usePitchesViewModel';
@@ -160,35 +161,15 @@ export const PitchesView: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
+      <div className="relative z-50 p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.surface')}</label>
-          <SelectField
-            value={surfaceFilter}
-            onChange={(e) => setSurfaceFilter(e.target.value as SurfaceType | 'Toutes')}
-            className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
-          >
-            {surfaces.map((s) => (
-              <option key={s} value={s}>
-                {s === 'Toutes' ? t('pitch.allSurfaces') : s}
-              </option>
-            ))}
-          </SelectField>
+          <MultiSelectField label={t('pitch.surface')} placeholder={t('pitch.allSurfaces')} options={surfaces} value={surfaceFilter} onChange={setSurfaceFilter} className="[&>button]:w-full [&>button]:rounded-full [&>button]:bg-pitch-input [&>button]:px-4 [&>button]:py-2.5 [&>button]:text-xs [&>button]:md:text-sm" />
         </div>
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.location')}</label>
-          <SelectField
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
-          >
-            <option value="Toutes">{t('pitch.allCities')}</option>
-            <option value="Fianarantsoa">Fianarantsoa</option>
-            <option value="Antananarivo">Antananarivo</option>
-            <option value="Toamasina">Toamasina</option>
-            <option value="Paris">Paris</option>
-          </SelectField>
+          <MultiSelectField label={t('pitch.location')} placeholder={t('pitch.allCities')} options={['Fianarantsoa', 'Antananarivo', 'Toamasina', 'Paris']} value={cityFilter} onChange={setCityFilter} className="[&>button]:w-full [&>button]:rounded-full [&>button]:bg-pitch-input [&>button]:px-4 [&>button]:py-2.5 [&>button]:text-xs [&>button]:md:text-sm" />
         </div>
       </div>
 

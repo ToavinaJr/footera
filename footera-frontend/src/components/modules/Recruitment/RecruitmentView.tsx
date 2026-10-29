@@ -4,7 +4,7 @@ import { Badge } from '../../common/Badge';
 import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
-import { SelectField } from '../../common/SelectField';
+import { MultiSelectField } from '../../common/MultiSelectField';
 import { CardSkeleton } from '../../common/Skeleton';
 import { RecruitmentDialogs } from './RecruitmentDialogs';
 import { useRecruitmentViewModel } from './useRecruitmentViewModel';
@@ -52,7 +52,7 @@ export const RecruitmentView: React.FC = () => {
 
       {activeTab === 'ads' ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
+          <div className="relative z-50 grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-3xl bg-white border border-pitch-line shadow-2xs">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
@@ -64,15 +64,7 @@ export const RecruitmentView: React.FC = () => {
               />
             </div>
             <div>
-              <SelectField
-                value={positionFilter}
-                onChange={(e) => setPositionFilter(e.target.value)}
-                aria-label={t('recruitment.filterPosition')}
-                className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary outline-hidden"
-              >
-                <option value="Tous">{t('recruitment.allPositions')}</option>
-                {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
-              </SelectField>
+              <MultiSelectField label={t('recruitment.filterPosition')} placeholder={t('recruitment.allPositions')} options={positionOptions} value={positionFilter} onChange={setPositionFilter} className="[&>button]:w-full [&>button]:rounded-full [&>button]:bg-pitch-input [&>button]:px-4 [&>button]:py-2.5 [&>button]:text-xs [&>button]:md:text-sm" />
             </div>
           </div>
 

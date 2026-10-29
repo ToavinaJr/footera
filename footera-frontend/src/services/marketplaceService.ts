@@ -21,15 +21,19 @@ export const marketplaceService = {
     return apiClient<string[]>('marketplace/categories');
   },
 
-  async list(filters?: { query?: string; category?: string; maxPrice?: number }): Promise<MarketplaceListing[]> {
+  async list(filters?: { query?: string; category?: string; minPrice?: number; maxPrice?: number }): Promise<MarketplaceListing[]> {
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
     if (filters?.category && filters.category !== 'Toutes') params.set('category', filters.category);
+    if (filters?.minPrice !== undefined && filters.minPrice >= 0) params.set('minPrice', String(filters.minPrice));
     if (filters?.maxPrice && filters.maxPrice > 0) params.set('maxPrice', String(filters.maxPrice));
     return apiClient<MarketplaceListing[]>(`marketplace?${params.toString()}`);
   },
 
   createListing(input: CreateListingInput): Promise<MarketplaceListing> {
     return apiClient<MarketplaceListing>('marketplace', { method: 'POST', body: JSON.stringify(input) });
+  },
+  addBrand(brand: string): Promise<string> {
+    return apiClient<string>('marketplace/brands', { method: 'POST', body: JSON.stringify({ brand }) });
   },
 };

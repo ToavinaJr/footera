@@ -29,7 +29,7 @@ const MARKETPLACE_IMAGE_PRESETS = [
 import type { useMarketplaceViewModel } from './useMarketplaceViewModel';
 
 export function MarketplaceDialogs({ model }: { model: ReturnType<typeof useMarketplaceViewModel> }) {
-  const { t, showToast, user, itemModal, categories, conditions, brands, condition, brand, selectedItem, formTitle, setFormTitle, formCategory, formPrice, setFormPrice, formCondition, setFormCondition, formBrand, setFormBrand, formCity, setFormCity, formDescription, setFormDescription, formImageUrl, setFormImageUrl, isSubmitting, canCreateListing, handleCategoryChange, handleCreateListing } = model;
+  const { t, showToast, user, itemModal, categories, conditions, brands, condition, brand, selectedItem, formTitle, setFormTitle, formCategory, formPrice, setFormPrice, formCondition, setFormCondition, formBrand, setFormBrand, customBrand, setCustomBrand, isAddingBrand, handleAddBrand, formCity, setFormCity, formDescription, setFormDescription, formImageUrl, setFormImageUrl, isSubmitting, canCreateListing, handleCategoryChange, handleCreateListing } = model;
   return <>
       {/* Item Details Modal */}
       {selectedItem && (
@@ -175,7 +175,12 @@ export function MarketplaceDialogs({ model }: { model: ReturnType<typeof useMark
               >
                 <option value="" disabled>{t('market.chooseBrand')}</option>
                 {brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+                <option value="__custom__">{t('market.addBrand')}</option>
               </SelectField>
+              {formBrand === '__custom__' && <div className="mt-2 flex gap-2">
+                <input value={customBrand} onChange={(event) => setCustomBrand(event.target.value)} maxLength={80} placeholder={t('market.customBrand')} className="min-w-0 flex-1 rounded-xl border border-pitch-line px-3 py-2 text-sm" />
+                <button type="button" onClick={() => void handleAddBrand()} disabled={isAddingBrand || !customBrand.trim()} className="rounded-xl bg-pitch-action px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{isAddingBrand ? t('market.savingBrand') : t('market.saveBrand')}</button>
+              </div>}
             </div>
 
             <div>

@@ -8,9 +8,11 @@ import { catalogsService } from '../../../services/catalogsService';
 import { recruitmentService } from '../../../services/recruitmentService';
 import { Application,RecruitmentAd } from '../../../types';
 import { useListPagination } from '../../../hooks/useListPagination';
+import { useSearchParams } from 'react-router-dom';
 
 /** Data, URL state and mutations shared by the list and its routed dialogs. */
 export function useRecruitmentViewModel() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { showToast, selectedResourceId, user } = useApp();
   const adModal = useRouteModal('/mercato');
@@ -18,12 +20,13 @@ export function useRecruitmentViewModel() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useUrlState<string>('query', '');
-  const [positionFilter, setPositionFilter] = useUrlState<string>('position', 'Tous');
+  const positionFilter = searchParams.getAll('position').filter((position) => position !== 'Tous');
+  const setPositionFilter = (values: string[]) => setSearchParams((current) => updateMultiFilter(current, 'position', values));
   const [positionOptions, setPositionOptions] = useState<string[]>([]);
 
-  const list = useResource<RecruitmentAd[]>(JSON.stringify([user?.id, searchQuery, positionFilter]), () => user ? recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter }) : recruitmentService.listAds({ query: searchQuery, position: positionFilter }), []);
+  const list = useResource<RecruitmentAd[]>(JSON.stringify([user?.id, searchQuery]), () => user ? recruitmentService.listAvailableAds({ query: searchQuery }) : recruitmentService.listAds({ query: searchQuery }), []);
   const applications = useResource<Application[]>(user?.id ?? '', () => recruitmentService.listMyApplications(), [], !!user);
-  const ads = list.data, setAds = list.setData;
+  const ads = list.data.filter((ad) => !positionFilter.length || positionFilter.includes(ad.positionSought)), setAds = list.setData;
   const myApplications = applications.data, setMyApplications = applications.setData;
   const isLoading = list.loading;
   const page = useListPagination(ads);
@@ -70,7 +73,7 @@ export function useRecruitmentViewModel() {
       closeApplication();
       setApplyMessage('');
       const [availableAds, applications] = await Promise.all([
-        recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter }),
+        recruitmentService.listAvailableAds({ query: searchQuery }),
         recruitmentService.listMyApplications(),
       ]);
       setAds(availableAds);
@@ -89,7 +92,7 @@ export function useRecruitmentViewModel() {
     try {
       await recruitmentService.cancelApplication(application.id);
       setMyApplications((current) => current.map((item) => item.id === application.id ? { ...item, status: 'RETIRÉE' } : item));
-      const availableAds = await recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter });
+      const availableAds = await recruitmentService.listAvailableAds({ query: searchQuery });
       setAds(availableAds);
       showToast(t('recruitment.applicationCancelled'), 'success');
     } catch (error: unknown) {
@@ -99,4 +102,12 @@ export function useRecruitmentViewModel() {
     }
   };
   return { t, adModal, activeTab, setActiveTab, searchQuery, setSearchQuery, positionFilter, setPositionFilter, positionOptions, list, applications, ads, myApplications, isLoading, page, applicationPage, detail, activeAd, cancellingApplicationId, openApplication, handleCancelApplication, applicationAd, isApplyModalOpen, applyMessage, setApplyMessage, applicantPhone, setApplicantPhone, isSubmitting, closeApplication, handleApply };
+}
+
+function updateMultiFilter(params: URLSearchParams, key: string, values: string[]): URLSearchParams {
+  const updated = new URLSearchParams(params);
+  updated.delete(key);
+  values.forEach((value) => updated.append(key, value));
+  updated.delete('page');
+  return updated;
 }

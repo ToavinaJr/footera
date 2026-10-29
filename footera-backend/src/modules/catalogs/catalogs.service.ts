@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { toCamelCase } from '../../utils/text.utils.js';
 import { SEED_CATALOGS } from '../../database/seeds.js';
@@ -59,5 +59,18 @@ export class CatalogsService implements OnModuleInit {
   async values(id: keyof CatalogOptions): Promise<string[]> {
     const options = await this.options();
     return options[id] ?? [];
+  }
+
+  async addMarketplaceBrand(value: string): Promise<string> {
+    const brand = value.trim().replace(/\s+/g, ' ');
+    if (!brand || brand.length > 80) throw new BadRequestException('Le nom de marque doit contenir entre 1 et 80 caractères.');
+    const catalogId = 'marketplace-brands';
+    const catalog = await this.records.find<{ id: string; values: string[] }>('catalogs', catalogId);
+    const values = catalog?.values ?? [];
+    const existing = values.find((item) => item.toLocaleLowerCase() === brand.toLocaleLowerCase());
+    if (existing) return existing;
+    const updated = [...values, brand].sort((a, b) => a.localeCompare(b));
+    await this.records.save('catalogs', catalogId, { id: catalogId, values: updated });
+    return brand;
   }
 }

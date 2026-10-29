@@ -37,11 +37,16 @@ export class MarketplaceService {
     return this.catalogs.options();
   }
 
-  async list(filters: { query?: string; category?: string; maxPrice?: number } = {}) {
+  addBrand(brand: string) {
+    return this.catalogs.addMarketplaceBrand(brand);
+  }
+
+  async list(filters: { query?: string; category?: string; minPrice?: number; maxPrice?: number } = {}) {
     const items = await this.records.list<MarketplaceRecord>('marketplace');
     return items.filter((item) => item.isAvailable !== false
       && (!filters.query || `${item.title} ${item.brand} ${item.city}`.toLowerCase().includes(filters.query.toLowerCase()))
       && (!filters.category || filters.category === 'Toutes' || item.category === filters.category)
+      && (filters.minPrice === undefined || item.price >= filters.minPrice)
       && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice))
       .map((item) => ({ ...item, isMine: !!this.accounts.authenticatedUserId && item.sellerId === this.accounts.authenticatedUserId }));
   }

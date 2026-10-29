@@ -1,4 +1,4 @@
-import React,{ useEffect,useState } from 'react';
+import React,{ useEffect,useState, type SubmitEvent } from 'react';
 import { useApp } from '../../../context/useApp';
 import { useResource } from '../../../hooks/useResource';
 import { useRouteModal } from '../../../hooks/useRouteModal';
@@ -8,6 +8,7 @@ import { catalogsService } from '../../../services/catalogsService';
 import { CreateListingInput,marketplaceService } from '../../../services/marketplaceService';
 import { MarketplaceListing } from '../../../types';
 import { useListPagination } from '../../../hooks/useListPagination';
+import { useSearchParams } from 'react-router-dom';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {
@@ -34,24 +35,29 @@ const MARKETPLACE_IMAGE_PRESETS = [
 
 /** Data, URL state and mutations shared by the list and its routed dialogs. */
 export function useMarketplaceViewModel() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { showToast, user } = useApp();
   const itemModal = useRouteModal('/marketplace');
   const [categories, setCategories] = useState<string[]>([]);
   const [conditions, setConditions] = useState<string[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
-  const [categoryFilter, setCategoryFilter] = useUrlState<string>('category', 'Toutes');
+  const categoryFilter = searchParams.getAll('category').filter((category) => category !== 'Toutes');
   const [searchQuery, setSearchQuery] = useUrlState<string>('query', '');
   const [mine, setMine] = useUrlState<boolean>('mine', false);
   const [sort, setSort] = useUrlState<string>('sort', 'recent');
   const [maxPrice, setMaxPrice] = useUrlState<string>('maxPrice', '');
-  const [condition, setCondition] = useUrlState<string>('condition', '');
-  const [brand, setBrand] = useUrlState<string>('brand', '');
-  const list = useResource<MarketplaceListing[]>(JSON.stringify([searchQuery, categoryFilter, maxPrice]), () => marketplaceService.list({ query: searchQuery, category: categoryFilter, maxPrice: Number(maxPrice) || undefined }), []);
+  const [minPrice, setMinPrice] = useUrlState<string>('minPrice', '');
+  const condition = searchParams.getAll('condition');
+  const brand = searchParams.getAll('brand');
+  const setCategoryFilter = (values: string[]) => setSearchParams((current) => updateMultiFilter(current, 'category', values));
+  const setCondition = (values: string[]) => setSearchParams((current) => updateMultiFilter(current, 'condition', values));
+  const setBrand = (values: string[]) => setSearchParams((current) => updateMultiFilter(current, 'brand', values));
+  const list = useResource<MarketplaceListing[]>(JSON.stringify([searchQuery, minPrice, maxPrice]), () => marketplaceService.list({ query: searchQuery, minPrice: Number(minPrice) || undefined, maxPrice: Number(maxPrice) || undefined }), []);
   const items = list.data;
   const setItems = list.setData;
   const isLoading = list.loading;
-  const page = useListPagination(items.filter((item) => (!mine || item.isMine) && (!condition || item.condition === condition) && (!brand || item.brand === brand))
+  const page = useListPagination(items.filter((item) => (!mine || item.isMine) && (!categoryFilter.length || categoryFilter.includes(item.category)) && (!condition.length || condition.includes(item.condition)) && (!brand.length || brand.includes(item.brand)))
     .sort((a, b) => sort === 'price' ? a.price - b.price : sort === 'name' ? a.title.localeCompare(b.title) : (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)));
   const detail = useResource<MarketplaceListing | null>(itemModal.resourceId ?? '', () => marketplaceService.getById(itemModal.resourceId!), null, !!itemModal.resourceId);
 
@@ -62,11 +68,13 @@ export function useMarketplaceViewModel() {
   const [formPrice, setFormPrice] = useState('');
   const [formCondition, setFormCondition] = useState('');
   const [formBrand, setFormBrand] = useState('');
+  const [customBrand, setCustomBrand] = useState('');
+  const [isAddingBrand, setIsAddingBrand] = useState(false);
   const [formCity, setFormCity] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const canCreateListing = Boolean(formTitle.trim() && formCategory && formCondition && formBrand
+  const canCreateListing = Boolean(formTitle.trim() && formCategory && formCondition && formBrand && formBrand !== '__custom__'
     && formCity.trim() && formImageUrl && Number.isFinite(Number(formPrice)) && Number(formPrice) > 0);
 
   useEffect(() => {
@@ -83,7 +91,24 @@ export function useMarketplaceViewModel() {
     setFormCategory(cat);
   };
 
-  const handleCreateListing = async (e: React.FormEvent) => {
+  const handleAddBrand = async () => {
+    const value = customBrand.trim();
+    if (!value) return;
+    setIsAddingBrand(true);
+    try {
+      const savedBrand = await marketplaceService.addBrand(value);
+      setBrands((current) => current.includes(savedBrand) ? current : [...current, savedBrand].sort((a, b) => a.localeCompare(b)));
+      setFormBrand(savedBrand);
+      setCustomBrand('');
+      showToast(t('market.brandAdded'), 'success');
+    } catch {
+      showToast(t('market.brandAddError'), 'error');
+    } finally {
+      setIsAddingBrand(false);
+    }
+  };
+
+  const handleCreateListing = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formTitle.trim() || !formPrice || !formCategory || !formCondition || !formBrand || !formCity.trim() || !formImageUrl) {
       showToast(t('market.required'), 'info');
@@ -115,7 +140,7 @@ export function useMarketplaceViewModel() {
       resetCreateListingForm();
 
       // Refresh listings
-      const updated = await marketplaceService.list({ category: categoryFilter });
+      const updated = await marketplaceService.list();
       setItems(updated);
       itemModal.openDetail(created.id, true);
     } catch {
@@ -131,6 +156,7 @@ export function useMarketplaceViewModel() {
     setFormPrice('');
     setFormCondition('');
     setFormBrand('');
+    setCustomBrand('');
     setFormCity('');
     setFormDescription('');
     setFormImageUrl('');
@@ -140,5 +166,13 @@ export function useMarketplaceViewModel() {
     resetCreateListingForm();
     itemModal.openCreate();
   };
-  return { t, itemModal, categories, conditions, brands, categoryFilter, setCategoryFilter, searchQuery, setSearchQuery, mine, setMine, sort, setSort, maxPrice, setMaxPrice, condition, setCondition, brand, setBrand, list, items, isLoading, page, detail, selectedItem, handleOpenCreateListing, showToast, user, formTitle, setFormTitle, formCategory, formPrice, setFormPrice, formCondition, setFormCondition, formBrand, setFormBrand, formCity, setFormCity, formDescription, setFormDescription, formImageUrl, setFormImageUrl, isSubmitting, canCreateListing, handleCategoryChange, handleCreateListing };
+  return { t, itemModal, categories, conditions, brands, categoryFilter, setCategoryFilter, searchQuery, setSearchQuery, mine, setMine, sort, setSort, minPrice, setMinPrice, maxPrice, setMaxPrice, condition, setCondition, brand, setBrand, list, items, isLoading, page, detail, selectedItem, handleOpenCreateListing, showToast, user, formTitle, setFormTitle, formCategory, formPrice, setFormPrice, formCondition, setFormCondition, formBrand, setFormBrand, customBrand, setCustomBrand, isAddingBrand, handleAddBrand, formCity, setFormCity, formDescription, setFormDescription, formImageUrl, setFormImageUrl, isSubmitting, canCreateListing, handleCategoryChange, handleCreateListing };
+}
+
+function updateMultiFilter(params: URLSearchParams, key: string, values: string[]): URLSearchParams {
+  const updated = new URLSearchParams(params);
+  updated.delete(key);
+  values.forEach((value) => updated.append(key, value));
+  updated.delete('page');
+  return updated;
 }
