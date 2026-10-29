@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
+
+const dialogStack: string[] = [];
+let previousBodyOverflow = '';
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,15 +27,41 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const contentRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialogStack.length) { previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; }
+    dialogStack.push(titleId);
+    const focusable = () => Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]') ?? []).filter((element) => element.getClientRects().length > 0);
+    const frame = requestAnimationFrame(() => (focusable()[0] ?? dialogRef.current)?.focus());
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+      if (dialogStack.at(-1) !== titleId) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeRef.current();
+      }
+      if (e.key === 'Tab') {
+        const elements = focusable();
+        const first = elements[0], last = elements.at(-1);
+        if (!first) { e.preventDefault(); return; }
+        if (e.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('keydown', handleKeyDown);
+      const index = dialogStack.indexOf(titleId);
+      if (index >= 0) dialogStack.splice(index, 1);
+      if (!dialogStack.length) document.body.style.overflow = previousBodyOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [isOpen, titleId]);
 
   useEffect(() => {
     if (isOpen) contentRef.current?.scrollTo({ top: 0 });
@@ -54,16 +83,19 @@ export const Modal: React.FC<ModalProps> = ({
       style={{ width: '100vw', height: '100vh' }}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className={`w-full ${maxWidthClass} max-h-[90vh] flex flex-col bg-white border border-pitch-line rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+        ref={dialogRef}
+        tabIndex={-1}
+        className={`modal-panel w-full ${maxWidthClass} max-h-[90dvh] flex flex-col bg-white border border-pitch-line rounded-3xl shadow-2xl overflow-hidden`}
       >
         <div className="flex items-start justify-between p-5 border-b border-[#e5ede2] bg-pitch-panel">
           <div>
-            <h2 className="text-lg font-extrabold text-pitch-ink tracking-tight">{title}</h2>
+            <h2 id={titleId} className="card-title text-lg font-extrabold tracking-tight">{title}</h2>
             {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
           <button

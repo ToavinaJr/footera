@@ -34,21 +34,21 @@ import { ProfileTeamPanel } from './ProfileTeamPanel';
 import { CurrentTeamSelectField } from './CurrentTeamSelectField';
 import { useTranslation } from '../../../i18n';
 
-export const ProfileView: React.FC = () => {
+export const ProfileView: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { t } = useTranslation();
   const { user, updateProfile, updateSportsCv, showToast, selectedResourceId } = useApp();
   const { profileId } = useParams();
   const isOwner = !profileId;
   const location = useLocation();
   const navigate = useNavigate();
-  const isEditCvOpen = location.pathname === '/profile/edit-cv';
-  const activeTab: 'profile' | 'bookings' | 'applications' = location.pathname.startsWith('/profile/bookings')
+  const isEditCvOpen = location.pathname === '/profile/edit-cv' || location.pathname === '/settings/sports-cv';
+  const activeTab: 'profile' | 'bookings' | 'applications' = /\/(?:profile|settings)\/bookings/.test(location.pathname)
     ? 'bookings'
-    : location.pathname === '/profile/applications'
+    : location.pathname === '/profile/applications' || location.pathname === '/settings/applications'
       ? 'applications'
       : 'profile';
   const setActiveTab = (tab: 'profile' | 'bookings' | 'applications') => {
-    const path = tab === 'profile' ? '/profile' : `/profile/${tab}`;
+    const path = `/settings/${tab}`;
     navigate(path);
   };
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -157,10 +157,10 @@ export const ProfileView: React.FC = () => {
     setIsSavingCv(true);
     const saved = await updateSportsCv(cv);
     setIsSavingCv(false);
-    if (saved) navigate('/profile', { replace: true });
+    if (saved) navigate('/settings/profile', { replace: true });
   };
 
-  const closeEditCv = () => navigate('/profile', { replace: true });
+  const closeEditCv = () => navigate('/settings/profile', { replace: true });
 
   const handleSavePersonalInfo = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -307,7 +307,7 @@ export const ProfileView: React.FC = () => {
       </section>
 
       {/* Tabs */}
-      {isOwner && <div className="flex items-center gap-2 border-b border-pitch-line pb-2">
+      {isOwner && !embedded && <div className="flex items-center gap-2 border-b border-pitch-line pb-2">
         {[
           { label: t('profile.sportsCv'), tab: 'profile' },
           { label: t('profile.bookingsTab', { count: bookings.length }), tab: 'bookings' },
@@ -333,7 +333,7 @@ export const ProfileView: React.FC = () => {
           <div className="p-6 rounded-3xl bg-white border border-pitch-line space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-extrabold text-pitch-ink">{t('profile.sportsCv')}</h2>
+                <h2 className="card-title text-base font-extrabold text-pitch-ink">{t('profile.sportsCv')}</h2>
                 <p className="text-xs text-slate-500">{isOwner ? t('profile.cvApplicationsNote') : t('profile.publicSportsProfile')}</p>
               </div>
               {isOwner && <button
@@ -344,7 +344,7 @@ export const ProfileView: React.FC = () => {
                   setCvFoot(user!.sportsCv.strongFoot);
                   setCvBio(user!.sportsCv.bio);
                   setCvCurrentTeam(user!.sportsCv.currentTeam);
-                  navigate('/profile/edit-cv');
+                  navigate('/settings/sports-cv');
                 }}
                 className="px-4 py-2 min-h-11 rounded-2xl bg-pitch-light hover:bg-[#d5edd9] text-pitch-primary text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
@@ -381,17 +381,17 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line text-xs text-slate-700 leading-relaxed">
-              <h3 className="font-bold text-pitch-ink mb-1">{t('profile.sportsPresentation')}</h3>
+              <h3 className="card-title font-bold text-pitch-ink mb-1">{t('profile.sportsPresentation')}</h3>
               {isOwner ? user!.sportsCv.bio : publicPlayer!.bio}
             </div>
           </div>
 
           {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
           {displayedPlayer && <PhotoGallery entity="players" id={displayedPlayer.id} />}
-          {isOwner && <RoleRequestsPanel />}
-          {isOwner && <ProfileTeamPanel currentTeamId={myPlayer?.currentTeamId} currentTeamName={myPlayer?.currentTeam ?? user?.sportsCv.currentTeam} />}
+          {isOwner && !embedded && <RoleRequestsPanel />}
+          {isOwner && !embedded && <ProfileTeamPanel currentTeamId={myPlayer?.currentTeamId} currentTeamName={myPlayer?.currentTeam ?? user?.sportsCv.currentTeam} />}
           {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
-            <h2 className="text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
+            <h2 className="card-title text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
             {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">
               {displayedPlayer.previousClubs.map((club) => {
                 const matchingTeam = teams.find((team) => team.name.toLowerCase() === club.toLowerCase())
@@ -422,7 +422,7 @@ export const ProfileView: React.FC = () => {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-extrabold text-pitch-ink"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
+                    <h2 className="card-title text-base font-extrabold text-pitch-ink"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
                     <Badge
                       variant={b.status === 'CONFIRMED' ? 'emerald' : b.status === 'PENDING' ? 'amber' : 'rose'}
                       size="sm"
@@ -467,7 +467,7 @@ export const ProfileView: React.FC = () => {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
+                    <h2 className="card-title text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
                     <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : app.status === 'RETIRÉE' ? 'rose' : 'amber'} size="sm">
                       {app.status === 'EN_REVUE' ? t('recruitment.inReview') : app.status === 'ACCEPTEE' ? t('recruitment.accepted') : app.status === 'RETIRÉE' ? t('recruitment.withdrawn') : t('recruitment.rejected')}
                     </Badge>

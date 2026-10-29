@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (headerSearch.trim()) {
-      setActiveSection('players');
+      navigate(`/players?query=${encodeURIComponent(headerSearch.trim())}`);
     }
   };
 
@@ -88,12 +88,14 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               value={headerSearch}
               onChange={(e) => setHeaderSearch(e.target.value)}
               placeholder={t('nav.searchPlaceholder')}
+              aria-label={t('nav.searchPlaceholder')}
               className="w-full bg-[#f4f7f2] border border-pitch-line focus:border-pitch-primary focus:bg-white rounded-full pl-10 pr-4 py-2 text-xs sm:text-sm text-pitch-ink placeholder:text-slate-400 transition-all outline-hidden"
             />
             {headerSearch && (
               <button
                 type="button"
                 onClick={() => setHeaderSearch('')}
+                aria-label={t('common.cancel')}
                 className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />

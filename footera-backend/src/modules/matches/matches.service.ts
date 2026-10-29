@@ -164,29 +164,34 @@ export class MatchesService {
     }
     if (input.lineups !== undefined) nextMatch.lineups = await this.validateMatchLineups(input.lineups, match);
     const saved = await this.records.save('matches', id, nextMatch);
+    if (input.events !== undefined) await this.records.publishActivity?.('matches', id, `${match.homeTeam.name} — ${match.awayTeam.name}`, `${nextMatch.homeTeam.score} - ${nextMatch.awayTeam.score}`);
     return (await this.ensureEventPlayerProfiles([saved]))[0] ?? saved;
   }
 
   async start(id: string) {
     const match = await this.getEditableMatch(id);
     if (match.status !== MATCH_STATUSES.SCHEDULED) throw new ConflictException('Seul un match planifié peut être lancé.');
-    return this.records.save('matches', id, {
+    const updated = await this.records.save('matches', id, {
       ...match,
       status: MATCH_STATUSES.LIVE,
       minute: 0,
       playedAt: new Date().toISOString(),
     });
+    await this.records.publishActivity?.('matches', id, `${match.homeTeam.name} — ${match.awayTeam.name}`, 'LIVE');
+    return updated;
   }
 
   async finish(id: string) {
     const match = await this.getEditableMatch(id);
     if (match.status !== MATCH_STATUSES.LIVE) throw new ConflictException('Seul un match en direct peut être terminé.');
-    return this.records.save('matches', id, {
+    const updated = await this.records.save('matches', id, {
       ...match,
       status: MATCH_STATUSES.FINISHED,
       minute: Math.max(match.minute ?? 0, 90),
       playedAt: new Date().toISOString(),
     });
+    await this.records.publishActivity?.('matches', id, `${match.homeTeam.name} — ${match.awayTeam.name}`, `${match.homeTeam.score} - ${match.awayTeam.score} · FINISHED`);
+    return updated;
   }
 
   private async getEditableMatch(id: string) {

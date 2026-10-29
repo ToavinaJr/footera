@@ -47,6 +47,11 @@ export class TeamsController {
     return this.teams.respondToJoinRequest(requestId, false);
   }
 
+  @Post(':id/reminders')
+  remindMembers(@Param('id') id: string, @Body('message') message: unknown) {
+    return this.teams.remindMembers(id, message);
+  }
+
   @Get(':id/detail')
   @Public()
   async getDetail(

@@ -7,26 +7,25 @@ import { AppContext } from './app-context';
 import type { AppContextType, ToastMessage } from './app-context';
 import type { NavigationSection } from './navigation';
 import { AppApiError } from '../lib/api/errors';
+import { sectionPath as routeForSection } from './routes';
+import { favoritesService, favoriteFields, type FavoriteEntity } from '../services/favoritesService';
+import { useTranslation } from '../i18n';
 
-const routeForSection = (section: NavigationSection) => {
-  if (section === 'home') return '/home';
-  if (section === 'bookings') return '/profile/bookings';
-  return `/${section}`;
-};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setLanguage } = useTranslation();
   const routeSection = location.pathname.split('/').filter(Boolean)[0];
   const sectionFromPath = (routeSection === 'player' ? 'players' : routeSection) as NavigationSection | undefined;
   const validSections: NavigationSection[] = [
-    'home', 'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'marketplace', 'notifications', 'profile', 'stats',
+    'home', 'players', 'teams', 'matches', 'tournaments', 'pitches', 'recruitment', 'mercato', 'settings', 'marketplace', 'notifications', 'profile', 'stats',
   ];
   const activeSection: NavigationSection = sectionFromPath && validSections.includes(sectionFromPath)
     ? sectionFromPath
     : 'home';
   const routeResourceMatch = location.pathname.match(
-    /^\/(?:player|players|teams|pitches|matches|recruitment)\/([^/]+)\/?$|^\/profile\/bookings\/([^/]+)\/?$/,
+    /^\/(?:player|players|teams|pitches|matches|recruitment|mercato)\/([^/]+)\/?$|^\/(?:profile|settings)\/bookings\/([^/]+)\/?$/,
   );
   const routeResourceId = routeResourceMatch?.[1] ?? routeResourceMatch?.[2];
   const selectedResourceId = routeResourceId
@@ -81,12 +80,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [fetchUserData]);
 
   useEffect(() => {
+    if (user?.preferences?.language) setLanguage(user.preferences.language);
+  }, [user?.id, user?.preferences?.language, setLanguage]);
+
+  useEffect(() => {
     if (user) {
       void fetchNotifications();
     } else {
       setNotifications([]);
     }
-  }, [user, fetchNotifications]);
+  }, [user?.id, fetchNotifications]);
 
   useEffect(() => {
     const handleSessionExpired = () => {
@@ -123,6 +126,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       || section === 'tournaments'
       || section === 'matches'
       || section === 'recruitment'
+      || section === 'mercato'
       || section === 'bookings';
     let path = routeForSection(section);
     if (resourceId && supportsDetailRoute) {
@@ -170,18 +174,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleFavoriteTeam = async (teamId: string): Promise<boolean> => {
-    const isFav = await authService.toggleFavoriteTeam(teamId);
-    if (user) {
-      setUser({
-        ...user,
-        favoriteTeamIds: isFav
-          ? [...user.favoriteTeamIds, teamId]
-          : user.favoriteTeamIds.filter((id) => id !== teamId),
-      });
-    }
+    const isFav = await setFavorite('teams', teamId, !user?.favoriteTeamIds?.includes(teamId));
     showToast(isFav ? 'Équipe ajoutée aux favoris' : 'Équipe retirée des favoris');
     return isFav;
   };
+
+  const setFavorite = useCallback(async (entity: FavoriteEntity, id: string, favorite: boolean) => {
+    const { isFavorite } = await favoritesService.set(entity, id, favorite);
+    const field = favoriteFields[entity];
+    setUser((current) => {
+      if (!current) return current;
+      const ids = current[field] ?? [];
+      return { ...current, [field]: isFavorite ? [...new Set([...ids, id])] : ids.filter((value) => value !== id) };
+    });
+    return isFavorite;
+  }, []);
 
   const markNotificationRead = async (id: string) => {
     await notificationsService.markAsRead(id);
@@ -221,6 +228,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProfile,
         updateSportsCv,
         toggleFavoriteTeam,
+        setFavorite,
+        refreshUser: fetchUserData,
         notifications,
         refreshNotifications: fetchNotifications,
         unreadNotificationsCount,

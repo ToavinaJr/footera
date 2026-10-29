@@ -1,161 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { SelectField } from '../../common/SelectField';
-import { ShoppingBag, Search, Plus, Tag, Star, MapPin, Check, Sparkles } from 'lucide-react';
-import { marketplaceService, CreateListingInput } from '../../../services/marketplaceService';
-import { MarketplaceListing } from '../../../types';
-import { Badge } from '../../common/Badge';
-import { Modal } from '../../common/Modal';
-import { CardSkeleton } from '../../common/Skeleton';
+import { MapPin,Plus,Search,ShoppingBag } from 'lucide-react';
+import React from 'react';
 import { EmptyState } from '../../common/EmptyState';
-import { useApp } from '../../../context/useApp';
-import { useRouteModal } from '../../../hooks/useRouteModal';
-import { ImageUploadField } from '../../common/ImageUploadField';
-import { catalogsService } from '../../../services/catalogsService';
-import { useTranslation } from '../../../i18n';
+import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
+import { ListToolbar } from '../../common/ListToolbar';
+import { SelectField } from '../../common/SelectField';
+import { CardSkeleton } from '../../common/Skeleton';
+import { MarketplaceDialogs } from './MarketplaceDialogs';
+import { useMarketplaceViewModel } from './useMarketplaceViewModel';
 
-const MARKETPLACE_IMAGE_PRESETS = [
-  {
-    name: 'Crampons Pro Moulés',
-    url: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=600&h=450&q=80',
-  },
-  {
-    name: 'Maillot Domicile Match',
-    url: 'https://images.unsplash.com/photo-1577212017184-80cc0da11082?auto=format&fit=crop&w=600&h=450&q=80',
-  },
-  {
-    name: 'Ballon Officiel Match',
-    url: 'https://images.unsplash.com/photo-1614632537423-1e6c2e7e0aab?auto=format&fit=crop&w=600&h=450&q=80',
-  },
-  {
-    name: 'Gants Gardien Pro Grip',
-    url: 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?auto=format&fit=crop&w=600&h=450&q=80',
-  },
-  {
-    name: 'Chasubles & Entraînement',
-    url: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600&h=450&q=80',
-  },
-];
 
 export const MarketplaceView: React.FC = () => {
-  const { t } = useTranslation();
-  const { showToast, user } = useApp();
-  const itemModal = useRouteModal('/marketplace');
-  const [items, setItems] = useState<MarketplaceListing[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [conditions, setConditions] = useState<string[]>([]);
-  const [brands, setBrands] = useState<string[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState('Toutes');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Detail Modal
-  const selectedItem = itemModal.resourceId
-    ? items.find((item) => item.id === itemModal.resourceId) ?? null
-    : null;
-  const [formTitle, setFormTitle] = useState('');
-  const [formCategory, setFormCategory] = useState<MarketplaceListing['category']>('');
-  const [formPrice, setFormPrice] = useState('');
-  const [formCondition, setFormCondition] = useState('');
-  const [formBrand, setFormBrand] = useState('');
-  const [formCity, setFormCity] = useState('');
-  const [formDescription, setFormDescription] = useState('');
-  const [formImageUrl, setFormImageUrl] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const canCreateListing = Boolean(formTitle.trim() && formCategory && formCondition && formBrand
-    && formCity.trim() && formImageUrl && Number.isFinite(Number(formPrice)) && Number(formPrice) > 0);
-
-  useEffect(() => {
-    catalogsService.getOptions()
-      .then((options) => {
-        setCategories(options.marketplaceCategories);
-        setConditions(options.marketplaceConditions);
-        setBrands(options.marketplaceBrands);
-      })
-      .catch((err: unknown) => showToast(err instanceof Error ? err.message : t('common.loading'), 'error'));
-  }, [showToast]);
-
-  useEffect(() => {
-    async function loadItems() {
-      setIsLoading(true);
-      try {
-        const data = await marketplaceService.list({
-          query: searchQuery,
-          category: categoryFilter,
-        });
-        setItems(data);
-      } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : t('market.createError'), 'error');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadItems();
-  }, [searchQuery, categoryFilter, showToast]);
-
-  const handleCategoryChange = (cat: MarketplaceListing['category']) => {
-    setFormCategory(cat);
-  };
-
-  const handleCreateListing = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formTitle.trim() || !formPrice || !formCategory || !formCondition || !formBrand || !formCity.trim() || !formImageUrl) {
-      showToast(t('market.required'), 'info');
-      return;
-    }
-
-    const priceNum = parseFloat(formPrice);
-    if (!Number.isFinite(priceNum) || priceNum <= 0) {
-      showToast(t('market.invalidPrice'), 'info');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const input: CreateListingInput = {
-        title: formTitle.trim(),
-        category: formCategory,
-        price: priceNum,
-        condition: formCondition,
-        brand: formBrand,
-        city: formCity.trim(),
-        imageUrl: formImageUrl,
-        description: formDescription.trim(),
-      };
-
-      const created = await marketplaceService.createListing(input);
-      showToast(t('market.created'), 'success');
-      // Reset fields
-      resetCreateListingForm();
-
-      // Refresh listings
-      const updated = await marketplaceService.list({ category: categoryFilter });
-      setItems(updated);
-      itemModal.openDetail(created.id, true);
-    } catch {
-      showToast(t('market.createError'), 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const resetCreateListingForm = () => {
-    setFormTitle('');
-    setFormCategory('');
-    setFormPrice('');
-    setFormCondition('');
-    setFormBrand('');
-    setFormCity('');
-    setFormDescription('');
-    setFormImageUrl('');
-  };
-
-  const handleOpenCreateListing = () => {
-    resetCreateListingForm();
-    itemModal.openCreate();
-  };
+  const model = useMarketplaceViewModel();
+  const { t, itemModal, categories, conditions, brands, categoryFilter, setCategoryFilter, searchQuery, setSearchQuery, mine, setMine, sort, setSort, maxPrice, setMaxPrice, condition, setCondition, brand, setBrand, list, items, isLoading, page, detail, selectedItem, handleOpenCreateListing } = model;
 
   return (
-    <div className="page-enter space-y-6 pb-16">
+    <ListPageLayout>
+      <ListError error={list.error || detail.error} onRetry={() => { list.refresh(); detail.refresh(); }} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
@@ -205,6 +65,12 @@ export const MarketplaceView: React.FC = () => {
       </div>
 
       {/* Items Grid */}
+      <ListToolbar mine={mine} onMine={setMine}>
+        <SelectField value={condition} onChange={(event) => setCondition(event.target.value)} aria-label={t('market.condition')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.condition')}</option>{conditions.map((item) => <option key={item}>{item}</option>)}</SelectField>
+        <SelectField value={brand} onChange={(event) => setBrand(event.target.value)} aria-label={t('market.brand')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.brand')}</option>{brands.map((item) => <option key={item}>{item}</option>)}</SelectField>
+        <input type="number" min="0" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} aria-label={t('market.price')} placeholder={t('market.price')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
+        <SelectField value={sort} onChange={(event) => setSort(event.target.value)} aria-label={t('list.sort')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="recent">{t('list.recent')}</option><option value="price">{t('market.price')}</option><option value="name">{t('list.name')}</option></SelectField>
+      </ListToolbar>
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <CardSkeleton />
@@ -212,7 +78,7 @@ export const MarketplaceView: React.FC = () => {
           <CardSkeleton />
           <CardSkeleton />
         </div>
-      ) : items.length === 0 ? (
+      ) : page.total === 0 ? (
         <EmptyState
           icon={ShoppingBag}
           title={t('market.emptyTitle')}
@@ -220,12 +86,12 @@ export const MarketplaceView: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {items.map((item) => (
+          {page.items.map((item) => (
             <div
               key={item.id}
               onClick={() => itemModal.openDetail(item.id)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
+                if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                   event.preventDefault();
                   itemModal.openDetail(item.id);
                 }
@@ -264,7 +130,7 @@ export const MarketplaceView: React.FC = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors line-clamp-1">
+                  <h3 className="card-title text-sm font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors line-clamp-1">
                     {item.title}
                   </h3>
 
@@ -287,220 +153,9 @@ export const MarketplaceView: React.FC = () => {
         </div>
       )}
 
-      {/* Item Details Modal */}
-      {selectedItem && (
-        <Modal
-          isOpen={!!selectedItem}
-          onClose={itemModal.close}
-          title={selectedItem.title}
-          subtitle={`${selectedItem.brand} · ${selectedItem.city}`}
-          maxWidth="lg"
-        >
-          <div className="space-y-5">
-            <div className="h-60 rounded-3xl overflow-hidden bg-slate-100 border border-pitch-line">
-              <img
-                src={selectedItem.imageUrl}
-                alt={selectedItem.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-2xl font-extrabold text-pitch-primary tabular-nums">
-                  {selectedItem.price} €
-                </span>
-                <span className="text-xs text-slate-500 block mt-0.5">
-                  État : <strong className="text-pitch-ink">{selectedItem.condition}</strong>
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-xs text-slate-400 block font-medium">Vendeur vérifié</span>
-                <strong className="text-sm text-pitch-ink">{selectedItem.sellerName}</strong>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 bg-pitch-panel p-3.5 rounded-2xl border border-border-subtle leading-relaxed">
-              {selectedItem.description}
-            </p>
-
-            <button
-              onClick={() => {
-                showToast(t('market.contactSent', { seller: selectedItem.sellerName }), 'success');
-                itemModal.close();
-              }}
-              className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center cursor-pointer shadow-xs transition-colors"
-            >
-              <span>{t('market.contact')}</span>
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Create Listing Modal */}
-      {itemModal.mode === 'create' && (
-        <Modal
-          isOpen={itemModal.mode === 'create'}
-          onClose={itemModal.close}
-          title={t('market.sell')}
-          subtitle={t('market.createSubtitle')}
-          maxWidth="lg"
-        >
-          <form onSubmit={handleCreateListing} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('market.itemTitle')}
-              </label>
-              <input
-                type="text"
-                required
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                placeholder={t('market.itemExample')}
-                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.category')}</label>
-                <SelectField
-                  value={formCategory}
-                  onChange={(e) => handleCategoryChange(e.target.value as MarketplaceListing['category'])}
-                  required
-                  disabled={categories.length === 0}
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                >
-                  <option value="" disabled>{t('market.chooseCategory')}</option>
-                  {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-                </SelectField>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.price')}</label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  step="1"
-                  value={formPrice}
-                  onChange={(e) => setFormPrice(e.target.value)}
-                  placeholder="65"
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.condition')}</label>
-                <SelectField
-                  value={formCondition}
-                  onChange={(e) => setFormCondition(e.target.value)}
-                  required
-                  disabled={!conditions.length}
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                >
-                  <option value="" disabled>{t('market.chooseCondition')}</option>
-                  {conditions.map((condition) => <option key={condition} value={condition}>{condition}</option>)}
-                </SelectField>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.city')}</label>
-                <input
-                  type="text"
-                  required
-                  value={formCity}
-                  onChange={(e) => setFormCity(e.target.value)}
-                  placeholder={t('market.cityExample')}
-                  className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('market.brand')}</label>
-              <SelectField
-                required
-                value={formBrand}
-                onChange={(e) => setFormBrand(e.target.value)}
-                disabled={!brands.length}
-                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-              >
-                <option value="" disabled>{t('market.chooseBrand')}</option>
-                {brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
-              </SelectField>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('market.description')}
-              </label>
-              <textarea
-                rows={3}
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                placeholder={t('market.descriptionHint')}
-                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary outline-hidden"
-              />
-            </div>
-
-            {/* Photo Preset Selector */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {t('market.photo')}
-              </label>
-              <ImageUploadField purpose="marketplace" label={t('market.importPhoto')} onUploaded={setFormImageUrl} disabled={isSubmitting || !user?.roles?.includes('Vendeur')} disabledHint={t('market.sellerRoleRequired')} />
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {MARKETPLACE_IMAGE_PRESETS.map((preset) => {
-                  const isSelected = formImageUrl === preset.url;
-                  return (
-                    <button
-                      type="button"
-                      key={preset.url}
-                      onClick={() => setFormImageUrl(preset.url)}
-                      className={`relative h-20 rounded-2xl overflow-hidden border-2 text-left transition-all cursor-pointer ${
-                        isSelected ? 'border-pitch-primary ring-2 ring-lime-volt' : 'border-transparent hover:opacity-90'
-                      }`}
-                    >
-                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/45 flex items-end p-1.5">
-                        <span className="text-micro font-bold text-white leading-tight">
-                          {preset.name}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-lime-volt text-pitch-ink flex items-center justify-center font-bold text-tiny">
-                          ✓
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-pitch-separator">
-              <button
-                type="button"
-                onClick={itemModal.close}
-                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 cursor-pointer"
-              >
-                {t('market.cancel')}
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || !canCreateListing}
-                className="px-6 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-              >
-                {isSubmitting ? t('market.publishing') : t('market.publish')}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-    </div>
+      <Pagination {...page} />
+      {itemModal.resourceId && detail.loading && !selectedItem && <CardSkeleton />}
+      <MarketplaceDialogs model={model} />
+    </ListPageLayout>
   );
 };

@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
@@ -42,7 +42,14 @@ export class MarketplaceService {
     return items.filter((item) => item.isAvailable !== false
       && (!filters.query || `${item.title} ${item.brand} ${item.city}`.toLowerCase().includes(filters.query.toLowerCase()))
       && (!filters.category || filters.category === 'Toutes' || item.category === filters.category)
-      && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice));
+      && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice))
+      .map((item) => ({ ...item, isMine: !!this.accounts.authenticatedUserId && item.sellerId === this.accounts.authenticatedUserId }));
+  }
+
+  async get(id: string) {
+    const item = await this.records.find('marketplace', id);
+    if (!item) throw new NotFoundException('Annonce introuvable.');
+    return { ...item, isMine: !!this.accounts.authenticatedUserId && item.sellerId === this.accounts.authenticatedUserId };
   }
 
   async create(input: CreateMarketplaceInput) {
@@ -67,11 +74,13 @@ export class MarketplaceService {
       ...input,
       id,
       sellerName: user.name || 'Vendeur Footera',
+      sellerId: user.id,
       sellerRating: 5,
-      createdAt: "À l’instant",
+      createdAt: new Date().toISOString(),
       isAvailable: true,
     };
     await this.records.create('marketplace', id, item);
+    await this.records.publishActivity?.('marketplace', id, item.title, `${item.city} · ${item.price} €`);
     await this.notifications.add({
       title: 'Annonce mise en ligne',
       message: `Votre article "${item.title}" (${item.price} €) est publié.`,

@@ -71,6 +71,7 @@ export class BookingsService {
     const myReview = uniqueReviews.find((review) => review.userId === userId);
     return {
       ...pitch,
+      canManageGallery: !!userId && pitch.ownerId === userId,
       reviews: uniqueReviews,
       rating: uniqueReviews.length ? Number((total / uniqueReviews.length).toFixed(2)) : 0,
       reviewsCount: uniqueReviews.length,
@@ -233,6 +234,7 @@ export class BookingsService {
     ];
     const pitch = { ...input, id, ownerId: user.id, galleryImages: [], rating: 0, reviewsCount: 0, reviews: [], amenities: input.amenities || [], availableSlots };
     await this.records.create('pitches', id, pitch);
+    await this.records.publishActivity?.('pitches', id, pitch.name, pitch.city);
     await this.notifications.add({ title: 'Nouveau terrain disponible', message: `Le terrain "${pitch.name}" est désormais réservable sur Footera.`, type: NOTIFICATION_TYPES.BOOKING, targetSection: APP_SECTIONS.PITCHES, targetId: id });
     return pitch;
   }

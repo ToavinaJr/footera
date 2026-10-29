@@ -15,6 +15,9 @@ export interface TeamJoinRequest {
 }
 
 export const teamsService = {
+  remindMembers(teamId: string, message: string) {
+    return apiClient<{ sent: number }>(`teams/${encodeURIComponent(teamId)}/reminders`, { method: 'POST', body: JSON.stringify({ message }) });
+  },
   async list(filters?: { query?: string; category?: string; city?: string }): Promise<Team[]> {
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);

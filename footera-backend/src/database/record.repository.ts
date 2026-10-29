@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from './prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
@@ -45,6 +45,7 @@ export type RecordCollection = keyof typeof RECORD_MODELS;
 
 @Injectable()
 export class RecordRepository {
+  private readonly logger = new Logger(RecordRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
   private delegate(collection: RecordCollection): RecordDelegate {
@@ -82,6 +83,22 @@ export class RecordRepository {
   async deleteOne(collection: RecordCollection, id: string): Promise<boolean> {
     const result = await this.delegate(collection).deleteMany({ where: { id } });
     return result.count === 1;
+  }
+
+  /** Atomic JSONB field update: simultaneous favorites never overwrite the profile. */
+  async setUserFavorite(userId: string, field: string, targetId: string, favorite: boolean): Promise<void> {
+    await this.prisma.$executeRaw`
+      UPDATE users SET payload = jsonb_set(payload, ARRAY[${field}]::text[],
+        CASE WHEN ${favorite} THEN
+          (SELECT COALESCE(jsonb_agg(DISTINCT value), '[]'::jsonb)
+           FROM jsonb_array_elements(COALESCE(payload -> ${field}, '[]'::jsonb) || jsonb_build_array(${targetId}::text)))
+        ELSE COALESCE(payload -> ${field}, '[]'::jsonb) - ${targetId}::text END)
+      WHERE id = ${userId}`;
+  }
+
+  async updateUserPreferences(userId: string, preferences: Record<string, unknown>): Promise<void> {
+    await this.prisma.$executeRaw`UPDATE users SET payload = jsonb_set(payload, '{preferences}',
+      COALESCE(payload -> 'preferences', '{}'::jsonb) || ${JSON.stringify(preferences)}::jsonb) WHERE id = ${userId}`;
   }
 
   async resolveTeamJoinRequest(
@@ -173,12 +190,40 @@ export class RecordRepository {
     return result.count === 1;
   }
 
+  async listUserSessions(userId: string) {
+    const rows = await this.prisma.authSessionRecord.findMany({ where: { payload: { path: ['userId'], equals: userId } } });
+    return rows.map((row) => ({ id: row.id, ...(row.payload as unknown as { userId: string; expiresAt: string }) }));
+  }
+
+  async changePasswordAndRevokeSessions(email: string, userId: string, previousHash: string, passwordHash: string): Promise<boolean> {
+    return this.prisma.$transaction(async (transaction) => {
+      const updated = await transaction.authCredentialRecord.updateMany({
+        where: { id: email, payload: { path: ['passwordHash'], equals: previousHash } },
+        data: { payload: { userId, passwordHash } },
+      });
+      if (updated.count !== 1) return false;
+      await transaction.authSessionRecord.deleteMany({ where: { payload: { path: ['userId'], equals: userId } } });
+      return true;
+    });
+  }
+
   async deleteAll(collection: RecordCollection): Promise<void> {
     await this.delegate(collection).deleteMany();
   }
 
   async count(collection: RecordCollection): Promise<number> {
     return this.delegate(collection).count();
+  }
+
+  /** Public events contain only the explicit summary supplied by domain services. */
+  async publishActivity(targetSection: string, targetId: string, title: string, description = ''): Promise<void> {
+    try {
+      const id = `activity_${randomUUID()}`;
+      await this.create('activity', id, { id, type: targetSection, targetSection, targetId, title, description, createdAt: new Date().toISOString() });
+    } catch {
+      // The business mutation already succeeded; do not encourage the client to repeat it.
+      this.logger.warn(`Activity publication failed for ${targetSection}/${targetId}`);
+    }
   }
 }
 

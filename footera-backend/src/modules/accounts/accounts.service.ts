@@ -19,6 +19,8 @@ export class AccountsService {
     return this.userContext.userId;
   }
 
+  get authenticatedUserId() { return this.userContext.userId; }
+
   async profile(): Promise<UserRecord | null> {
     const user = await this.records.find<UserRecord>('users', this.userId);
     if (!user) return null;
@@ -102,6 +104,16 @@ export class AccountsService {
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, { ...current, activeRole: role });
     return this.withoutPasswordHash({ ...updated, age: calculateAge(updated.dateOfBirth) });
+  }
+
+  async updatePreferences(input: unknown) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new BadRequestException('Préférences invalides.');
+    const values = input as Record<string, unknown>;
+    if (!Object.keys(values).length || Object.keys(values).some((key) => !['language', 'showPersonalActivity'].includes(key))
+      || (values.language !== undefined && !['fr', 'en', 'mg'].includes(String(values.language)))
+      || (values.showPersonalActivity !== undefined && typeof values.showPersonalActivity !== 'boolean')) throw new BadRequestException('Préférences invalides.');
+    await this.records.updateUserPreferences(this.userId, values);
+    return this.profile();
   }
 
   private async toggleFavorite(field: 'favoriteTeamIds' | 'favoriteMatchIds', id: string) {

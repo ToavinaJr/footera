@@ -17,11 +17,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-3xl border border-dashed border-[#ccd9c7] bg-white">
+    <div className="empty-pitch flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-3xl border border-dashed border-[#ccd9c7] bg-white">
       <div className="w-12 h-12 rounded-2xl bg-pitch-light flex items-center justify-center text-pitch-primary mb-3.5 shadow-2xs">
         <Icon className="w-6 h-6 stroke-[2.2]" />
       </div>
-      <h3 className="text-base font-extrabold text-pitch-ink">{title}</h3>
+      <h3 className="card-title text-base font-extrabold text-pitch-ink">{title}</h3>
       <p className="text-xs md:text-sm text-slate-500 max-w-sm mt-1">{description}</p>
       {actionLabel && onAction && (
         <button

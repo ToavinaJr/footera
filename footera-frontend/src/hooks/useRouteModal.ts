@@ -13,11 +13,11 @@ export const useRouteModal = (basePath: string) => {
     ? decodeURIComponent(detailMatch[1])
     : undefined;
 
-  const openCreate = useCallback(() => navigate(`${basePath}/new`), [basePath, navigate]);
+  const openCreate = useCallback(() => navigate(`${basePath}/new${location.search}`), [basePath, navigate, location.search]);
   const openDetail = useCallback((id: string, replace = false) => {
-    navigate(`${basePath}/${encodeURIComponent(id)}`, { replace });
-  }, [basePath, navigate]);
-  const close = useCallback(() => navigate(basePath, { replace: true }), [basePath, navigate]);
+    navigate(`${basePath}/${encodeURIComponent(id)}${location.search}`, { replace });
+  }, [basePath, navigate, location.search]);
+  const close = useCallback(() => navigate(`${basePath}${location.search}`, { replace: true }), [basePath, navigate, location.search]);
 
   const mode: RouteModalMode = isCreate ? 'create' : resourceId ? 'detail' : null;
   return { mode, resourceId, openCreate, openDetail, close };

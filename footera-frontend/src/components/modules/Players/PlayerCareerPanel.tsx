@@ -38,7 +38,7 @@ export const PlayerCareerPanel: React.FC<{ player: Player }> = ({ player }) => {
     <section className="space-y-5" aria-label={t('playerStats.careerAndStats')}>
       <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
         <div className="mb-4">
-          <h2 className="text-lg font-extrabold text-pitch-ink">{t('playerStats.global')}</h2>
+          <h2 className="card-title text-lg font-extrabold text-pitch-ink">{t('playerStats.global')}</h2>
           <p className="mt-1 text-xs text-slate-500">{t('playerStats.globalDescription')}</p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -53,9 +53,9 @@ export const PlayerCareerPanel: React.FC<{ player: Player }> = ({ player }) => {
       </div>
 
       <div className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
-        <h2 className="mb-4 text-lg font-extrabold text-pitch-ink">{t('playerStats.byTeam')}</h2>
+        <h2 className="card-title mb-4 text-lg font-extrabold text-pitch-ink">{t('playerStats.byTeam')}</h2>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-xs">
+          <table className="w-full min-w-175 text-left text-xs">
             <thead className="border-b border-pitch-line text-slate-500">
               <tr>
                 <th className="py-3 pr-3">{t('stats.team')}</th>
@@ -109,7 +109,7 @@ export const PlayerCareerPanel: React.FC<{ player: Player }> = ({ player }) => {
         </div>
         {pastClubsWithoutStats.length > 0 && (
           <div className="mt-4 border-t border-pitch-separator pt-4">
-            <h3 className="text-xs font-bold text-pitch-ink">{t('playerStats.previousClubs')}</h3>
+            <h3 className="card-title text-xs font-bold text-pitch-ink">{t('playerStats.previousClubs')}</h3>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">
               {t('playerStats.previousClubsWithoutStats', { clubs: pastClubsWithoutStats.join(' · ') })}
             </p>

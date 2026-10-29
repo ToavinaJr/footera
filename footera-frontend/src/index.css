@@ -34,6 +34,7 @@
 
 :root {
   color-scheme: light;
+  --surface-shadow: 0 2px 3px -2px #10271e08, 0 10px 32px -20px #10271e24;
 }
 
 body {
@@ -142,7 +143,65 @@ h1, h2 { letter-spacing: -0.035em; }
 }
 
 .page-enter {
-  animation: page-arrive 460ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  animation: page-arrive 380ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+/* Footera's lime marker is shared by card headings across every domain. */
+.card-title {
+  color: var(--color-pitch-ink);
+  background: var(--color-lime-volt);
+  border-radius: .375rem;
+  padding: .2em .5em;
+  width: fit-content;
+  max-width: 100%;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  line-height: 1.55;
+}
+
+.surface-card { box-shadow: var(--surface-shadow); }
+.modal-panel { animation: modal-arrive 180ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes modal-arrive { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.dashboard-hero {
+  background-image: radial-gradient(ellipse at 100% 0%, #2c6444 0%, transparent 65%);
+  box-shadow: 0 18px 35px -25px #10271e99;
+}
+.football-pitch {
+  position: absolute;
+  right: -4rem;
+  top: -1rem;
+  width: 30rem;
+  height: 19rem;
+  color: #d4f36a;
+  opacity: .1;
+  pointer-events: none;
+  transform: rotate(-12deg);
+}
+.football-pitch svg { stroke: currentColor; stroke-width: 1.5; }
+.football-pass { stroke-width: 3; animation: pass-draw 1800ms ease-out both; }
+.football-marker { fill: currentColor; }
+.football-ball { position: absolute; font-size: 1.5rem; left: 74%; top: 24%; animation: football-pass 1900ms cubic-bezier(.2,.8,.2,1) both; }
+.football-loader { display: flex; height: 1.5rem; width: 5.5rem; align-items: center; gap: .4rem; color: var(--color-pitch-primary); }
+.football-loader span { font-size: 1.15rem; animation: dribble 1.4s ease-in-out infinite; }
+.football-loader i { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--color-lime-volt); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #14804d; box-shadow: 0 0 0 3px #14804d15; animation: live-signal 2.4s ease-out 3; }
+.skeleton-shimmer { background-image: linear-gradient(100deg, transparent 25%, #ffffffa0 50%, transparent 75%); background-size: 240% 100%; animation: shimmer 1.8s linear infinite; }
+.match-preview { transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease; }
+.match-preview:hover { border-color: #adca89; box-shadow: 0 4px 12px -8px #17624666; }
+.empty-pitch { background-image: radial-gradient(ellipse at 50% 0%, #d4f36a12, transparent 80%); }
+@keyframes pass-draw { from { stroke-dashoffset: 150; opacity: 0; } to { stroke-dashoffset: 0; opacity: 1; } }
+@keyframes football-pass { from { transform: translate(-190px, 110px) rotate(-180deg); opacity: 0; } to { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+@keyframes dribble { 0%, 100% { transform: translateY(0) rotate(-12deg); } 50% { transform: translateY(-4px) rotate(12deg); } }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes live-signal { 50% { box-shadow: 0 0 0 6px #14804d05; } }
+
+@media (hover: hover) {
+  .surface-card { transition: box-shadow 200ms ease, border-color 200ms ease; }
+  .surface-card:hover { border-color: #c9d6bc; box-shadow: 0 12px 34px -24px #10271e50; }
+}
+@media (max-width: 640px) {
+  .app-shell main { padding-left: 1rem; padding-right: 1rem; }
+  .football-pitch { right: -10rem; opacity: .07; }
 }
 
 .page-enter > :nth-child(1) { animation: page-arrive 420ms 20ms both; }

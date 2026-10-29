@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Body, HttpCode, HttpStatus, Res, ForbiddenException, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Param, Body, HttpCode, HttpStatus, Res, ForbiddenException, Req, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AccountsService } from '../modules/accounts/accounts.service.js';
 import { SeedService } from '../database/seed.service.js';
@@ -58,6 +58,24 @@ export class AuthController {
   @Put('profile')
   updateProfile(@Body(profileBodyPipe) body: Record<string, unknown>) {
     return this.accounts.updateProfile(body);
+  }
+
+  @Put('preferences')
+  preferences(@Body() body: unknown) { return this.accounts.updatePreferences(body); }
+
+  @Get('sessions')
+  sessions(@Req() request: Request & { user: { id: string; sessionId: string } }) {
+    return this.auth.listSessions(request.user.id, request.user.sessionId);
+  }
+
+  @Delete('sessions/:id')
+  revokeSession(@Req() request: Request & { user: { id: string } }, @Param('id') id: string) {
+    return this.auth.revokeSession(request.user.id, id);
+  }
+
+  @Put('password')
+  changePassword(@Req() request: Request & { user: { id: string } }, @Body() body: unknown) {
+    return this.auth.changePassword(request.user.id, body);
   }
 
   @Put('sports-cv')

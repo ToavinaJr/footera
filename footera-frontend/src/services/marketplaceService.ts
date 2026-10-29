@@ -14,6 +14,9 @@ export interface CreateListingInput {
 }
 
 export const marketplaceService = {
+  getById(id: string): Promise<MarketplaceListing> {
+    return apiClient<MarketplaceListing>(`marketplace/${encodeURIComponent(id)}`);
+  },
   categories(): Promise<string[]> {
     return apiClient<string[]>('marketplace/categories');
   },

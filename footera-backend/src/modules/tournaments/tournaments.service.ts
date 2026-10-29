@@ -156,6 +156,7 @@ export class TournamentsService {
       id, organizerId, registeredTeams: 0, participantTeamIds: [], status: TOURNAMENT_STATUSES.REGISTRATION_OPEN, standings: [], fixtures: [],
     };
     await this.records.create('tournaments', id, tournament);
+    await this.records.publishActivity?.('tournaments', id, input.title, input.city);
     await this.notifications.add({ title: 'Nouveau tournoi ouvert', message: `Le tournoi "${input.title}" est maintenant ouvert aux inscriptions !`, type: NOTIFICATION_TYPES.SYSTEM, targetSection: APP_SECTIONS.TOURNAMENTS, targetId: id });
     const { organizerId: _organizerId, ...publicTournament } = tournament;
     return publicTournament;

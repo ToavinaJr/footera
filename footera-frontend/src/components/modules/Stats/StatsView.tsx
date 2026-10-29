@@ -287,7 +287,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
+                      <h3 className="card-title font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={scorers[1].playerId}>{scorers[1].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -319,7 +319,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-black text-pitch-ink text-base truncate">
+                      <h3 className="card-title font-black text-pitch-ink text-base truncate">
                         <EntityLink section="players" id={scorers[0].playerId}>{scorers[0].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs font-bold text-pitch-primary flex items-center justify-center gap-1 mt-0.5">
@@ -350,7 +350,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
+                      <h3 className="card-title font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={scorers[2].playerId}>{scorers[2].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -374,7 +374,7 @@ export const StatsView: React.FC = () => {
               <div className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs">
                 <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-extrabold text-pitch-ink">
+                    <h2 className="card-title text-sm font-extrabold text-pitch-ink">
                       {t('stats.scorerRanking')}
                     </h2>
                     <p className="text-xs text-slate-500">
@@ -486,7 +486,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
+                      <h3 className="card-title font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={assisters[1].playerId}>{assisters[1].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -518,7 +518,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-black text-pitch-ink text-base truncate">
+                      <h3 className="card-title font-black text-pitch-ink text-base truncate">
                         <EntityLink section="players" id={assisters[0].playerId}>{assisters[0].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs font-bold text-pitch-primary flex items-center justify-center gap-1 mt-0.5">
@@ -549,7 +549,7 @@ export const StatsView: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="font-extrabold text-pitch-ink text-sm truncate">
+                      <h3 className="card-title font-extrabold text-pitch-ink text-sm truncate">
                         <EntityLink section="players" id={assisters[2].playerId}>{assisters[2].playerName}</EntityLink>
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
@@ -573,7 +573,7 @@ export const StatsView: React.FC = () => {
               <div className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs">
                 <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-extrabold text-pitch-ink">
+                    <h2 className="card-title text-sm font-extrabold text-pitch-ink">
                       {t('stats.assisterRanking')}
                     </h2>
                     <p className="text-xs text-slate-500">
@@ -717,7 +717,7 @@ export const StatsView: React.FC = () => {
               <div className="rounded-3xl bg-white border border-pitch-line overflow-hidden shadow-xs">
                 <div className="p-4 bg-pitch-panel border-b border-pitch-separator flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-extrabold text-pitch-ink">
+                    <h2 className="card-title text-sm font-extrabold text-pitch-ink">
                       {t('stats.teamComparison')}
                     </h2>
                     <p className="text-xs text-slate-500">
@@ -863,7 +863,7 @@ export const StatsView: React.FC = () => {
                             className="w-12 h-12 rounded-2xl object-cover bg-slate-100 border border-pitch-line"
                           />
                           <div>
-                            <h3 className="font-black text-pitch-ink text-sm group-hover:text-pitch-primary transition-colors">
+                            <h3 className="card-title font-black text-pitch-ink text-sm group-hover:text-pitch-primary transition-colors">
                               <EntityLink section="players" id={player.playerId}>{player.name}</EntityLink>
                             </h3>
                             <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
@@ -929,7 +929,7 @@ export const StatsView: React.FC = () => {
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-black text-pitch-ink">
+                  <h3 className="card-title text-lg font-black text-pitch-ink">
                     <EntityLink section="teams" id={selectedTeamModal.teamId}>{selectedTeamModal.teamName}</EntityLink>
                   </h3>
                   <span className="text-sm font-black text-pitch-primary">
@@ -1060,7 +1060,7 @@ export const StatsView: React.FC = () => {
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-black text-pitch-ink">
+                  <h3 className="card-title text-base font-black text-pitch-ink">
                     {selectedPlayerModal.name}
                   </h3>
                 </div>

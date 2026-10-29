@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Home, Compass, Trophy, Medal, MapPin, ShoppingBag, X, Briefcase, BarChart3, PanelLeftClose, PanelLeftOpen,
+  Home, Compass, Trophy, Medal, MapPin, ShoppingBag, X, Briefcase, BarChart3, PanelLeftClose, PanelLeftOpen, Users, Settings,
 } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
@@ -18,13 +18,15 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
   const { t } = useTranslation();
   const menuItems: { label: string; section: NavigationSection; icon: React.ElementType }[] = [
     { label: t('nav.home'), section: 'home', icon: Home },
-    { label: t('nav.players'), section: 'players', icon: Compass },
-    { label: t('nav.teamsMatches'), section: 'matches', icon: Trophy },
+    { label: t('nav.matches'), section: 'matches', icon: Trophy },
+    { label: t('nav.teamsOnly'), section: 'teams', icon: Users },
     { label: t('nav.tournaments'), section: 'tournaments', icon: Medal },
-    { label: t('nav.stats'), section: 'stats', icon: BarChart3 },
-    { label: t('nav.pitches'), section: 'pitches', icon: MapPin },
+    { label: t('nav.players'), section: 'players', icon: Compass },
     { label: t('nav.marketplace'), section: 'marketplace', icon: ShoppingBag },
-    { label: t('nav.recruitment'), section: 'recruitment', icon: Briefcase },
+    { label: t('nav.pitches'), section: 'pitches', icon: MapPin },
+    { label: t('nav.mercato'), section: 'mercato', icon: Briefcase },
+    { label: t('nav.settings'), section: 'settings', icon: Settings },
+    { label: t('nav.stats'), section: 'stats', icon: BarChart3 },
   ];
 
   const content = (collapsed: boolean, mobile = false) => (
@@ -53,7 +55,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
       <nav aria-label={t('nav.sidebar')} className={`min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain py-4 ${collapsed && !mobile ? 'px-2' : 'px-3'}`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeSection === item.section || (item.section === 'players' && activeSection === 'teams');
+          const isActive = activeSection === item.section;
           return (
             <button
               key={item.section}

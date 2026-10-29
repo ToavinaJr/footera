@@ -274,6 +274,25 @@ export class TeamsService {
     return { success: true, invitation, message: `Invitation envoyée à ${player.name}.` };
   }
 
+  async remindMembers(teamId: string, input: unknown) {
+    const user = await this.accounts.profile();
+    const team = await this.records.find('teams', teamId);
+    if (!team || !user || (team.ownerId !== user.id && !team.managerIds?.includes(user.id))) {
+      throw new ForbiddenException('Seul le staff de cette équipe peut envoyer une convocation.');
+    }
+    if (typeof input !== 'string' || !input.trim() || input.length > 1000) throw new BadRequestException('Message invalide (1 à 1000 caractères).');
+    const players = await this.records.list('players');
+    const memberIds = new Set((team.members ?? []).map((member) => member.playerId));
+    const recipients = new Set(players.filter((player) => player.currentTeamId === team.id || memberIds.has(player.id) || (!!player.userId && memberIds.has(player.userId)))
+      .flatMap((player) => player.userId ? [player.userId] : []));
+    const message = sanitizeMultilineText(input, 1000);
+    await Promise.all([...recipients].map((recipientId) => this.notifications.add({
+      title: `Convocation — ${team.name}`, message, recipientId,
+      type: NOTIFICATION_TYPES.TEAM, targetSection: APP_SECTIONS.TEAMS, targetId: team.id,
+    })));
+    return { sent: recipients.size };
+  }
+
   async listMyTeamInvitations() {
     const team = await this.myTeam();
     if (!team) return [];

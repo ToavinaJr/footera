@@ -1,471 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  Trophy, 
-  Users, 
-  MapPin, 
-  Briefcase, 
-  Calendar, 
-  ArrowRight, 
-  Activity, 
-  ChevronRight,
-  Shield,
-  Clock,
-  Send,
-  Zap,
-  TrendingUp,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../../context/useApp';
-import type { NavigationSection } from '../../../context/navigation';
-import { matchesService } from '../../../services/matchesService';
-import { recruitmentService } from '../../../services/recruitmentService';
-import { pitchesService } from '../../../services/pitchesService';
-import { playersService } from '../../../services/playersService';
-import { teamsService } from '../../../services/teamsService';
-import { Match, RecruitmentAd, Pitch, Player, Team, LeagueStandingRow, ActivityFeedItem, Application } from '../../../types';
-import { Badge, FormIndicator } from '../../common/Badge';
-import { Modal } from '../../common/Modal';
-import { EntityLink } from '../../common/EntityLink';
-import { AppApiError } from '../../../lib/api/errors';
 import { useTranslation } from '../../../i18n';
+import { useResource } from '../../../hooks/useResource';
+import { dashboardService, type DashboardData } from '../../../services/dashboardService';
+import { teamsService } from '../../../services/teamsService';
+import { ListPageLayout, PageHeader, ListError } from '../../common/ListPage';
+import { CardSkeleton } from '../../common/Skeleton';
+import { Modal } from '../../common/Modal';
+import { DashboardSection, DashboardMatchCard, ActivityList } from './DashboardSection';
+import { FootballPitch } from '../../common/FootballPitch';
 
-export const HomeView: React.FC = () => {
+export const HomeView = () => {
+  const { user, showToast, refreshNotifications } = useApp();
   const { t } = useTranslation();
-  const { navigateToResource, user, showToast } = useApp();
-  const [liveMatch, setLiveMatch] = useState<Match | null>(null);
-  const [myTeam, setMyTeam] = useState<Team | null>(null);
-  const [standings, setStandings] = useState<LeagueStandingRow[]>([]);
-  const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([]);
-  const [activeApplications, setActiveApplications] = useState<Application[]>([]);
-  const [followedTeams, setFollowedTeams] = useState<Team[]>([]);
-  const [allTeams, setAllTeams] = useState<Team[]>([]);
-  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
-  const [featuredPlayers, setFeaturedPlayers] = useState<Player[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const key = JSON.stringify([user?.id, user?.favoritePlayerIds, user?.favoriteTeamIds, user?.favoriteMatchIds, user?.favoriteTournamentIds, user?.preferences]);
+  const { data, loading, error, refresh } = useResource<DashboardData | null>(key, dashboardService.get, null);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
-  // Modal for Team Roster & Relance
-  const [isRelanceModalOpen, setIsRelanceModalOpen] = useState(false);
-  const [relanceMessage, setRelanceMessage] = useState('');
-  const [isSendingRelance, setIsSendingRelance] = useState(false);
-
-  useEffect(() => {
-    async function loadHomeData() {
-      try {
-        const [matches, team, stand, feed, apps, allTeams, players] = await Promise.all([
-          matchesService.list(),
-          teamsService.getMyTeam(),
-          matchesService.getLeagueStandings(),
-          matchesService.getActivityFeed(),
-          recruitmentService.listMyApplications(),
-          teamsService.list(),
-          playersService.list(),
-        ]);
-
-        const live = matches.find((m) => m.status === 'LIVE') || matches[0];
-        setLiveMatch(live || null);
-        setMyTeam(team || null);
-        setStandings(stand);
-        setActivityFeed(feed);
-        setActiveApplications(apps);
-        setFollowedTeams(allTeams.slice(0, 3));
-        setAllTeams(allTeams);
-        setAllPlayers(players);
-        setFeaturedPlayers(players.slice(0, 2));
-      } catch (e) {
-        if (!(e instanceof AppApiError && e.statusCode === 401)) {
-          // eslint-disable-next-line no-console
-          console.error('Error loading home data:', e);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadHomeData();
-  }, []);
-
-  const handleSendRelance = async () => {
-    if (!relanceMessage.trim()) return;
-    setIsSendingRelance(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setIsSendingRelance(false);
-    setIsRelanceModalOpen(false);
-    showToast(t('home.relaunchSent'));
-  };
-
-  return (
-    <div className="page-enter space-y-8 pb-16">
-      {/* Hero: Prochain match de mon équipe & Relance d'effectif */}
-      {myTeam && (
-        <section aria-label={t('home.officialTeam', { division: myTeam.division })} className="rounded-3xl bg-white border border-pitch-line shadow-sm overflow-hidden">
-          <div className="p-6 md:p-8 bg-linear-to-r from-[#0d3822] via-pitch-action to-pitch-ink text-white">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              {/* Team brand and form */}
-              <div className="space-y-3 max-w-xl">
-                <div className="flex items-center gap-2 text-xs font-bold text-lime-volt">
-                  <span className="w-2 h-2 rounded-full bg-lime-volt animate-pulse" />
-                  <span>{t('home.officialTeam', { division: myTeam.division })}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={myTeam.logoUrl}
-                    alt={myTeam.name}
-                    className="w-14 h-14 rounded-2xl object-cover bg-white/10 border-2 border-lime-volt shrink-0"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div>
-                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                      <EntityLink section="teams" id={myTeam.id}>{myTeam.name}</EntityLink>
-                    </h1>
-                    <p className="text-xs text-slate-200 mt-0.5">
-                      {myTeam.city} · {t('home.coach', { name: myTeam.coachName })} · {t('home.members', { count: myTeam.membersCount })}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Forme des 5 derniers matchs: D D N V D */}
-                <div className="flex items-center gap-3 pt-1">
-                  <span className="text-xs font-semibold text-slate-300">{t('home.recentForm')}</span>
-                  <div className="flex items-center gap-1.5">
-                    {myTeam.recentForm.map((res, i) => (
-                      <FormIndicator key={i} result={res} size="sm" />
-                    ))}
-                  </div>
-                  <span className="text-xs text-lime-volt font-semibold ml-2">
-                    {t('home.rank', { rank: myTeam.stats.position, points: myTeam.stats.points })}
-                  </span>
-                </div>
-              </div>
-
-              {/* Next Match & Action Strip */}
-              {myTeam.nextMatch && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 max-w-md w-full space-y-3">
-                  <div className="flex items-center justify-between text-xs text-lime-volt font-bold">
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {t('home.nextMatch')}
-                    </span>
-                    <span className="text-slate-200">{myTeam.nextMatch.date} à {myTeam.nextMatch.time}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 py-1">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm font-extrabold text-white truncate"><EntityLink section="teams" id={myTeam.id} className="text-white">{myTeam.name}</EntityLink></span>
-                    </div>
-                    <span className="text-xs font-extrabold text-lime-volt px-2 py-0.5 rounded-md bg-black/30">
-                      VS
-                    </span>
-                    <div className="flex items-center gap-2 min-w-0 text-right justify-end">
-                      <span className="text-sm font-extrabold text-white truncate">{myTeam.nextMatch.opponentName}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-caption text-slate-300 truncate">
-                    {t('home.venue', { venue: myTeam.nextMatch.venue })}
-                  </p>
-
-                  <div className="pt-2 flex items-center gap-2">
-                    <button
-                      onClick={() => setIsRelanceModalOpen(true)}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-lime-volt hover:bg-lime-hover text-pitch-ink font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>{t('home.relaunch')}</span>
-                    </button>
-                    <button
-                      onClick={() => navigateToResource('teams', myTeam.id)}
-                      className="py-2.5 px-3 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs border border-white/20 transition-colors cursor-pointer"
-                    >
-                      {t('home.roster')}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Grid: 2 Columns (Left: Candidatures & Activités, Right: Classement & Matchs) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column (2 cols wide on desktop) */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Active application / Candidature active */}
-          {activeApplications.length > 0 && (
-            <section aria-label={t('home.activeApplication')} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-pitch-primary" />
-                  <h2 className="text-base font-extrabold text-pitch-ink">{t('home.activeApplication')}</h2>
-                </div>
-                <button
-                  onClick={() => navigateToResource('recruitment')}
-                  className="text-xs font-semibold text-pitch-primary hover:underline"
-                >
-                  {t('home.viewAll')}
-                </button>
-              </div>
-
-              {activeApplications.slice(0, 1).map((app) => (
-                <div
-                  key={app.id}
-                  className="p-5 rounded-2xl bg-white border border-pitch-line shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-pitch-ink">{app.adTitle}</h3>
-                      <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : 'amber'} size="sm">
-                        {app.status === 'EN_REVUE' ? t('home.applicationInReview') : t('home.applicationTryout')}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {t('home.club')} <strong className="text-slate-800"><EntityLink section="teams" id={allTeams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink></strong> · {t('home.candidate')} <EntityLink section="players" id={allPlayers.find((player) => player.name === app.applicantName)?.id}>{app.applicantName}</EntityLink> ({app.applicantPosition})
-                    </p>
-                    <p className="text-xs text-slate-600 italic">« {app.message} »</p>
-                  </div>
-
-                  <button
-                  onClick={() => showToast(t('home.reminderSent'))}
-                    className="px-4 py-2 rounded-xl bg-pitch-light hover:bg-[#d5edd9] text-pitch-primary text-xs font-bold transition-colors cursor-pointer shrink-0"
-                  >
-                  {t('home.remindRecruiter')}
-                  </button>
-                </div>
-              ))}
-            </section>
-          )}
-
-          {/* Featured Players Spotlight (matching user screenshot 2) */}
-          <section aria-label={t('home.featuredPlayers')} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-extrabold text-pitch-ink">{t('home.featuredPlayers')}</h2>
-                <p className="text-xs text-slate-500">{t('home.featuredDescription')}</p>
-              </div>
-              <button
-                onClick={() => navigateToResource('players')}
-                className="text-xs font-bold text-pitch-primary hover:text-[#093c23] flex items-center gap-1 cursor-pointer"
-              >
-                <span>{t('home.explorePlayers')}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {featuredPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className="rounded-2xl bg-white border border-pitch-line overflow-hidden shadow-xs hover:border-pitch-primary/50 transition-all flex flex-col justify-between"
-                >
-                  <div className="relative h-44 bg-slate-100 overflow-hidden">
-                    <img
-                      src={player.avatarUrl}
-                      alt={player.name}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-
-                  <div className="p-4 space-y-3">
-                    <div>
-                      <h3 className="text-base font-extrabold text-pitch-ink"><EntityLink section="players" id={player.id}>{player.name}</EntityLink></h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {player.primaryPosition} · {player.age ? t('profile.ageYears', { age: player.age }) : t('home.ageUnknown')}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Badge variant="emerald" size="sm">{t('home.available')}</Badge>
-                      <Badge variant="slate" size="sm">{player.level}</Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-pitch-separator">
-                      <span className="truncate">{player.currentTeam} · {player.city}</span>
-                      <span className="font-extrabold text-pitch-primary shrink-0">🎯 {t('home.goals', { count: player.goals })}</span>
-                    </div>
-
-                    {myTeam && <button
-                      onClick={() => {
-                        showToast(t('home.invitationSent', { player: player.name }));
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-pitch-primary hover:bg-pitch-hover text-white font-bold text-xs transition-colors cursor-pointer"
-                    >
-                      {t('home.invitePlayer')}
-                    </button>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Live Activity Feed / Activité récente */}
-          <section aria-label={t('home.activity')} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-pitch-ink">{t('home.activity')}</h2>
-              <span className="text-xs text-slate-400">{t('home.realtime')}</span>
-            </div>
-
-            <div className="space-y-2.5">
-              {activityFeed.map((act) => (
-                <div
-                  key={act.id}
-                  onClick={() => navigateToResource(act.targetSection as NavigationSection)}
-                  className="p-4 rounded-2xl bg-white border border-pitch-line hover:border-pitch-primary/40 transition-all cursor-pointer shadow-2xs flex items-start gap-3.5"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-pitch-light flex items-center justify-center text-pitch-primary shrink-0 mt-0.5">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-xs font-bold text-pitch-ink">{act.title}</h3>
-                      <span className="text-micro text-slate-400">{act.time}</span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">{act.description}</p>
-                  </div>
-                  <Badge variant="lime" size="sm">{act.badgeText}</Badge>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column: Standings & Followed Teams */}
-        <div className="space-y-8">
-          {/* Official League Standings Table */}
-          <section aria-label={t('home.standings')} className="p-5 rounded-3xl bg-white border border-pitch-line shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-extrabold text-pitch-ink">{t('home.standings')}</h2>
-                <p className="text-caption text-slate-500">{t('home.regularSeason', { year: 2026 })}</p>
-              </div>
-              <Trophy className="w-4 h-4 text-pitch-primary" />
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="text-micro text-slate-400 border-b border-pitch-separator uppercase font-bold">
-                  <tr>
-                    <th className="pb-2">#</th>
-                    <th className="pb-2">{t('home.team')}</th>
-                    <th className="pb-2 text-center">{t('home.played')}</th>
-                    <th className="pb-2 text-center">{t('home.difference')}</th>
-                    <th className="pb-2 text-right">{t('home.points')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-pitch-separator tabular-nums font-medium text-slate-700">
-                  {standings.map((teamRow) => {
-                    const isMyTeamRow = teamRow.teamId === 'team_betsileo';
-                    return (
-                      <tr
-                        key={teamRow.teamId}
-                        className={`transition-colors ${
-                          isMyTeamRow ? 'bg-pitch-light font-bold text-pitch-ink' : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <td className="py-2.5 font-bold text-slate-500">{teamRow.position}</td>
-                        <td className="py-2.5 font-semibold truncate max-w-30 text-pitch-ink">
-                          <EntityLink section="teams" id={teamRow.teamId}>{teamRow.teamName}</EntityLink>
-                        </td>
-                        <td className="py-2.5 text-center text-slate-500">{teamRow.played}</td>
-                        <td className="py-2.5 text-center text-slate-600">
-                          {teamRow.goalDifference > 0 ? `+${teamRow.goalDifference}` : teamRow.goalDifference}
-                        </td>
-                        <td className="py-2.5 text-right font-extrabold text-pitch-primary">
-                          {teamRow.points}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <button
-              onClick={() => navigateToResource('matches')}
-              className="w-full py-2 text-center text-xs font-bold text-pitch-primary hover:bg-pitch-light rounded-xl transition-colors cursor-pointer"
-            >
-              {t('home.fullSchedule')}
-            </button>
-          </section>
-
-          {/* Followed Teams / Équipes suivies */}
-          <section aria-label={t('home.followedTeams')} className="p-5 rounded-3xl bg-white border border-pitch-line shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-extrabold text-pitch-ink">{t('home.followedTeams')}</h2>
-              <Shield className="w-4 h-4 text-pitch-primary" />
-            </div>
-
-            <div className="space-y-3">
-              {followedTeams.map((team) => (
-                <div
-                  key={team.id}
-                  onClick={() => navigateToResource('teams', team.id)}
-                  className="p-3 rounded-2xl bg-pitch-panel border border-border-subtle hover:border-pitch-primary/40 transition-all cursor-pointer flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={team.logoUrl}
-                      alt={team.name}
-                      className="w-9 h-9 rounded-xl object-cover bg-slate-200"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="min-w-0">
-                      <h3 className="text-xs font-bold text-pitch-ink truncate"><EntityLink section="teams" id={team.id}>{team.name}</EntityLink></h3>
-                      <p className="text-micro text-slate-500 truncate">{team.city} · {team.division}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      </div>
-
-      {/* Relance Modal */}
-      {isRelanceModalOpen && myTeam && (
-        <Modal
-          isOpen={isRelanceModalOpen}
-          onClose={() => setIsRelanceModalOpen(false)}
-          title={t('home.relaunchTitle', { team: myTeam.name })}
-          subtitle={t('home.relaunchSubtitle', { opponent: myTeam.nextMatch?.opponentName || t('home.nextOpponent') })}
-          maxWidth="md"
-        >
+  return <ListPageLayout>
+    <PageHeader title={t('dashboard.title', { name: user?.name ?? '' })} description={t('dashboard.description')} actions={<button type="button" disabled={loading} onClick={refresh} className="min-h-11 rounded-xl border border-pitch-line bg-white px-4 text-sm font-bold disabled:opacity-50">{t('list.refresh')}</button>} />
+    <ListError error={error} onRetry={refresh} />
+    {loading && !data && <CardSkeleton />}
+    {data && <>
+      <section className="dashboard-hero relative isolate overflow-hidden rounded-3xl bg-pitch-ink p-6 text-white sm:p-8">
+        <FootballPitch />
+        <div className="relative z-10 grid items-start gap-6 lg:grid-cols-2">
           <div className="space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {t('home.relaunchDescription', { count: myTeam.membersCount })}
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('home.relaunchInstruction')}
-              </label>
-              <textarea
-                rows={4}
-                value={relanceMessage}
-                onChange={(e) => setRelanceMessage(e.target.value)}
-                placeholder={t('home.relaunchPlaceholder')}
-                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors"
-              />
-            </div>
-            <div className="flex items-center justify-end gap-3 pt-3">
-              <button
-                onClick={() => setIsRelanceModalOpen(false)}
-                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
-              >
-                {t('home.cancel')}
-              </button>
-              <button
-                onClick={handleSendRelance}
-                disabled={!relanceMessage.trim() || isSendingRelance}
-                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-primary hover:bg-pitch-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>{isSendingRelance ? t('home.sending') : t('home.send')}</span>
-              </button>
-            </div>
+            <h2 className="card-title text-xs font-bold uppercase text-lime-volt">{t('settings.team')}</h2>
+            {data.myTeam ? <>
+              <Link to={'/teams/' + encodeURIComponent(data.myTeam.id)} className="flex items-center gap-3 text-xl font-extrabold">{data.myTeam.logoUrl && <img src={data.myTeam.logoUrl} alt="" className="h-14 w-14 rounded-xl object-cover" />} {data.myTeam.name}</Link>
+              <p className="text-sm text-slate-300">{data.myTeam.division} · {data.myTeam.city} · {t('home.members', { count: data.myTeam.membersCount })}</p>
+              <div className="flex flex-wrap gap-2"><Link to={'/teams/' + encodeURIComponent(data.myTeam.id)} className="rounded-xl border border-white/20 px-4 py-3 text-sm">{t('home.roster')}</Link>
+                {data.canManageTeam && <button type="button" onClick={() => setReminderOpen(true)} className="rounded-xl bg-lime-volt px-4 py-3 text-sm font-bold text-pitch-ink">{t('home.relaunch')}</button>}</div>
+            </> : <Link to="/teams" className="block text-sm text-slate-200 underline">{t('dashboard.noTeam')}</Link>}
           </div>
-        </Modal>
-      )}
-    </div>
-  );
+          <div className="space-y-3"><h2 className="card-title text-xs font-bold text-lime-volt">{t('home.nextMatch')}</h2>
+            {data.nextTeamMatch ? <div className="rounded-2xl bg-white text-pitch-ink"><DashboardMatchCard match={data.nextTeamMatch} /></div> : <p className="text-sm text-slate-300">{t('dashboard.noMatch')}</p>}
+            <Link to="/matches" className="inline-block text-sm underline">{t('home.fullSchedule')}</Link>
+          </div>
+        </div>
+      </section>
+      <div className="grid gap-3 sm:grid-cols-3">{([
+        ['dashboard.applications', '/settings/applications', data.pendingActions.applications],
+        ['dashboard.bookings', '/settings/bookings', data.pendingActions.bookings],
+        ['dashboard.roles', '/settings/roles', data.pendingActions.roles],
+      ] as const).map(([label, href, count]) => <Link key={href} to={href} className="flex items-center justify-between rounded-2xl border border-pitch-line bg-white p-4 text-sm font-bold">{t(label)}<span className="rounded-full bg-pitch-light px-3 py-1">{count}</span></Link>)}</div>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <DashboardSection title={t('dashboard.matches')} href="/matches?favorites=true" empty={!data.followedMatches.length}><div className="space-y-3">{data.followedMatches.map((match) => <DashboardMatchCard key={match.id} match={match} />)}</div></DashboardSection>
+        <DashboardSection title={t('dashboard.teams')} href="/teams?favorites=true" empty={!data.favoriteTeams.length}><div className="grid gap-3 sm:grid-cols-2">{data.favoriteTeams.map((team) => <Link key={team.id} to={'/teams/' + encodeURIComponent(team.id)} className="flex items-center gap-3 rounded-xl border border-pitch-line p-3 text-sm font-bold">{team.logoUrl && <img src={team.logoUrl} alt="" className="h-10 w-10 rounded-xl object-cover" />}{team.name}</Link>)}</div></DashboardSection>
+        <DashboardSection title={t('dashboard.players')} href="/players?favorites=true" empty={!data.favoritePlayers.length}><div className="grid gap-3 sm:grid-cols-2">{data.favoritePlayers.map((player) => <Link key={player.id} to={'/profile/' + encodeURIComponent(player.id)} className="flex items-center gap-3 rounded-xl border border-pitch-line p-3">{player.avatarUrl && <img src={player.avatarUrl} alt="" className="h-12 w-12 rounded-xl object-cover" />}<span><strong className="block text-sm">{player.name}</strong><span className="text-xs text-slate-500">{player.primaryPosition} · {player.currentTeam}</span></span></Link>)}</div></DashboardSection>
+        <DashboardSection title={t('dashboard.tournaments')} href="/tournaments?favorites=true" empty={!data.favoriteTournaments.length}>{data.favoriteTournaments.map((tournament) => <Link key={tournament.id} to={'/tournaments/' + encodeURIComponent(tournament.id)} className="block rounded-xl border border-pitch-line p-3 text-sm font-bold">{tournament.title}<span className="block text-xs font-normal text-slate-500">{tournament.city} · {tournament.startDate}</span></Link>)}</DashboardSection>
+        <DashboardSection title={t('dashboard.bookings')} href="/settings/bookings" empty={!data.bookings.length}>{data.bookings.map((booking) => <Link key={booking.id} to={'/settings/bookings/' + encodeURIComponent(booking.id)} className="block border-b border-pitch-line py-3 text-sm"><strong>{booking.pitchName}</strong><span className="block text-xs text-slate-500">{booking.date} · {booking.time} · {booking.status}</span></Link>)}</DashboardSection>
+        <DashboardSection title={t('dashboard.applications')} href="/settings/applications" empty={!data.applications.length}>{data.applications.map((application) => <Link key={application.id} to={'/mercato/' + encodeURIComponent(application.adId)} className="block border-b border-pitch-line py-3 text-sm"><strong>{application.title} · {application.teamName}</strong><span className="block text-xs text-slate-500">{application.status}</span></Link>)}</DashboardSection>
+        {user?.preferences?.showPersonalActivity !== false && <DashboardSection title={t('dashboard.personal')} href="/notifications" empty={!data.personalActivity.length}><ActivityList items={data.personalActivity} /></DashboardSection>}
+        <DashboardSection title={t('dashboard.platform')} empty={!data.platformActivity.length}><ActivityList items={data.platformActivity} /></DashboardSection>
+      </div>
+      <Link to="/stats" className="inline-block text-sm font-bold text-pitch-primary underline">{t('home.standings')} · {t('nav.stats')}</Link>
+    </>}
+    {reminderOpen && data?.myTeam && <Modal isOpen onClose={() => setReminderOpen(false)} title={t('home.relaunchTitle', { team: data.myTeam.name })}>
+      <form onSubmit={async (event) => {
+        event.preventDefault(); if (!data.myTeam || sending) return; setSending(true);
+        try { await teamsService.remindMembers(data.myTeam.id, message); setReminderOpen(false); setMessage(''); showToast(t('home.relaunchSent')); await refreshNotifications(); refresh(); }
+        catch (reason) { showToast(reason instanceof Error ? reason.message : t('matches.loadError'), 'error'); }
+        finally { setSending(false); }
+      }} className="space-y-4"><label className="block text-sm font-bold">{t('home.relaunchInstruction')}<textarea required maxLength={1000} value={message} onChange={(event) => setMessage(event.target.value)} className="mt-2 min-h-32 w-full rounded-xl border border-pitch-line p-3 font-normal" /></label><button type="submit" disabled={sending || !message.trim()} className="min-h-11 rounded-xl bg-pitch-primary px-4 text-white disabled:opacity-50">{sending ? t('home.sending') : t('home.send')}</button></form>
+    </Modal>}
+  </ListPageLayout>;
 };

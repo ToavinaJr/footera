@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import type { NotificationItem, UserProfile, UserRole } from '../types';
 import type { NavigationSection } from './navigation';
+import type { FavoriteEntity } from '../services/favoritesService';
 
 export type { NavigationSection } from './navigation';
 
@@ -24,6 +25,8 @@ export interface AppContextType {
   updateProfile: (partial: Partial<UserProfile>) => Promise<boolean>;
   updateSportsCv: (cv: Partial<UserProfile['sportsCv']>) => Promise<boolean>;
   toggleFavoriteTeam: (teamId: string) => Promise<boolean>;
+  setFavorite: (entity: FavoriteEntity, id: string, favorite: boolean) => Promise<boolean>;
+  refreshUser: () => Promise<void>;
   notifications: NotificationItem[];
   refreshNotifications: () => Promise<void>;
   unreadNotificationsCount: number;

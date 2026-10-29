@@ -1,137 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { SelectField } from '../../common/SelectField';
-import { Briefcase, Search, CheckCircle2, Send, XCircle } from 'lucide-react';
-import { recruitmentService } from '../../../services/recruitmentService';
-import { RecruitmentAd, Application } from '../../../types';
+import { Briefcase,Search,XCircle } from 'lucide-react';
+import React from 'react';
 import { Badge } from '../../common/Badge';
-import { Modal } from '../../common/Modal';
-import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
-import { useApp } from '../../../context/useApp';
-import { useRouteModal } from '../../../hooks/useRouteModal';
 import { EntityLink } from '../../common/EntityLink';
-import { catalogsService } from '../../../services/catalogsService';
-import { useTranslation } from '../../../i18n';
+import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
+import { SelectField } from '../../common/SelectField';
+import { CardSkeleton } from '../../common/Skeleton';
+import { RecruitmentDialogs } from './RecruitmentDialogs';
+import { useRecruitmentViewModel } from './useRecruitmentViewModel';
 
 export const RecruitmentView: React.FC = () => {
-  const { t } = useTranslation();
-  const { showToast, selectedResourceId, user } = useApp();
-  const adModal = useRouteModal('/recruitment');
-  const [activeTab, setActiveTab] = useState<'ads' | 'my-applications'>('ads');
-  const [ads, setAds] = useState<RecruitmentAd[]>([]);
-  const [myApplications, setMyApplications] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [positionFilter, setPositionFilter] = useState('Tous');
-  const [positionOptions, setPositionOptions] = useState<string[]>([]);
-
-  // Ad Detail & Apply
-  const activeAd = adModal.resourceId
-    ? ads.find((ad) => ad.id === adModal.resourceId) ?? null
-    : selectedResourceId
-      ? ads.find((ad) => ad.id === selectedResourceId) ?? null
-      : null;
-  const [applicationAdId, setApplicationAdId] = useState<string | null>(null);
-  const applicationAd = applicationAdId
-    ? ads.find((ad) => ad.id === applicationAdId) ?? null
-    : null;
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [applyMessage, setApplyMessage] = useState('');
-  const [applicantPhone, setApplicantPhone] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [cancellingApplicationId, setCancellingApplicationId] = useState<string | null>(null);
-
-  const openApplication = (ad: RecruitmentAd) => {
-    // A candidate form is its own modal; leave the route-backed ad detail first.
-    adModal.close();
-    setApplicationAdId(ad.id);
-    setApplicantPhone(user?.phone || '');
-    setApplyMessage('');
-    setIsApplyModalOpen(true);
-  };
-
-  const closeApplication = () => {
-    setIsApplyModalOpen(false);
-    setApplicationAdId(null);
-  };
-
-  useEffect(() => {
-    catalogsService.getOptions()
-      .then((options) => setPositionOptions(options.recruitmentPositions))
-      .catch((error: unknown) => showToast(error instanceof Error ? error.message : t('recruitment.optionsError'), 'error'));
-  }, [showToast]);
-
-  useEffect(() => {
-    async function loadRecruitmentData() {
-      setIsLoading(true);
-      try {
-        const [adsData, appsData] = await Promise.all([
-          user
-            ? recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter })
-            : recruitmentService.listAds({ query: searchQuery, position: positionFilter }),
-          user ? recruitmentService.listMyApplications() : Promise.resolve([]),
-        ]);
-        setAds(adsData);
-        setMyApplications(appsData);
-
-      } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : t('recruitment.loadError'), 'error');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadRecruitmentData();
-  }, [searchQuery, positionFilter, selectedResourceId, showToast, user]);
-
-  const handleApply = async () => {
-    if (!applicationAd || !applyMessage.trim() || !applicantPhone.trim()) return;
-    setIsSubmitting(true);
-    try {
-      await recruitmentService.apply(applicationAd.id, {
-        message: applyMessage,
-        phone: applicantPhone,
-      });
-      showToast(t('recruitment.applicationSent', { team: applicationAd.teamName }));
-      closeApplication();
-      setApplyMessage('');
-      const [availableAds, applications] = await Promise.all([
-        recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter }),
-        recruitmentService.listMyApplications(),
-      ]);
-      setAds(availableAds);
-      setMyApplications(applications);
-      setActiveTab('my-applications');
-    } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : t('recruitment.submitError'), 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCancelApplication = async (application: Application) => {
-    if (application.status !== 'EN_REVUE' || cancellingApplicationId) return;
-    setCancellingApplicationId(application.id);
-    try {
-      await recruitmentService.cancelApplication(application.id);
-      setMyApplications((current) => current.map((item) => item.id === application.id ? { ...item, status: 'RETIRÉE' } : item));
-      const availableAds = await recruitmentService.listAvailableAds({ query: searchQuery, position: positionFilter });
-      setAds(availableAds);
-      showToast(t('recruitment.applicationCancelled'), 'success');
-    } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : t('recruitment.cancelApplicationError'), 'error');
-    } finally {
-      setCancellingApplicationId(null);
-    }
-  };
+  const model = useRecruitmentViewModel();
+  const { t, adModal, activeTab, setActiveTab, searchQuery, setSearchQuery, positionFilter, setPositionFilter, positionOptions, list, applications, ads, myApplications, isLoading, page, applicationPage, detail, activeAd, cancellingApplicationId, openApplication, handleCancelApplication } = model;
 
   return (
-    <div className="page-enter space-y-6 pb-16">
+    <ListPageLayout>
+      <ListError error={list.error || applications.error || detail.error} onRetry={() => { list.refresh(); applications.refresh(); detail.refresh(); }} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-pitch-ink tracking-tight">
-            {t('recruitment.pageTitle')}
+            {t('nav.mercato')}
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
             {t('recruitment.pageDescription')}
@@ -201,7 +89,7 @@ export const RecruitmentView: React.FC = () => {
             />
           ) : (
             <div className="space-y-4">
-              {ads.map((ad) => (
+              {page.items.map((ad) => (
                 <div
                   key={ad.id}
                   onClick={() => adModal.openDetail(ad.id)}
@@ -216,7 +104,7 @@ export const RecruitmentView: React.FC = () => {
                     />
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-base font-extrabold text-pitch-ink">{ad.positionSought}</h2>
+                        <h2 className="card-title text-base font-extrabold text-pitch-ink">{ad.positionSought}</h2>
                         <Badge variant="emerald" size="sm">{ad.division}</Badge>
                       </div>
                       <p className="text-xs text-slate-500 font-medium">
@@ -259,14 +147,14 @@ export const RecruitmentView: React.FC = () => {
             />
           ) : (
             <div className="space-y-3">
-              {myApplications.map((app) => (
+              {applicationPage.items.map((app) => (
                 <div
                   key={app.id}
                   className="p-5 rounded-3xl bg-white border border-pitch-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
+                      <h2 className="card-title text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
                       <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : app.status === 'RETIRÉE' ? 'rose' : 'amber'} size="sm">
                         {app.status === 'EN_REVUE' ? t('recruitment.inReview') : app.status === 'ACCEPTEE' ? t('recruitment.accepted') : app.status === 'RETIRÉE' ? t('recruitment.withdrawn') : t('recruitment.rejected')}
                       </Badge>
@@ -286,95 +174,9 @@ export const RecruitmentView: React.FC = () => {
         </div>
       )}
 
-      {/* Ad Details Modal */}
-      {activeAd && !isApplyModalOpen && (
-        <Modal
-          isOpen={!!activeAd}
-          onClose={adModal.close}
-          title={activeAd.positionSought}
-          subtitle={`${activeAd.teamName} · ${activeAd.division}`}
-          maxWidth="lg"
-        >
-          <div className="space-y-5">
-            <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line flex items-center gap-3">
-              <img
-                src={activeAd.teamLogoUrl}
-                alt={activeAd.teamName}
-                className="w-12 h-12 rounded-xl object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div>
-                <h3 className="text-sm font-bold text-pitch-ink"><EntityLink section="teams" id={activeAd.teamId}>{activeAd.teamName}</EntityLink></h3>
-                <span className="text-xs text-slate-500">{activeAd.city} · {activeAd.category}</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed bg-pitch-panel p-3 rounded-2xl border border-border-subtle">
-              {activeAd.description}
-            </p>
-
-            <button
-              onClick={() => openApplication(activeAd)}
-              className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-            >
-              <Send className="w-4 h-4" />
-              <span>{t('recruitment.applyOpportunity')}</span>
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Apply Modal */}
-      {isApplyModalOpen && applicationAd && (
-        <Modal
-          isOpen={isApplyModalOpen}
-          onClose={closeApplication}
-          title={t('recruitment.applyTitle', { position: applicationAd.positionSought })}
-          subtitle={applicationAd.teamName}
-          maxWidth="md"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('recruitment.phoneRequired')}
-              </label>
-              <input
-                type="tel"
-                value={applicantPhone}
-                onChange={(e) => setApplicantPhone(e.target.value)}
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('recruitment.messageRequired')}
-              </label>
-              <textarea
-                rows={4}
-                value={applyMessage}
-                onChange={(e) => setApplyMessage(e.target.value)}
-                placeholder={t('recruitment.messagePlaceholder')}
-                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
-              />
-            </div>
-            <div className="flex items-center justify-end gap-3 pt-3">
-              <button
-                onClick={closeApplication}
-                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
-              >
-                {t('recruitment.cancel')}
-              </button>
-              <button
-                onClick={handleApply}
-                disabled={!applyMessage.trim() || !applicantPhone.trim() || isSubmitting}
-                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-              >
-                {isSubmitting ? t('recruitment.sendingApplication') : t('recruitment.submitApplication')}
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </div>
+      <Pagination {...(activeTab === 'ads' ? page : applicationPage)} />
+      {adModal.resourceId && detail.loading && !activeAd && <CardSkeleton />}
+      <RecruitmentDialogs model={model} />
+    </ListPageLayout>
   );
 };

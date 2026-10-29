@@ -89,7 +89,7 @@ export function RoleRequestsPanel() {
   return <section className="overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-sm">
     <div className="flex items-start gap-4 border-b border-pitch-line bg-linear-to-br from-pitch-light/70 via-white to-white px-5 py-5 md:px-7 md:py-6">
       <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-pitch-primary shadow-sm ring-1 ring-pitch-line"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></span>
-      <div className="min-w-0"><h2 className="text-lg font-extrabold text-pitch-ink md:text-xl">{t('roles.title')}</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{t('roles.description')}</p></div>
+      <div className="min-w-0"><h2 className="card-title text-lg font-extrabold text-pitch-ink md:text-xl">{t('roles.title')}</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{t('roles.description')}</p></div>
     </div>
     <div className="p-5 md:p-7">
 
@@ -108,7 +108,7 @@ export function RoleRequestsPanel() {
     {error && <p role="alert" className="mt-4 text-sm text-rose-700">{error}</p>}
     {notice && <p role="status" className="mt-4 flex items-center gap-2 text-sm font-semibold text-pitch-primary"><CheckCircle2 className="h-4 w-4" />{notice}</p>}
     <div className="mt-5 border-t border-pitch-line pt-4">
-      <h3 className="text-sm font-bold text-pitch-ink">{t('roles.history')}</h3>
+      <h3 className="card-title text-sm font-bold text-pitch-ink">{t('roles.history')}</h3>
       {data.requests.length ? <ul className="mt-3 space-y-3">{data.requests.map((request: RoleRequest) => <li key={request.id} className="flex min-w-0 flex-col gap-3 rounded-2xl border border-pitch-line bg-pitch-panel/70 p-4 text-sm sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0"><p className="font-bold text-pitch-ink">{roleLabel(request.role, t)}</p>{request.reason && <p className="mt-1 whitespace-pre-wrap break-words text-slate-600">{request.reason}</p>}<time className="mt-1 block text-xs text-slate-500" dateTime={request.createdAt}>{formatRequestDate(request.createdAt, language)}</time></div>
         <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${request.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : request.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>

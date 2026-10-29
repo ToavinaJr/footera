@@ -8,6 +8,7 @@ import { SidebarDrawer } from './components/layout/SidebarDrawer';
 import { ToastContainer } from './components/common/Toast';
 import { AuthView } from './components/modules/Auth/AuthView';
 import { LanguageProvider, useTranslation } from './i18n';
+import { legacyPath } from './context/routes';
 
 const HomeView = lazy(() => import('./components/modules/Home/HomeView').then((module) => ({ default: module.HomeView })));
 const PlayersView = lazy(() => import('./components/modules/Players/PlayersView').then((module) => ({ default: module.PlayersView })));
@@ -19,12 +20,18 @@ const PitchesView = lazy(() => import('./components/modules/Pitches/PitchesView'
 const RecruitmentView = lazy(() => import('./components/modules/Recruitment/RecruitmentView').then((module) => ({ default: module.RecruitmentView })));
 const MarketplaceView = lazy(() => import('./components/modules/Marketplace/MarketplaceView').then((module) => ({ default: module.MarketplaceView })));
 const ProfileView = lazy(() => import('./components/modules/Profile/ProfileView').then((module) => ({ default: module.ProfileView })));
+const SettingsView = lazy(() => import('./components/modules/Settings/SettingsView').then((module) => ({ default: module.SettingsView })));
 const StatsView = lazy(() => import('./components/modules/Stats/StatsView').then((module) => ({ default: module.StatsView })));
 const LandingView = lazy(() => import('./components/modules/Landing/LandingView').then((module) => ({ default: module.LandingView })));
 
 const LegacyPlayerRedirect: React.FC = () => {
   const { playerId = '' } = useParams();
   return <Navigate to={`/profile/${encodeURIComponent(playerId)}`} replace />;
+};
+
+const LegacyRouteRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={legacyPath(location.pathname) + location.search + location.hash} state={location.state} replace />;
 };
 
 const AppContent: React.FC = () => {
@@ -84,18 +91,21 @@ const AppContent: React.FC = () => {
           <Route path="/pitches" element={<PitchesView />} />
           <Route path="/pitches/:pitchId/book" element={<PitchesView />} />
           <Route path="/pitches/:pitchId" element={<PitchesView />} />
-          <Route path="/recruitment" element={<RecruitmentView />} />
-          <Route path="/recruitment/:adId" element={<RecruitmentView />} />
+          <Route path="/recruitment/*" element={<LegacyRouteRedirect />} />
+          <Route path="/mercato" element={<RecruitmentView />} />
+          <Route path="/mercato/:adId" element={<RecruitmentView />} />
           <Route path="/marketplace" element={<MarketplaceView />} />
           <Route path="/marketplace/new" element={<MarketplaceView />} />
           <Route path="/marketplace/:listingId" element={<MarketplaceView />} />
           <Route path="/pitches/new" element={<PitchesView />} />
-          <Route path="/profile" element={<ProfileView />} />
-          <Route path="/profile/edit-cv" element={<ProfileView />} />
-          <Route path="/profile/bookings" element={<ProfileView />} />
-          <Route path="/profile/bookings/:bookingId" element={<ProfileView />} />
-          <Route path="/profile/applications" element={<ProfileView />} />
-          <Route path="/notifications" element={<HomeView />} />
+          <Route path="/profile" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/edit-cv" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/bookings" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/bookings/:bookingId" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/applications" element={<LegacyRouteRedirect />} />
+          <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
+          <Route path="/settings/*" element={<SettingsView />} />
+          <Route path="/notifications" element={<Navigate to="/settings/notifications" replace />} />
           <Route path="/stats" element={<StatsView />} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

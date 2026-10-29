@@ -53,10 +53,10 @@ export const PlayerProfileView: React.FC = () => {
         {player.isAvailableForTransfer && <span className="rounded-full bg-[#ecfdf5] px-3 py-2 text-xs font-bold text-[#059669]">{t('players.available')}</span>}
       </header>
 
-      {player.bio && <section className="rounded-3xl border border-pitch-line bg-white p-5 text-sm leading-relaxed text-slate-600 shadow-xs md:p-6"><h2 className="mb-2 font-extrabold text-pitch-ink">{t('players.about')}</h2>{player.bio}</section>}
+      {player.bio && <section className="rounded-3xl border border-pitch-line bg-white p-5 text-sm leading-relaxed text-slate-600 shadow-xs md:p-6"><h2 className="card-title mb-2 font-extrabold text-pitch-ink">{t('players.about')}</h2>{player.bio}</section>}
       <PlayerCareerPanel player={player} />
       <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
-        <h2 className="text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
+        <h2 className="card-title text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
         {player.previousClubs.length ? (
           <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">
             {player.previousClubs.map((club) => {

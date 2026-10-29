@@ -11,6 +11,9 @@ export interface UserRecord {
   roles?: string[];
   favoriteTeamIds?: string[];
   favoriteMatchIds?: string[];
+  favoritePlayerIds?: string[];
+  favoriteTournamentIds?: string[];
+  preferences?: { language?: 'fr' | 'en' | 'mg'; showPersonalActivity?: boolean };
   dateOfBirth?: string;
   age?: number;
   sportsCv?: SportsCvRecord;

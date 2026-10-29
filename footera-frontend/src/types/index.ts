@@ -398,6 +398,7 @@ export interface Application {
 }
 
 export interface MarketplaceListing {
+  isMine?: boolean;
   id: string;
   title: string;
   category: string;
@@ -468,6 +469,8 @@ export interface UserProfile {
   favoriteTeamIds: string[];
   favoriteMatchIds: string[];
   favoriteTournamentIds: string[];
+  favoritePlayerIds?: string[];
+  preferences?: { language?: 'fr' | 'en' | 'mg'; showPersonalActivity?: boolean };
   sportsCv: {
     height: number;
     weight: number;

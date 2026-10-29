@@ -12,7 +12,7 @@ export const MobileNav: React.FC = () => {
     { label: t('nav.home'), section: 'home', icon: Home },
     { label: t('nav.players'), section: 'players', icon: Compass },
     { label: t('nav.matches'), section: 'matches', icon: Trophy },
-    { label: t('nav.profileShort'), section: 'profile', icon: User },
+    { label: t('nav.settings'), section: 'settings', icon: User },
   ];
 
   return (
@@ -23,9 +23,7 @@ export const MobileNav: React.FC = () => {
       <div className="grid grid-cols-4 h-16 max-w-md mx-auto items-center">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive =
-            activeSection === tab.section ||
-            (tab.label === 'Explorer' && (activeSection === 'players' || activeSection === 'teams'));
+          const isActive = activeSection === tab.section;
 
           return (
             <button

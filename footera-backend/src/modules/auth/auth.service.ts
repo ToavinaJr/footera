@@ -139,6 +139,41 @@ export class AuthService {
     return { ...safeUser, age: calculateAge(user.dateOfBirth) };
   }
 
+  async listSessions(userId: string, currentSessionId: string) {
+    return (await this.records.listUserSessions(userId)).filter((session) => Date.parse(session.expiresAt) > Date.now())
+      .map((session) => ({ id: session.id, expiresAt: session.expiresAt, current: session.id === currentSessionId }));
+  }
+
+  async revokeSession(userId: string, id: string) {
+    const session = await this.records.find('authSessions', id);
+    if (!session || session.userId !== userId) throw new UnauthorizedException('Session introuvable.');
+    await this.records.consumeAuthSession(id);
+    return { success: true };
+  }
+
+  async changePassword(userId: string, body: unknown) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestException('Formulaire invalide.');
+    const input = body as Record<string, unknown>;
+    if (Object.keys(input).some((key) => !['currentPassword', 'newPassword'].includes(key))
+      || typeof input.currentPassword !== 'string' || input.currentPassword.length > 256
+      || typeof input.newPassword !== 'string' || input.newPassword.length < 12 || input.newPassword.length > 256) {
+      throw new BadRequestException('Le nouveau mot de passe doit contenir entre 12 et 256 caractères.');
+    }
+    const now = new Date();
+    const bucket = Math.floor(now.getTime() / LOGIN_FAILURE_WINDOW_MS);
+    const key = createHash('sha256').update(`password-change:${userId}:${bucket}`).digest('hex');
+    if (await this.records.getLoginFailureCount(key, now) >= LOGIN_FAILURE_LIMIT) throw new HttpException('Trop de tentatives.', HttpStatus.TOO_MANY_REQUESTS);
+    const user = await this.records.find('users', userId);
+    const credential = user ? await this.records.find('authCredentials', user.email.toLowerCase()) : null;
+    if (!user || !credential || !await this.verifyPassword(input.currentPassword, credential.passwordHash)) {
+      await this.records.recordLoginFailure(key, now, new Date((bucket + 1) * LOGIN_FAILURE_WINDOW_MS));
+      throw new UnauthorizedException('Mot de passe actuel incorrect.');
+    }
+    const hash = await this.hashPassword(input.newPassword);
+    if (!await this.records.changePasswordAndRevokeSessions(user.email.toLowerCase(), userId, credential.passwordHash, hash)) throw new ConflictException('Le mot de passe a déjà été modifié. Reconnectez-vous.');
+    return { success: true };
+  }
+
   verifyToken(token: string): { id: string; sessionId: string } {
     try {
       if (token.length > 4096) throw new Error('Invalid token');

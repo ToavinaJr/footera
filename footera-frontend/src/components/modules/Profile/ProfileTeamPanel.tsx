@@ -112,7 +112,7 @@ export function ProfileTeamPanel({ currentTeamId, currentTeamName }: ProfileTeam
   return <section className="overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
     <header className="flex items-start gap-3 border-b border-pitch-line bg-pitch-panel/70 p-5 md:p-6">
       <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-pitch-primary shadow-xs"><Users className="h-5 w-5" aria-hidden="true" /></span>
-      <div className="min-w-0"><h2 className="text-lg font-extrabold text-pitch-ink">{t('profile.teamDiscoveryTitle')}</h2><p className="mt-1 text-sm leading-6 text-slate-600">{t('profile.teamDiscoveryDescription')}</p></div>
+      <div className="min-w-0"><h2 className="card-title text-lg font-extrabold text-pitch-ink">{t('profile.teamDiscoveryTitle')}</h2><p className="mt-1 text-sm leading-6 text-slate-600">{t('profile.teamDiscoveryDescription')}</p></div>
     </header>
 
     {(activeTeamId || activeTeamName) && <div className="mx-5 mt-5 flex flex-col gap-3 rounded-2xl border border-pitch-line bg-pitch-light/60 p-4 sm:mx-6 sm:flex-row sm:items-center sm:justify-between">
@@ -142,7 +142,7 @@ export function ProfileTeamPanel({ currentTeamId, currentTeamName }: ProfileTeam
     </div>
 
     {managedTeam && <div className="border-t border-pitch-line p-5 md:p-6">
-      <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-pitch-primary" aria-hidden="true" /><h3 className="font-bold text-pitch-ink">{t('profile.teamRequestsInbox', { team: managedTeam.name })}</h3></div>
+      <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-pitch-primary" aria-hidden="true" /><h3 className="card-title font-bold text-pitch-ink">{t('profile.teamRequestsInbox', { team: managedTeam.name })}</h3></div>
       {isLoadingRequests ? <p className="mt-3 text-sm text-slate-500">{t('common.loading')}</p> : incomingRequests.length === 0 ? <p className="mt-3 text-sm text-slate-500">{t('profile.noPendingTeamRequests')}</p> : <ul className="mt-3 space-y-3">{incomingRequests.map((request) => <li key={request.id} className="flex min-w-0 flex-col gap-3 rounded-2xl bg-pitch-panel p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0"><EntityLink section="players" id={request.playerId} className="font-bold text-pitch-ink hover:text-pitch-primary">{request.playerName}</EntityLink><p className="mt-1 break-words text-sm text-slate-600">{request.message}</p></div>
         <div className="flex shrink-0 gap-2"><button type="button" onClick={() => void respondToRequest(request, true)} disabled={Boolean(pendingActionId)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-pitch-action px-3 py-2 text-sm font-bold text-white disabled:opacity-50"><Check className="h-4 w-4" aria-hidden="true" />{t('profile.acceptTeamRequest')}</button><button type="button" onClick={() => void respondToRequest(request, false)} disabled={Boolean(pendingActionId)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-pitch-line bg-white px-3 py-2 text-sm font-bold text-slate-700 disabled:opacity-50"><X className="h-4 w-4" aria-hidden="true" />{t('profile.declineTeamRequest')}</button></div>

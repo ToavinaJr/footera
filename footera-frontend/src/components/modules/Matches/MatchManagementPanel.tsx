@@ -133,7 +133,7 @@ export const MatchManagementPanel: React.FC<MatchManagementPanelProps> = ({ matc
   return (
     <section className="space-y-3 rounded-2xl border border-pitch-line bg-pitch-panel p-4" aria-label={t('matches.manageTitle')}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="flex items-center gap-2 text-sm font-bold text-pitch-ink">
+        <h3 className="card-title flex items-center gap-2 text-sm font-bold text-pitch-ink">
           <Shield className="h-4 w-4 text-pitch-primary" />{t('matches.manageTitle')}
         </h3>
         <div className="flex flex-wrap gap-2">
