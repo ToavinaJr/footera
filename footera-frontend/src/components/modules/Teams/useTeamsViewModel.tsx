@@ -6,7 +6,7 @@ import { useTranslation } from '../../../i18n';
 import { statsService } from '../../../services/statsService';
 import { teamsService } from '../../../services/teamsService';
 import { Club,Team,TopAssisterItem,TopScorerItem } from '../../../types';
-import { useListPagination } from '../../common/ListPage';
+import { useListPagination } from '../../../hooks/useListPagination';
 
 /** Data, URL state and mutations shared by the list and its routed dialogs. */
 export function useTeamsViewModel() {

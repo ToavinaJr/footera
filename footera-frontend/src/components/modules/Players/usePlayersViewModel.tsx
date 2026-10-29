@@ -7,7 +7,7 @@ import { useTranslation } from '../../../i18n';
 import { playersService } from '../../../services/playersService';
 import { teamsService } from '../../../services/teamsService';
 import { Player,Team,TeamInvitationStatus } from '../../../types';
-import { useListPagination } from '../../common/ListPage';
+import { useListPagination } from '../../../hooks/useListPagination';
 
 /** Data, URL state and mutations shared by the list and its routed dialogs. */
 export function usePlayersViewModel() {

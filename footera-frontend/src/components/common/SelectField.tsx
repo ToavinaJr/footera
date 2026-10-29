@@ -228,7 +228,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
     : null;
 
   return (
-    <div className="relative w-full min-w-0">
+    <div className="relative min-w-0">
       <button
         id={id}
         ref={buttonRef}

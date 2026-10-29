@@ -8,7 +8,7 @@ import { useTranslation } from '../../../i18n';
 import { BookingQuote,bookingsService } from '../../../services/bookingsService';
 import { CreatePitchInput,pitchesService } from '../../../services/pitchesService';
 import { Pitch,PitchSlot,SurfaceType } from '../../../types';
-import { useListPagination } from '../../common/ListPage';
+import { useListPagination } from '../../../hooks/useListPagination';
 
 const PITCH_IMAGE_PRESETS = [
   {

@@ -11,7 +11,7 @@ import { CreateTournamentInput,tournamentsService } from '../../../services/tour
 import type { CatalogOptions } from '../../../types';
 import { Team,TopAssisterItem,TopScorerItem,Tournament,TournamentStadium } from '../../../types';
 import { getTodayDateInputValue } from '../../../utils/date';
-import { useListPagination } from '../../common/ListPage';
+import { useListPagination } from '../../../hooks/useListPagination';
 
 const TOURNAMENT_BANNER_PRESETS = [
   {

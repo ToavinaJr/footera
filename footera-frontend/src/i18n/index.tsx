@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SelectField } from '../components/common/SelectField';
 import { screenMessages } from './screens';
+import { LanguageContext } from './LanguageContext';
+import type { Language } from './types';
 
-export type Language = 'mg' | 'en' | 'fr';
+export type { Language } from './types';
+export { useTranslation } from './useTranslation';
 
 const messages = {
   fr: {
@@ -144,6 +147,54 @@ const messages = {
     'landing.featureMatches': 'Matchs et tournois', 'landing.featureMatchesDescription': 'Suivez les compétitions, les résultats et les statistiques.',
     'landing.featurePitches': 'Terrains', 'landing.featurePitchesDescription': 'Trouvez un terrain, consultez ses disponibilités et réservez vos créneaux.',
     'landing.footer': 'Footera — Faites grandir le football, ensemble.',
+    'landing.howItWorksTitle': 'Comment ça marche ?',
+    'landing.howItWorksDescription': 'Trois étapes simples pour rejoindre la communauté.',
+    'landing.step1Title': 'Créez votre profil',
+    'landing.step1Description': 'Inscrivez-vous et complétez votre CV sportif avec vos statistiques et votre parcours.',
+    'landing.step2Title': 'Rejoignez une équipe',
+    'landing.step2Description': 'Trouvez un club, postulez à des offres de recrutement et intégrez une équipe locale.',
+    'landing.step3Title': 'Jouez et progressez',
+    'landing.step3Description': 'Participez aux matchs, tournois et suivez votre évolution en temps réel.',
+    'landing.statsTitle': 'La communauté en chiffres',
+    'landing.statsPlayers': 'Joueurs inscrits',
+    'landing.statsTeams': 'Équipes actives',
+    'landing.statsMatches': 'Matchs joués',
+    'landing.statsPitches': 'Terrains référencés',
+    'landing.testimonialsTitle': 'Ce qu\'ils en disent',
+    'landing.testimonialsDescription': 'Des joueurs et clubs partagent leur expérience avec Footera.',
+    'landing.testimonial1Name': 'Andry R.',
+    'landing.testimonial1Role': 'Capitaine, Betsileo FC',
+    'landing.testimonial1Text': 'Grâce à Footera, j\'ai trouvé ma nouvelle équipe en une semaine. L\'application m\'a aussi aidé à suivre mes statistiques sur toute la saison.',
+    'landing.testimonial2Name': 'Nomena H.',
+    'landing.testimonial2Role': 'Gardienne de but, Iarivo Dames',
+    'landing.testimonial2Text': 'La gestion des matchs et des convocations est super simple. Mon coach peut relancer toute l\'équipe d\'un seul clic.',
+    'landing.testimonial3Name': 'Tojo M.',
+    'landing.testimonial3Role': 'Organisateur de tournois, Ligue Matsiatra',
+    'landing.testimonial3Text': 'J\'ai organisé deux tournois avec Footera. Le suivi des scores, des buteurs et le classement sont automatiques. Un vrai gain de temps.',
+    'landing.ctaTitle': 'Prêt à rejoindre la communauté ?',
+    'landing.ctaDescription': 'Créez votre compte gratuitement et accédez à tout l\'écosystème football local.',
+    'landing.ctaButton': 'Créer mon compte gratuitement',
+    'landing.footerAbout': 'La plateforme qui rassemble joueurs, clubs, matchs, tournois et terrains pour le football local.',
+    'landing.footerProduct': 'Produit',
+    'landing.footerCommunity': 'Communauté',
+    'landing.footerLegal': 'Légal',
+    'landing.footerMatches': 'Matchs',
+    'landing.footerTournaments': 'Tournois',
+    'landing.footerPitches': 'Terrains',
+    'landing.footerMarketplace': 'Marketplace',
+    'landing.footerPlayers': 'Joueurs',
+    'landing.footerTeams': 'Équipes',
+    'landing.footerRecruitment': 'Mercato',
+    'landing.footerPrivacy': 'Confidentialité',
+    'landing.footerTerms': 'Conditions d\'utilisation',
+    'landing.footerCopyright': '© {year} Footera. Tous droits réservés.',
+    'landing.moreFeatures': 'Et bien plus encore…',
+    'landing.featureMarketplace': 'Marketplace',
+    'landing.featureMarketplaceDescription': 'Achetez et vendez crampons, maillots et équipements entre passionnés.',
+    'landing.featureRecruitment': 'Mercato et recrutement',
+    'landing.featureRecruitmentDescription': 'Publiez des offres, postulez et trouvez les talents pour votre équipe.',
+    'landing.featureStats': 'Statistiques',
+    'landing.featureStatsDescription': 'Suivez vos performances, classements des buteurs et passeurs.',
   },
   en: {
     ...screenMessages.en,
@@ -280,6 +331,54 @@ const messages = {
     'landing.featureMatches': 'Matches and tournaments', 'landing.featureMatchesDescription': 'Follow competitions, results and statistics.',
     'landing.featurePitches': 'Pitches', 'landing.featurePitchesDescription': 'Find a pitch, check availability and book a time slot.',
     'landing.footer': 'Footera — Growing football together.',
+    'landing.howItWorksTitle': 'How it works',
+    'landing.howItWorksDescription': 'Three simple steps to join the community.',
+    'landing.step1Title': 'Create your profile',
+    'landing.step1Description': 'Sign up and build your sports CV with your stats and career history.',
+    'landing.step2Title': 'Join a team',
+    'landing.step2Description': 'Find a club, apply for recruitment offers and join a local team.',
+    'landing.step3Title': 'Play and grow',
+    'landing.step3Description': 'Compete in matches, tournaments and track your progress in real time.',
+    'landing.statsTitle': 'The community in numbers',
+    'landing.statsPlayers': 'Registered players',
+    'landing.statsTeams': 'Active teams',
+    'landing.statsMatches': 'Matches played',
+    'landing.statsPitches': 'Listed pitches',
+    'landing.testimonialsTitle': 'What they say',
+    'landing.testimonialsDescription': 'Players and clubs share their experience with Footera.',
+    'landing.testimonial1Name': 'Andry R.',
+    'landing.testimonial1Role': 'Captain, Betsileo FC',
+    'landing.testimonial1Text': 'Thanks to Footera, I found my new team in a week. The app also helped me track my stats throughout the season.',
+    'landing.testimonial2Name': 'Nomena H.',
+    'landing.testimonial2Role': 'Goalkeeper, Iarivo Dames',
+    'landing.testimonial2Text': 'Managing matches and call-ups is super easy. My coach can remind the whole team with a single click.',
+    'landing.testimonial3Name': 'Tojo M.',
+    'landing.testimonial3Role': 'Tournament organizer, Matsiatra League',
+    'landing.testimonial3Text': 'I organized two tournaments with Footera. Score tracking, top scorers and rankings are all automatic. A real time-saver.',
+    'landing.ctaTitle': 'Ready to join the community?',
+    'landing.ctaDescription': 'Create your free account and access the entire local football ecosystem.',
+    'landing.ctaButton': 'Create my free account',
+    'landing.footerAbout': 'The platform that brings players, clubs, matches, tournaments and pitches together for local football.',
+    'landing.footerProduct': 'Product',
+    'landing.footerCommunity': 'Community',
+    'landing.footerLegal': 'Legal',
+    'landing.footerMatches': 'Matches',
+    'landing.footerTournaments': 'Tournaments',
+    'landing.footerPitches': 'Pitches',
+    'landing.footerMarketplace': 'Marketplace',
+    'landing.footerPlayers': 'Players',
+    'landing.footerTeams': 'Teams',
+    'landing.footerRecruitment': 'Transfers',
+    'landing.footerPrivacy': 'Privacy',
+    'landing.footerTerms': 'Terms of use',
+    'landing.footerCopyright': '© {year} Footera. All rights reserved.',
+    'landing.moreFeatures': 'And much more…',
+    'landing.featureMarketplace': 'Marketplace',
+    'landing.featureMarketplaceDescription': 'Buy and sell boots, shirts and equipment between enthusiasts.',
+    'landing.featureRecruitment': 'Transfers and recruitment',
+    'landing.featureRecruitmentDescription': 'Post offers, apply and find talents for your team.',
+    'landing.featureStats': 'Statistics',
+    'landing.featureStatsDescription': 'Track your performance, top scorers and assists rankings.',
   },
   mg: {
     ...screenMessages.mg,
@@ -419,12 +518,58 @@ const messages = {
     'landing.featureMatches': 'Lalao sy fifaninanana', 'landing.featureMatchesDescription': 'Araho ny fifaninanana, vokatra ary antontan’isa.',
     'landing.featurePitches': 'Kianja', 'landing.featurePitchesDescription': 'Mitadiava kianja, jereo ny fotoana malalaka ary mamandriha fotoana.',
     'landing.footer': 'Footera — Ampitomboy miaraka ny baolina kitra.',
+    'landing.howItWorksTitle': 'Ahoana ny fomba fiasany?',
+    'landing.howItWorksDescription': 'Dingana telo tsotra hidirana amin\'ny vondrom-piarahamonina.',
+    'landing.step1Title': 'Amboary ny mombamomba anao',
+    'landing.step1Description': 'Misoratra anarana ary fenoy ny CV ara-panatanjahantena miaraka amin\'ny antontanisanao sy ny tantaranao.',
+    'landing.step2Title': 'Midira amin\'ny ekipa iray',
+    'landing.step2Description': 'Tadiavo ny klioba, mangataha amin\'ny tolotra fitadiavana mpilalao ary midira amin\'ny ekipa eto an-toerana.',
+    'landing.step3Title': 'Milalao ary mandroso',
+    'landing.step3Description': 'Mandraisa anjara amin\'ny lalao, fifaninanana ary araho ny fivoaranao mivantana.',
+    'landing.statsTitle': 'Ny vondrom-piarahamonina amin\'ny isa',
+    'landing.statsPlayers': 'Mpilalao nisoratra anarana',
+    'landing.statsTeams': 'Ekipa mavitrika',
+    'landing.statsMatches': 'Lalao natao',
+    'landing.statsPitches': 'Kianja voatanisa',
+    'landing.testimonialsTitle': 'Ny filazan\'izy ireo',
+    'landing.testimonialsDescription': 'Mpilalao sy klioba mizara ny traikefany amin\'ny Footera.',
+    'landing.testimonial1Name': 'Andry R.',
+    'landing.testimonial1Role': 'Kapiteny, Betsileo FC',
+    'landing.testimonial1Text': 'Noho ny Footera, nahita ekipa vaovao aho tao anatin\'ny herinandro. Nanampy ahy nanaraka ny antontanisako nandritra ny vanim-potoana manontolo koa.',
+    'landing.testimonial2Name': 'Nomena H.',
+    'landing.testimonial2Role': 'Mpiaro, Iarivo Dames',
+    'landing.testimonial2Text': 'Mora dia mora ny fitantanana ny lalao sy ny antso. Ny mpanazatra dia afaka mampahatsiahy ny ekipa manontolo amin\'ny tsindry iray.',
+    'landing.testimonial3Name': 'Tojo M.',
+    'landing.testimonial3Role': 'Mpikarakara fifaninanana, Ligy Matsiatra',
+    'landing.testimonial3Text': 'Nanatontosa fifaninanana roa aho tamin\'ny Footera. Automatika ny fanaraha-maso ny isa, ny mpanao baolina ary ny filaharana. Tena manamora asa.',
+    'landing.ctaTitle': 'Vonona ny hiditra amin\'ny vondrom-piarahamonina?',
+    'landing.ctaDescription': 'Amorony maimaim-poana ny kaontinao ary midira amin\'ny tontolo baolina kitra eto an-toerana.',
+    'landing.ctaButton': 'Hamorona ny kaontiko maimaim-poana',
+    'landing.footerAbout': 'Ny sehatra ampiraisina ny mpilalao, klioba, lalao, fifaninanana ary kianja ho an\'ny baolina kitra eto an-toerana.',
+    'landing.footerProduct': 'Vokatra',
+    'landing.footerCommunity': 'Vondrom-piarahamonina',
+    'landing.footerLegal': 'Ara-dalàna',
+    'landing.footerMatches': 'Lalao',
+    'landing.footerTournaments': 'Fifaninanana',
+    'landing.footerPitches': 'Kianja',
+    'landing.footerMarketplace': 'Tsena',
+    'landing.footerPlayers': 'Mpilalao',
+    'landing.footerTeams': 'Ekipa',
+    'landing.footerRecruitment': 'Fifindrana',
+    'landing.footerPrivacy': 'Tsiambaratelo',
+    'landing.footerTerms': 'Fepetra fampiasana',
+    'landing.footerCopyright': '© {year} Footera. Zo rehetra voatokana.',
+    'landing.moreFeatures': 'Ary maro hafa koa…',
+    'landing.featureMarketplace': 'Tsena',
+    'landing.featureMarketplaceDescription': 'Mividiana sy amidio kiraro, akanjo ary fitaovana eo amin\'ny tia baolina kitra.',
+    'landing.featureRecruitment': 'Fifindrana sy fitadiavana mpilalao',
+    'landing.featureRecruitmentDescription': 'Apetraho ny tolotra, mangataha ary tadiavo ny talenta ho an\'ny ekipanao.',
+    'landing.featureStats': 'Antontanisa',
+    'landing.featureStatsDescription': 'Araho ny fahombiazan\'ny, filaharan\'ny mpanao baolina sy mpanome baolina.',
   },
 } as const;
 
 type MessageKey = keyof typeof messages.fr;
-type LanguageContextValue = { language: Language; setLanguage: (language: Language) => void; t: (key: MessageKey, values?: Record<string, string | number>) => string };
-const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 function isLanguage(value: string | null): value is Language {
   return value === 'mg' || value === 'en' || value === 'fr';
@@ -449,12 +594,13 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
   }, []);
 
-  const value = useMemo<LanguageContextValue>(() => ({
+  const value = useMemo(() => ({
     language,
     setLanguage,
-    t: (key, values) => {
+    t: (key: string, values?: Record<string, string | number>) => {
+      const k = key as MessageKey;
       const localizedMessages = messages[language] as Partial<Record<MessageKey, string>>;
-      const message = localizedMessages[key] ?? messages.fr[key];
+      const message = localizedMessages[k] ?? messages.fr[k];
       return Object.entries(values ?? {}).reduce((result, [name, value]) => result.replaceAll(`{${name}}`, String(value)), message);
     },
   }), [language, setLanguage]);
@@ -462,14 +608,8 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };
 
-export function useTranslation(): LanguageContextValue {
-  const context = useContext(LanguageContext);
-  if (!context) throw new Error('useTranslation must be used within LanguageProvider.');
-  return context;
-}
-
 export const LanguageSwitcher: React.FC = () => {
-  const { language, setLanguage, t } = useTranslation();
+  const { language, setLanguage, t } = React.useContext(LanguageContext)!;
   return (
     <label className="inline-flex min-w-44 items-center gap-2 whitespace-nowrap text-xs font-semibold text-slate-600">
       <span>{t('language.label')}</span>

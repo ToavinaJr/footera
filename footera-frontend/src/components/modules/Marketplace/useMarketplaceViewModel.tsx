@@ -7,7 +7,7 @@ import { useTranslation } from '../../../i18n';
 import { catalogsService } from '../../../services/catalogsService';
 import { CreateListingInput,marketplaceService } from '../../../services/marketplaceService';
 import { MarketplaceListing } from '../../../types';
-import { useListPagination } from '../../common/ListPage';
+import { useListPagination } from '../../../hooks/useListPagination';
 
 const MARKETPLACE_IMAGE_PRESETS = [
   {

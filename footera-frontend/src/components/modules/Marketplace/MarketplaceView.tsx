@@ -66,8 +66,8 @@ export const MarketplaceView: React.FC = () => {
 
       {/* Items Grid */}
       <ListToolbar mine={mine} onMine={setMine}>
-        <SelectField value={condition} onChange={(event) => setCondition(event.target.value)} aria-label={t('market.condition')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.condition')}</option>{conditions.map((item) => <option key={item}>{item}</option>)}</SelectField>
-        <SelectField value={brand} onChange={(event) => setBrand(event.target.value)} aria-label={t('market.brand')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.brand')}</option>{brands.map((item) => <option key={item}>{item}</option>)}</SelectField>
+        <SelectField value={condition} onChange={(event) => setCondition(event.target.value)} aria-label={t('market.condition')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.condition')}</option>{conditions.map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
+        <SelectField value={brand} onChange={(event) => setBrand(event.target.value)} aria-label={t('market.brand')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="">{t('market.brand')}</option>{brands.map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
         <input type="number" min="0" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} aria-label={t('market.price')} placeholder={t('market.price')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
         <SelectField value={sort} onChange={(event) => setSort(event.target.value)} aria-label={t('list.sort')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="recent">{t('list.recent')}</option><option value="price">{t('market.price')}</option><option value="name">{t('list.name')}</option></SelectField>
       </ListToolbar>
@@ -130,7 +130,7 @@ export const MarketplaceView: React.FC = () => {
                     </span>
                   </div>
 
-                  <h3 className="card-title text-sm font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors line-clamp-1">
+                  <h3 className="text-sm font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors line-clamp-1">
                     {item.title}
                   </h3>
 

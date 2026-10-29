@@ -7,7 +7,7 @@ import { useTranslation } from '../../../i18n';
 import { catalogsService } from '../../../services/catalogsService';
 import { recruitmentService } from '../../../services/recruitmentService';
 import { Application,RecruitmentAd } from '../../../types';
-import { useListPagination } from '../../common/ListPage';
+import { useListPagination } from '../../../hooks/useListPagination';
 
 /** Data, URL state and mutations shared by the list and its routed dialogs. */
 export function useRecruitmentViewModel() {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from '../../i18n';
-import { useUrlState } from '../../hooks/useUrlState';
 
 export const ListPageLayout: React.FC<React.PropsWithChildren> = ({ children }) => (
   <div className="page-enter space-y-6 pb-16">{children}</div>
@@ -21,13 +20,6 @@ export function ListError({ error, onRetry }: { error: Error | string | null; on
     <span>{error instanceof Error ? error.message : error}</span>
     <button type="button" onClick={onRetry} className="min-h-11 rounded-xl border px-4 font-bold">{t('list.retry')}</button>
   </div>;
-}
-
-export function useListPagination<T>(items: T[], pageSize = 12) {
-  const [rawPage, setPage] = useUrlState<string>('page', '1');
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  const page = Math.min(totalPages, Math.max(1, Number.isSafeInteger(Number(rawPage)) ? Number(rawPage) : 1));
-  return { items: items.slice((page - 1) * pageSize, page * pageSize), page, totalPages, total: items.length, setPage: (value: number) => setPage(String(value)) };
 }
 
 export function Pagination({ page, totalPages, total, setPage }: { page: number; totalPages: number; total: number; setPage: (value: number) => void }) {
