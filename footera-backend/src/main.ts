@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import express from 'express';
 import { resolve } from 'node:path';
@@ -6,7 +7,16 @@ import { AppModule } from './app.module.js';
 import { normalizeOriginList } from './utils/text.utils.js';
 import { RequestBodyValidationPipe } from './common/pipes/request-body-validation.pipe.js';
 
+const logger = new Logger('Bootstrap');
+
 async function bootstrap() {
+  logger.log(JSON.stringify({
+    event: 'bootstrap:start',
+    nodeEnv: process.env.NODE_ENV || 'undefined',
+    vercelEnv: process.env.VERCEL_ENV || 'undefined',
+    databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
+    jwtSecretConfigured: Boolean(process.env.JWT_SECRET),
+  }));
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new RequestBodyValidationPipe());
   const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
@@ -39,6 +49,16 @@ async function bootstrap() {
   const port = process.env.NODE_ENV === 'production'
     ? Number(process.env.PORT) || 3000
     : 3000;
+  logger.log(JSON.stringify({ event: 'bootstrap:listen', port, frontendOrigins: frontendOrigins.length }));
   await app.listen(port, '0.0.0.0');
+  logger.log(JSON.stringify({ event: 'bootstrap:ready', port }));
 }
-await bootstrap();
+await bootstrap().catch((error: unknown) => {
+  const details = {
+    event: 'bootstrap:failed',
+    name: error instanceof Error ? error.name : 'UnknownError',
+    message: error instanceof Error ? error.message : String(error),
+  };
+  logger.error(JSON.stringify(details), error instanceof Error ? error.stack : undefined);
+  throw error;
+});
