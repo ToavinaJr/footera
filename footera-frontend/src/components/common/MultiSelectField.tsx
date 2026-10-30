@@ -1,54 +1,78 @@
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
-export function MultiSelectField({ label, placeholder, options, value, onChange, className = '' }: {
+interface MultiSelectOption {
+  value: string;
   label: string;
-  placeholder: string;
-  options: string[];
+}
+
+interface MultiSelectFieldProps {
   value: string[];
   onChange: (value: string[]) => void;
+  options: MultiSelectOption[];
+  placeholder: string;
+  ariaLabel: string;
   className?: string;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const listId = useId();
-  const summary = value.length ? `${label} (${value.length})` : placeholder;
+}
+
+export function MultiSelectField({ value, onChange, options, placeholder, ariaLabel, className = '' }: MultiSelectFieldProps) {
+  const id = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [style, setStyle] = useState<React.CSSProperties>();
+  const selectedLabels = options.filter((option) => value.includes(option.value)).map((option) => option.label);
+
+  const updatePosition = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const edge = 12;
+    const width = Math.min(Math.max(rect.width, 220), window.innerWidth - edge * 2);
+    const left = Math.max(edge, Math.min(rect.left, window.innerWidth - width - edge));
+    const below = window.innerHeight - rect.bottom - 8 - edge;
+    const above = rect.top - 8 - edge;
+    const height = Math.min(320, Math.max(below, above));
+    const top = below >= Math.min(220, height) || below >= above ? rect.bottom + 8 : rect.top - height - 8;
+    setStyle({ position: 'fixed', top, left, width, maxHeight: height });
+  };
 
   useEffect(() => {
-    const closeOnOutsideClick = (event: PointerEvent) => {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setIsOpen(false);
+    if (!open) return undefined;
+    updatePosition();
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node) || triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
-    document.addEventListener('pointerdown', closeOnOutsideClick);
-    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
-  }, []);
+    const reposition = () => updatePosition();
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => {
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+      document.removeEventListener('pointerdown', closeOnOutside);
+    };
+  }, [open]);
 
-  return (
-    <div ref={rootRef} className={`relative min-w-0 ${className}`}>
-      <button
-        type="button"
-        aria-label={label}
-        aria-expanded={isOpen}
-        aria-controls={listId}
-        onClick={() => setIsOpen((open) => !open)}
-        className="flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-pitch-line bg-white px-3 text-left text-sm text-pitch-ink transition-colors hover:border-pitch-primary focus-visible:outline-2 focus-visible:outline-pitch-primary"
-      >
-        <span className="truncate">{summary}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-pitch-primary transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-      </button>
-      {isOpen && (
-        <div id={listId} role="group" aria-label={label} className="absolute left-0 top-full z-30 mt-2 max-h-60 w-full min-w-48 overflow-y-auto rounded-xl border border-pitch-line bg-white p-2 shadow-xl">
-          {options.map((option) => {
-            const checked = value.includes(option);
-            return (
-              <label key={option} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-pitch-ink hover:bg-pitch-panel">
-                <input type="checkbox" checked={checked} onChange={() => onChange(checked ? value.filter((item) => item !== option) : [...value, option])} className="h-4 w-4 accent-pitch-primary" />
-                <span className="min-w-0 flex-1">{option}</span>
-              </label>
-            );
-          })}
-          {options.length === 0 && <p className="px-2 py-3 text-xs text-slate-500">{placeholder}</p>}
-        </div>
-      )}
-    </div>
-  );
+  const menu = open && style && typeof document !== 'undefined' ? createPortal(
+    <div ref={menuRef} id={`${id}-options`} role="listbox" aria-label={ariaLabel} aria-multiselectable="true" style={style} className="z-120 overflow-y-auto overscroll-contain rounded-xl border border-pitch-line bg-white p-1 text-sm text-pitch-ink shadow-xl">
+      {options.map((option) => {
+        const selected = value.includes(option.value);
+        return <button key={option.value} type="button" role="option" aria-selected={selected} onClick={() => onChange(selected ? value.filter((item) => item !== option.value) : [...value, option.value])} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-pitch-panel">
+          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${selected ? 'border-pitch-primary bg-pitch-primary text-white' : 'border-slate-300 bg-white'}`}>{selected && <Check className="h-3 w-3" aria-hidden="true" />}</span>
+          <span className="min-w-0 flex-1 whitespace-normal">{option.label}</span>
+        </button>;
+      })}
+    </div>, document.body,
+  ) : null;
+
+  return <>
+    <button ref={triggerRef} type="button" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} aria-controls={`${id}-options`} onClick={() => setOpen((current) => !current)} className={`inline-flex min-h-11 min-w-36 items-center justify-between gap-2 rounded-xl border border-pitch-line bg-white px-3 text-sm text-pitch-ink ${className}`}>
+      <span className="truncate">{selectedLabels.length ? selectedLabels.join(', ') : placeholder}</span>
+      <ChevronDown className={`h-4 w-4 shrink-0 text-pitch-primary transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+    </button>
+    {menu}
+  </>;
 }

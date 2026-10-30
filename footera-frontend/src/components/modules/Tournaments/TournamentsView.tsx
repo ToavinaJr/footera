@@ -4,7 +4,7 @@ import { formatDateForDisplay } from '../../../utils/date';
 import { EmptyState } from '../../common/EmptyState';
 import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
 import { ListToolbar } from '../../common/ListToolbar';
-import { SelectField } from '../../common/SelectField';
+import { MultiSelectField } from '../../common/MultiSelectField';
 import { CardSkeleton } from '../../common/Skeleton';
 import { TournamentsDialogs } from './TournamentsDialogs';
 import { useTournamentsViewModel } from './useTournamentsViewModel';
@@ -12,7 +12,7 @@ import { useTournamentsViewModel } from './useTournamentsViewModel';
 
 export const TournamentsView: React.FC = () => {
   const model = useTournamentsViewModel();
-  const { t, tournamentModal, list, query, setQuery, favorites, setFavorites, mine, setMine, status, setStatus, page, isLoading, detail, selectedTournament, handleOpenCreateTournament } = model;
+  const { t, tournamentModal, list, query, setQuery, favorites, setFavorites, mine, setMine, setStatus, selectedStatuses, page, isLoading, detail, selectedTournament, handleOpenCreateTournament } = model;
 
   return (
     <ListPageLayout>
@@ -38,9 +38,17 @@ export const TournamentsView: React.FC = () => {
       </div>
 
       <ListToolbar query={query} onQuery={setQuery} favorites={favorites} onFavorites={setFavorites} mine={mine} onMine={setMine}>
-        <SelectField value={status} onChange={(event) => setStatus(event.target.value)} aria-label={t('matches.filterAll')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm">
-          <option value="ALL">{t('list.all')}</option><option value="INSCRIPTIONS_OUVERTES">{t('matches.filterUpcoming')}</option><option value="EN_COURS">{t('matches.filterLive')}</option><option value="TERMINE">{t('matches.filterFinished')}</option>
-        </SelectField>
+        <MultiSelectField
+          value={selectedStatuses}
+          onChange={(values) => setStatus(values.length ? values.join(',') : 'ALL')}
+          ariaLabel={t('matches.filterAll')}
+          placeholder={t('list.all')}
+          options={[
+            { value: 'INSCRIPTIONS_OUVERTES', label: t('matches.filterUpcoming') },
+            { value: 'EN_COURS', label: t('matches.filterLive') },
+            { value: 'TERMINE', label: t('matches.filterFinished') },
+          ]}
+        />
       </ListToolbar>
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

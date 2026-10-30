@@ -44,9 +44,10 @@ export function useTournamentsViewModel() {
   const [favorites, setFavorites] = useUrlState<boolean>('favorites', false);
   const [mine, setMine] = useUrlState<boolean>('mine', false);
   const [status, setStatus] = useUrlState<string>('status', 'ALL');
+  const selectedStatuses = status === 'ALL' ? [] : status.split(',').filter(Boolean);
   const page = useListPagination(tournaments.filter((item) => (!query || (item.title + ' ' + item.city).toLocaleLowerCase().includes(query.toLocaleLowerCase()))
     && (!favorites || user?.favoriteTournamentIds?.includes(item.id)) && (!mine || item.canManageGallery)
-    && (status === 'ALL' || item.status === status)));
+    && (selectedStatuses.length === 0 || selectedStatuses.includes(item.status))));
   const [catalogOptions, setCatalogOptions] = useState<CatalogOptions | null>(null);
   const isLoading = list.loading;
 
@@ -224,5 +225,5 @@ export function useTournamentsViewModel() {
     resetCreateTournamentForm();
     tournamentModal.openCreate();
   };
-  return { t, tournamentModal, list, query, setQuery, favorites, setFavorites, mine, setMine, status, setStatus, page, isLoading, detail, selectedTournament, handleOpenCreateTournament, user, catalogOptions, setSelectedTournament, tournModalTab, setTournModalTab, tournScorers, tournAssisters, isRegisterOpen, setIsRegisterOpen, registerTeamId, setRegisterTeamId, teams, ownedPitches, tournamentTeams, tournamentStadiums, isSubmitting, formTitle, setFormTitle, formFormat, setFormFormat, formCity, setFormCity, setFormVenue, formPitchIds, setFormPitchIds, formStartDate, setFormStartDate, formEndDate, setFormEndDate, formMaxTeams, setFormMaxTeams, formEntryFee, setFormEntryFee, formPrizePool, setFormPrizePool, formOrganizer, setFormOrganizer, formBannerUrl, setFormBannerUrl, isCreating, canCreateTournament, handleRegister, handleCreateTournament };
+  return { t, tournamentModal, list, query, setQuery, favorites, setFavorites, mine, setMine, status, setStatus, selectedStatuses, page, isLoading, detail, selectedTournament, handleOpenCreateTournament, user, catalogOptions, setSelectedTournament, tournModalTab, setTournModalTab, tournScorers, tournAssisters, isRegisterOpen, setIsRegisterOpen, registerTeamId, setRegisterTeamId, teams, ownedPitches, tournamentTeams, tournamentStadiums, isSubmitting, formTitle, setFormTitle, formFormat, setFormFormat, formCity, setFormCity, setFormVenue, formPitchIds, setFormPitchIds, formStartDate, setFormStartDate, formEndDate, setFormEndDate, formMaxTeams, setFormMaxTeams, formEntryFee, setFormEntryFee, formPrizePool, setFormPrizePool, formOrganizer, setFormOrganizer, formBannerUrl, setFormBannerUrl, isCreating, canCreateTournament, handleRegister, handleCreateTournament };
 }
