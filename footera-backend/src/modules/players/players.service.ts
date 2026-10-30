@@ -81,9 +81,9 @@ export class PlayersService {
     return enrichedPlayers.filter((player) => {
       const query = filters.query?.toLowerCase();
       return (!query || `${player.name} ${player.city}`.toLowerCase().includes(query))
-        && (!positions.length || positions.includes('Toutes') || positions.includes(player.primaryPosition) || Boolean(player.secondaryPosition && positions.includes(player.secondaryPosition)))
+        && (!positions.length || positions.includes('Toutes') || Boolean(player.primaryPosition && positions.includes(player.primaryPosition)) || Boolean(player.secondaryPosition && positions.includes(player.secondaryPosition)))
         && (!filters.city || filters.city === 'Toutes' || player.city?.toLowerCase() === filters.city.toLowerCase())
-        && (!levels.length || levels.includes('Tous') || levels.includes(player.level))
+        && (!levels.length || levels.includes('Tous') || Boolean(player.level && levels.includes(player.level)))
         && (!filters.transferOnly || player.isAvailableForTransfer);
     });
   }
