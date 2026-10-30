@@ -25,7 +25,9 @@ export function usePlayersViewModel() {
   const [selectedLevel, setSelectedLevel] = useUrlState<string>('level', 'Tous');
   const [onlyTransfer, setOnlyTransfer] = useUrlState<boolean>('available', false);
   const [onlyFavorites, setOnlyFavorites] = useUrlState<boolean>('favorites', false);
-  const list = useResource<Player[]>(JSON.stringify([searchQuery, selectedPosition, selectedLevel, onlyTransfer]), () => playersService.list({ query: searchQuery, position: selectedPosition, level: selectedLevel, transferOnly: onlyTransfer }), []);
+  const selectedPositions = selectedPosition === 'Toutes' ? [] : selectedPosition.split(',').filter(Boolean);
+  const selectedLevels = selectedLevel === 'Tous' ? [] : selectedLevel.split(',').filter(Boolean);
+  const list = useResource<Player[]>(JSON.stringify([searchQuery, selectedPositions, selectedLevels, onlyTransfer]), () => playersService.list({ query: searchQuery, position: selectedPositions, level: selectedLevels, transferOnly: onlyTransfer }), []);
   const players = list.data;
   const isLoading = list.loading;
   const page = useListPagination(players.filter((player) => !onlyFavorites || user?.favoritePlayerIds?.includes(player.id)));
@@ -86,6 +88,7 @@ export function usePlayersViewModel() {
     }
   };
 
-  const positionsList = ['Toutes', ...positions];
-  return { t, navigateToResource, levels, myTeam, isLoadingMyTeam, searchQuery, setSearchQuery, selectedPosition, setSelectedPosition, selectedLevel, setSelectedLevel, onlyTransfer, setOnlyTransfer, onlyFavorites, setOnlyFavorites, list, players, isLoading, page, detail, setSelectedPlayer, setIsInviteOpen, invitationStatuses, positionsList, playerModal, selectedPlayer, profilePlayer, isInviteOpen, inviteMessage, setInviteMessage, isSubmittingInvite, handleSendInvite };
+  const setSelectedPositions = (values: string[]) => setSelectedPosition(values.length ? values.join(',') : 'Toutes');
+  const setSelectedLevels = (values: string[]) => setSelectedLevel(values.length ? values.join(',') : 'Tous');
+  return { t, navigateToResource, levels, myTeam, isLoadingMyTeam, searchQuery, setSearchQuery, selectedPositions, setSelectedPositions, selectedLevels, setSelectedLevels, onlyTransfer, setOnlyTransfer, onlyFavorites, setOnlyFavorites, list, players, isLoading, page, detail, setSelectedPlayer, setIsInviteOpen, invitationStatuses, positions, playerModal, selectedPlayer, profilePlayer, isInviteOpen, inviteMessage, setInviteMessage, isSubmittingInvite, handleSendInvite };
 }

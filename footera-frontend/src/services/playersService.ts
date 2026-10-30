@@ -8,9 +8,9 @@ export interface PlayerOptions {
 
 export interface PlayerFilters {
   query?: string;
-  position?: Position | 'Toutes';
+  position?: Position | 'Toutes' | Position[];
   city?: string;
-  level?: string;
+  level?: string | string[];
   transferOnly?: boolean;
 }
 
@@ -22,9 +22,11 @@ export const playersService = {
   async list(filters?: PlayerFilters): Promise<Player[]> {
     const params = new URLSearchParams();
     if (filters?.query) params.set('q', filters.query);
-    if (filters?.position && filters.position !== 'Toutes') params.set('position', filters.position);
+    if (Array.isArray(filters?.position)) filters.position.forEach((position) => params.append('position', position));
+    else if (filters?.position && filters.position !== 'Toutes') params.set('position', filters.position);
     if (filters?.city && filters.city !== 'Toutes') params.set('city', filters.city);
-    if (filters?.level && filters.level !== 'Tous') params.set('level', filters.level);
+    if (Array.isArray(filters?.level)) filters.level.forEach((level) => params.append('level', level));
+    else if (filters?.level && filters.level !== 'Tous') params.set('level', filters.level);
     if (filters?.transferOnly) params.set('transferOnly', 'true');
     return apiClient<Player[]>(`players?${params.toString()}`);
   },

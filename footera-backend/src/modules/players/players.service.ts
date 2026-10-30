@@ -28,7 +28,7 @@ export class PlayersService {
     return { positions: options.playerPositions, levels: options.playerLevels };
   }
 
-  async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean; competitionId?: string } = {}) {
+  async list(filters: { query?: string; position?: string | string[]; city?: string; level?: string | string[]; transferOnly?: boolean; competitionId?: string } = {}) {
     const [players, users, teams] = await Promise.all([
       this.records.list<PlayerRecord>('players'),
       this.records.list<UserRecord>('users'),
@@ -76,12 +76,14 @@ export class PlayersService {
         })) : [],
       };
     });
+    const positions = (Array.isArray(filters.position) ? filters.position : filters.position?.split(',') ?? []).filter(Boolean);
+    const levels = (Array.isArray(filters.level) ? filters.level : filters.level?.split(',') ?? []).filter(Boolean);
     return enrichedPlayers.filter((player) => {
       const query = filters.query?.toLowerCase();
       return (!query || `${player.name} ${player.city}`.toLowerCase().includes(query))
-        && (!filters.position || filters.position === 'Toutes' || player.primaryPosition === filters.position || player.secondaryPosition === filters.position)
+        && (!positions.length || positions.includes('Toutes') || positions.includes(player.primaryPosition) || Boolean(player.secondaryPosition && positions.includes(player.secondaryPosition)))
         && (!filters.city || filters.city === 'Toutes' || player.city?.toLowerCase() === filters.city.toLowerCase())
-        && (!filters.level || filters.level === 'Tous' || player.level === filters.level)
+        && (!levels.length || levels.includes('Tous') || levels.includes(player.level))
         && (!filters.transferOnly || player.isAvailableForTransfer);
     });
   }

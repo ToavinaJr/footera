@@ -25,9 +25,9 @@ export class PlayersController {
   @Public()
   list(
     @Query('q') query?: string,
-    @Query('position') position?: string,
+    @Query('position') position?: string | string[],
     @Query('city') city?: string,
-    @Query('level') level?: string,
+    @Query('level') level?: string | string[],
     @Query('transferOnly') transferOnly?: string,
   ) {
     return this.players.list({

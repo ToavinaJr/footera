@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '../../common/EmptyState';
 import { FavoriteButton } from '../../common/FavoriteButton';
 import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
-import { SelectField } from '../../common/SelectField';
+import { MultiSelectField } from '../../common/MultiSelectField';
 import { CardSkeleton } from '../../common/Skeleton';
 import { PlayersDialogs } from './PlayersDialogs';
 import { usePlayersViewModel } from './usePlayersViewModel';
@@ -12,7 +12,7 @@ import { usePlayersViewModel } from './usePlayersViewModel';
 export const PlayersView: React.FC = () => {
   const navigate = useNavigate();
   const model = usePlayersViewModel();
-  const { t, navigateToResource, levels, myTeam, isLoadingMyTeam, searchQuery, setSearchQuery, selectedPosition, setSelectedPosition, selectedLevel, setSelectedLevel, onlyTransfer, setOnlyTransfer, onlyFavorites, setOnlyFavorites, list, players, isLoading, page, detail, setSelectedPlayer, setIsInviteOpen, invitationStatuses, positionsList } = model;
+  const { t, navigateToResource, levels, myTeam, isLoadingMyTeam, searchQuery, setSearchQuery, selectedPositions, setSelectedPositions, selectedLevels, setSelectedLevels, onlyTransfer, setOnlyTransfer, onlyFavorites, setOnlyFavorites, list, players, isLoading, page, detail, setSelectedPlayer, setIsInviteOpen, invitationStatuses, positions } = model;
 
   return (
     <ListPageLayout>
@@ -54,30 +54,11 @@ export const PlayersView: React.FC = () => {
           </div>
 
           <div>
-            <SelectField
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
-              aria-label={t('players.filterPosition')}
-              className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary transition-colors outline-hidden"
-            >
-              {positionsList.map((p) => (
-                <option key={p} value={p}>
-                  {p === 'Toutes' ? t('players.allPositions') : p}
-                </option>
-              ))}
-            </SelectField>
+            <MultiSelectField value={selectedPositions} onChange={setSelectedPositions} ariaLabel={t('players.filterPosition')} placeholder={t('players.allPositions')} options={positions.map((position) => ({ value: position, label: position }))} className="w-full bg-pitch-input text-xs md:text-sm" />
           </div>
 
           <div>
-            <SelectField
-              value={selectedLevel}
-              onChange={(e) => setSelectedLevel(e.target.value)}
-              aria-label={t('players.filterLevel')}
-              className="w-full bg-pitch-input border border-pitch-line rounded-full px-4 py-2.5 text-xs md:text-sm text-pitch-ink focus:border-pitch-primary transition-colors outline-hidden"
-            >
-              <option value="Tous">{t('players.allLevels')}</option>
-              {levels.map((level) => <option key={level} value={level}>{level}</option>)}
-            </SelectField>
+            <MultiSelectField value={selectedLevels} onChange={setSelectedLevels} ariaLabel={t('players.filterLevel')} placeholder={t('players.allLevels')} options={levels.map((level) => ({ value: level, label: level }))} className="w-full bg-pitch-input text-xs md:text-sm" />
           </div>
         </div>
       </div>
