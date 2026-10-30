@@ -14,7 +14,11 @@ async function bootstrap() {
     throw new Error('TRUST_PROXY_HOPS must be a non-negative integer.');
   }
   app.getHttpAdapter().getInstance().set('trust proxy', trustProxyHops);
-  const frontendOrigins = normalizeOriginList(process.env.FRONTEND_URL, 'http://localhost:3001');
+  const configuredFrontendOrigins = normalizeOriginList(process.env.FRONTEND_URL, 'http://localhost:3001');
+  const frontendOrigins = [...new Set([
+    ...configuredFrontendOrigins,
+    'https://footera-frontend.vercel.app',
+  ])];
 
   app.enableCors({
     origin: frontendOrigins,
