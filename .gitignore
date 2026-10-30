@@ -56,3 +56,6 @@ Desktop.ini
 *.p12
 *.pfx
 *.jks
+
+.vercel
+.env*

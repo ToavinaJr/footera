@@ -23,6 +23,17 @@ describe('SeedService', () => {
     expect(seedDatabase).not.toHaveBeenCalled();
   });
 
+  it('does not apply demo fixtures in a Vercel production deployment', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('VERCEL_ENV', 'production');
+    const service = new SeedService({} as never);
+
+    await service.onModuleInit();
+
+    expect(seedDatabase).not.toHaveBeenCalled();
+    expect(() => service.resetDemo()).toThrow(ForbiddenException);
+  });
+
   it('synchronizes demo fixtures outside production', async () => {
     vi.stubEnv('NODE_ENV', 'test');
     const prisma = {} as never;
