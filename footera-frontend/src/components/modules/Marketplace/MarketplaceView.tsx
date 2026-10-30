@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { EmptyState } from '../../common/EmptyState';
 import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
 import { ListToolbar } from '../../common/ListToolbar';
+import { MultiSelectField } from '../../common/MultiSelectField';
 import { SelectField } from '../../common/SelectField';
 import { CardSkeleton } from '../../common/Skeleton';
 import { MarketplaceDialogs } from './MarketplaceDialogs';
@@ -57,7 +58,7 @@ export const MarketplaceView: React.FC = () => {
       <div className="relative z-40">
         <ListToolbar mine={mine} onMine={setMine}>
           <MarketplaceMultiSelect label={t('market.condition')} options={conditions} value={condition} onChange={setCondition} />
-          <MarketplaceMultiSelect label={t('market.brand')} options={brands} value={brand} onChange={setBrand} />
+          <MultiSelectField value={brand} onChange={setBrand} ariaLabel={t('market.brand')} placeholder={t('market.brand')} options={brands.map((option) => ({ value: option, label: option }))} searchable searchPlaceholder={t('market.searchBrand')} emptyMessage={t('market.noBrandsFound')} />
           <input type="number" min="0" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} aria-label={t('market.minPrice')} placeholder={t('market.minPrice')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
           <input type="number" min="0" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} aria-label={t('market.maxPrice')} placeholder={t('market.maxPrice')} className="min-h-11 w-32 rounded-xl border border-pitch-line px-3 text-sm" />
           <SelectField value={sort} onChange={(event) => setSort(event.target.value)} aria-label={t('list.sort')} className="min-h-11 rounded-xl border border-pitch-line px-3 text-sm"><option value="recent">{t('list.recent')}</option><option value="price">{t('market.price')}</option><option value="name">{t('list.name')}</option></SelectField>

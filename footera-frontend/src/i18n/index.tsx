@@ -10,6 +10,7 @@ export { useTranslation } from './useTranslation';
 const messages = {
   fr: {
     ...screenMessages.fr,
+    'market.searchBrand': 'Rechercher une marque…', 'market.noBrandsFound': 'Aucune marque trouvée.',
     'profile.editTeamRequest': 'Modifier', 'profile.cancelTeamRequest': 'Annuler la demande', 'profile.teamRequestUpdated': 'Votre demande a été modifiée.', 'profile.teamRequestCancelled': 'Votre demande a été annulée.', 'profile.teamRequestEditError': 'Impossible de modifier la demande.', 'profile.teamRequestCancelError': 'Impossible d’annuler la demande.',
     'teams.editJoinTitle': 'Modifier ma demande pour {team}',
     'teams.joinPosition': 'Poste souhaité *', 'teams.joinPositionPlaceholder': 'Ex. : Avant-centre', 'teams.joinMessage': 'Message au staff technique *', 'teams.joinMessagePlaceholder': 'Ex. : Bonjour coach, je suis disponible pour les entraînements et souhaite intégrer l’équipe…', 'teams.joinCv': 'Votre CV sportif ({position}, {height} cm, {foot}) sera directement envoyé au coach {coach}.', 'teams.joinTitle': 'Rejoindre {team}', 'teams.joinSubtitle': 'Demande d’adhésion pour la division {division}', 'teams.cancel': 'Annuler', 'teams.joinSending': 'Envoi…', 'teams.joinSubmit': 'Envoyer ma demande', 'teams.joinRoster': 'Rejoindre cet effectif',
@@ -201,6 +202,7 @@ const messages = {
   },
   en: {
     ...screenMessages.en,
+    'market.searchBrand': 'Search brands…', 'market.noBrandsFound': 'No brands found.',
     'profile.editTeamRequest': 'Edit', 'profile.cancelTeamRequest': 'Cancel request', 'profile.teamRequestUpdated': 'Your request was updated.', 'profile.teamRequestCancelled': 'Your request was cancelled.', 'profile.teamRequestEditError': 'Could not update the request.', 'profile.teamRequestCancelError': 'Could not cancel the request.',
     'teams.editJoinTitle': 'Edit my request to join {team}',
     'teams.joinPosition': 'Requested position *', 'teams.joinPositionPlaceholder': 'E.g. Striker', 'teams.joinMessage': 'Message to the coaching staff *', 'teams.joinMessagePlaceholder': 'E.g. Hello coach, I am available for training and would like to join the team…', 'teams.joinCv': 'Your sports CV ({position}, {height} cm, {foot}) will be sent directly to coach {coach}.', 'teams.joinTitle': 'Join {team}', 'teams.joinSubtitle': 'Application for the {division} division', 'teams.cancel': 'Cancel', 'teams.joinSending': 'Sending…', 'teams.joinSubmit': 'Send my request', 'teams.joinRoster': 'Join this squad',
@@ -388,6 +390,7 @@ const messages = {
   },
   mg: {
     ...screenMessages.mg,
+    'market.searchBrand': 'Mitadiava marika…', 'market.noBrandsFound': 'Tsy misy marika hita.',
     'profile.editTeamRequest': 'Ovay', 'profile.cancelTeamRequest': 'Foano ny fangatahana', 'profile.teamRequestUpdated': 'Novaina ny fangatahanao.', 'profile.teamRequestCancelled': 'Nofoanana ny fangatahanao.', 'profile.teamRequestEditError': 'Tsy afaka nanova ny fangatahana.', 'profile.teamRequestCancelError': 'Tsy afaka nanafoana ny fangatahana.',
     'teams.editJoinTitle': 'Hanova ny fangatahako hiditra ao amin’ny {team}',
     'teams.joinPosition': 'Toerana irina *', 'teams.joinPositionPlaceholder': 'Ohatra: Mpanafika', 'teams.joinMessage': 'Hafatra ho an’ny mpanazatra *', 'teams.joinMessagePlaceholder': 'Ohatra: Manao ahoana coach, afaka manatrika fanazaran-tena aho ary te hiditra amin’ny ekipa…', 'teams.joinCv': 'Halefa mivantana amin’ny coach {coach} ny CV-nao ({position}, {height} sm, {foot}).', 'teams.joinTitle': 'Hiditra ao amin’ny {team}', 'teams.joinSubtitle': 'Fangatahana hiditra amin’ny fizarana {division}', 'teams.cancel': 'Aoka ihany', 'teams.joinSending': 'Eo am-pandefasana…', 'teams.joinSubmit': 'Alefaso ny fangatahako', 'teams.joinRoster': 'Hiditra amin’ity ekipa ity',
