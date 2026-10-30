@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Post, Body, NotFoundException, HttpCode, HttpStatus, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Patch, Body, NotFoundException, HttpCode, HttpStatus, Delete } from '@nestjs/common';
 import { TeamsService } from '../modules/teams/teams.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
@@ -30,6 +30,16 @@ export class TeamsController {
   @Get('my-join-requests')
   listMyJoinRequests() {
     return this.teams.listMyJoinRequests();
+  }
+
+  @Patch('my-join-requests/:requestId')
+  updateMyJoinRequest(@Param('requestId') requestId: string, @Body() body: { message?: string; position?: string }) {
+    return this.teams.updateMyJoinRequest(requestId, body.message ?? '', body.position ?? '');
+  }
+
+  @Delete('my-join-requests/:requestId')
+  cancelMyJoinRequest(@Param('requestId') requestId: string) {
+    return this.teams.cancelMyJoinRequest(requestId);
   }
 
   @Delete('my-team/membership')

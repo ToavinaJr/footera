@@ -3,11 +3,12 @@ import { formatFiniteNumber } from '../../../utils/numberFormat';
 import { Badge } from '../../common/Badge';
 import { EntityLink } from '../../common/EntityLink';
 import { Modal } from '../../common/Modal';
+import { SelectField } from '../../common/SelectField';
 
 import type { useTeamsViewModel } from './useTeamsViewModel';
 
 export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewModel> }) {
-  const { user, t, navigateToResource, selectedTeam, setSelectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, setRosterTab, teamScorers, teamAssisters, isJoinModalOpen, setIsJoinModalOpen, joinMessage, setJoinMessage, joinPosition, setJoinPosition, isSubmittingJoin, isTeamMember, handleJoinTeam } = model;
+  const { user, t, navigateToResource, selectedTeam, setSelectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, setRosterTab, teamScorers, teamAssisters, isJoinModalOpen, setIsJoinModalOpen, joinMessage, setJoinMessage, joinPosition, setJoinPosition, joinPositionOptions, editingJoinRequest, isSubmittingJoin, isTeamMember, handleJoinTeam } = model;
   return <>
       {/* Roster / Membres de l'équipe Modal */}
       {isRosterModalOpen && selectedTeam && (
@@ -237,7 +238,7 @@ export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewM
         <Modal
           isOpen={isJoinModalOpen}
           onClose={() => setIsJoinModalOpen(false)}
-          title={t('teams.joinTitle', { team: selectedTeam.name })}
+          title={t(editingJoinRequest ? 'teams.editJoinTitle' : 'teams.joinTitle', { team: selectedTeam.name })}
           subtitle={`Demande d'adhésion pour la division ${selectedTeam.division}`}
           maxWidth="md"
         >
@@ -247,7 +248,10 @@ export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewM
             </p>
             <div>
               <label htmlFor="team-join-position" className="block text-xs font-bold text-slate-700 mb-1">{t('teams.joinPosition')}</label>
-              <input id="team-join-position" name="position" required maxLength={100} value={joinPosition} onChange={(e) => setJoinPosition(e.target.value)} placeholder={t('teams.joinPositionPlaceholder')} className="mb-3 w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors" />
+              <SelectField id="team-join-position" name="position" required value={joinPosition} onChange={(event) => setJoinPosition(event.target.value)} className="mb-3 w-full rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-xs text-pitch-ink focus:border-pitch-primary">
+                <option value="" disabled>{t('teams.joinPositionPlaceholder')}</option>
+                {joinPositionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
+              </SelectField>
               <label htmlFor="team-join-message" className="block text-xs font-bold text-slate-700 mb-1">
                 {t('teams.joinMessage')}
               </label>

@@ -5,6 +5,8 @@ import { useUrlState } from '../../../hooks/useUrlState';
 import { useTranslation } from '../../../i18n';
 import { statsService } from '../../../services/statsService';
 import { teamsService } from '../../../services/teamsService';
+import { catalogsService } from '../../../services/catalogsService';
+import type { TeamJoinRequest } from '../../../services/teamsService';
 import { Club,Team,TopAssisterItem,TopScorerItem } from '../../../types';
 import { useListPagination } from '../../../hooks/useListPagination';
 
@@ -37,8 +39,48 @@ export function useTeamsViewModel() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
   const [joinPosition, setJoinPosition] = useState(user?.sportsCv.primaryPosition ?? '');
+  const [joinPositionOptions, setJoinPositionOptions] = useState<string[]>([]);
+  const [myJoinRequests, setMyJoinRequests] = useState<TeamJoinRequest[]>([]);
+  const [editingJoinRequest, setEditingJoinRequest] = useState<TeamJoinRequest | null>(null);
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
   const [updatingClubLogoId, setUpdatingClubLogoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    catalogsService.getOptions().then((options) => {
+      if (active) setJoinPositionOptions(options.recruitmentPositions);
+    }).catch((error: unknown) => {
+      if (active) showToast(error instanceof Error ? error.message : t('common.loadOptionsError'), 'error');
+    });
+    return () => { active = false; };
+  }, [showToast, t]);
+
+  useEffect(() => {
+    let active = true;
+    if (user) teamsService.listMyJoinRequests().then((requests) => {
+      if (active) setMyJoinRequests(requests.filter((request) => request.status === 'PENDING'));
+    }).catch((error: unknown) => {
+      if (active) showToast(error instanceof Error ? error.message : t('profile.teamRequestsLoadError'), 'error');
+    });
+    else setMyJoinRequests([]);
+    return () => { active = false; };
+  }, [user?.id, showToast, t]);
+
+  const editJoinRequest = (request: TeamJoinRequest, team: Team) => {
+    setSelectedTeam(team);
+    setEditingJoinRequest(request);
+    setJoinPosition(request.position);
+    setJoinMessage(request.message);
+    setIsJoinModalOpen(true);
+  };
+
+  const startJoinRequest = (team: Team) => {
+    setSelectedTeam(team);
+    setEditingJoinRequest(null);
+    setJoinMessage('');
+    setJoinPosition(user?.sportsCv.primaryPosition ?? '');
+    setIsJoinModalOpen(true);
+  };
 
   const isTeamMember = (team: Team) => Boolean(user && team.members?.some((member) => member.playerId === user.id));
   const visibleTeams = showFavoriteTeams
@@ -78,12 +120,16 @@ export function useTeamsViewModel() {
     if (!selectedTeam) return;
     setIsSubmittingJoin(true);
     try {
-      const res = await teamsService.joinTeam(selectedTeam.id, joinMessage, joinPosition);
+      const res = editingJoinRequest
+        ? await teamsService.updateMyJoinRequest(editingJoinRequest.id, joinMessage, joinPosition)
+        : await teamsService.joinTeam(selectedTeam.id, joinMessage, joinPosition);
       if (res.success) {
-        showToast(res.message);
+        showToast(editingJoinRequest ? t('profile.teamRequestUpdated') : ('message' in res ? res.message : ''));
         setIsJoinModalOpen(false);
         setJoinMessage('');
         setJoinPosition('');
+        setEditingJoinRequest(null);
+        setMyJoinRequests(await teamsService.listMyJoinRequests().then((requests) => requests.filter((request) => request.status === 'PENDING')));
         const updated = await teamsService.getById(selectedTeam.id);
         setSelectedTeam(updated);
       } else {
@@ -95,5 +141,14 @@ export function useTeamsViewModel() {
       setIsSubmittingJoin(false);
     }
   };
-  return { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setSelectedTeam, setRosterTab, setIsJoinModalOpen, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite, selectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, teamScorers, teamAssisters, isJoinModalOpen, joinMessage, setJoinMessage, joinPosition, setJoinPosition, isSubmittingJoin, handleJoinTeam };
+  const cancelJoinRequest = async (request: TeamJoinRequest) => {
+    try {
+      await teamsService.cancelMyJoinRequest(request.id);
+      setMyJoinRequests((current) => current.filter((item) => item.id !== request.id));
+      showToast(t('profile.teamRequestCancelled'));
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : t('profile.teamRequestCancelError'), 'error');
+    }
+  };
+  return { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setSelectedTeam, setRosterTab, setIsJoinModalOpen, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite, selectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, teamScorers, teamAssisters, isJoinModalOpen, joinMessage, setJoinMessage, joinPosition, setJoinPosition, joinPositionOptions, myJoinRequests, editingJoinRequest, editJoinRequest, startJoinRequest, cancelJoinRequest, isSubmittingJoin, handleJoinTeam };
 }

@@ -13,7 +13,7 @@ import { useTeamsViewModel } from './useTeamsViewModel';
 
 export const TeamsView: React.FC = () => {
   const model = useTeamsViewModel();
-  const { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setSelectedTeam, setRosterTab, setIsJoinModalOpen, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite } = model;
+  const { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setRosterTab, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite, myJoinRequests, editJoinRequest, startJoinRequest, cancelJoinRequest } = model;
 
   return (
     <ListPageLayout>
@@ -228,18 +228,21 @@ export const TeamsView: React.FC = () => {
 
                   {/* Primary CTA button matching Screenshot 3: Demander à rejoindre */}
                   {!isMember && user && <div className="p-5 pt-0">
-                    <button
+                    {myJoinRequests.find((request) => request.teamId === team.id) ? <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                      <span className="w-full text-center text-xs font-bold text-amber-800">{t('profile.teamRequestPending')}</span>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); const request = myJoinRequests.find((item) => item.teamId === team.id); if (request) editJoinRequest(request, team); }} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-pitch-ink">{t('profile.editTeamRequest')}</button>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); const request = myJoinRequests.find((item) => item.teamId === team.id); if (request) void cancelJoinRequest(request); }} className="rounded-xl px-3 py-2 text-xs font-bold text-rose-700">{t('profile.cancelTeamRequest')}</button>
+                    </div> : <button
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        setSelectedTeam(team);
-                        setIsJoinModalOpen(true);
+                        startJoinRequest(team);
                       }}
                       className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>Demander à rejoindre</span>
-                    </button>
+                    </button>}
                   </div>}
                 </div>
               );

@@ -13,7 +13,7 @@ function makeService(existingInvitations: unknown[] = []) {
   };
   const accounts = { profile: vi.fn(async () => user) };
   const notifications = { add: vi.fn(async (payload: unknown) => payload) };
-  return { service: new TeamsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never), records, notifications };
+  return { service: new TeamsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never, { values: vi.fn(async () => ['Avant-centre']) } as unknown as never), records, notifications };
 }
 
 describe('TeamsService player invitations', () => {
@@ -54,7 +54,7 @@ describe('TeamsService join requests', () => {
       save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
     const notifications = { add: vi.fn(async (payload: unknown) => payload) };
-    const service = new TeamsService(records as unknown as never, { profile: vi.fn(async () => user) } as unknown as never, notifications as unknown as never);
+    const service = new TeamsService(records as unknown as never, { profile: vi.fn(async () => user) } as unknown as never, notifications as unknown as never, { values: vi.fn(async () => ['Avant-centre']) } as unknown as never);
 
     const result = await service.requestJoin('team-1', 'Disponible les week-ends.', 'Avant-centre');
 
@@ -92,7 +92,7 @@ describe('TeamsService public roster statistics', () => {
       }[collection] ?? [])),
       save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
-    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never);
+    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never, {} as unknown as never);
 
     const detail = await service.getDetail('team-1');
 
@@ -125,7 +125,7 @@ describe('TeamsService public roster statistics', () => {
         return payload;
       }),
     };
-    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never);
+    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never, {} as unknown as never);
 
     const detail = await service.getDetail('team-1');
 

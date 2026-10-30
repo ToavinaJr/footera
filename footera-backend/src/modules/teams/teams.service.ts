@@ -9,6 +9,7 @@ import { aggregatePlayerMatchStats } from '../players/player-match-stats.js';
 import type { MatchRecord, PlayerRecord, TeamInvitationRecord, TeamJoinRequestRecord, TeamMemberRecord, TeamRecord, TournamentRecord, UserRecord } from '../../types/records.js';
 import { APP_SECTIONS, MATCH_STATUSES, NOTIFICATION_TYPES, TEAM_INVITATION_STATUSES, TEAM_JOIN_REQUEST_STATUSES } from '../../types/domain.js';
 import { sanitizeMultilineText } from '../../utils/sanitize.utils.js';
+import { CatalogsService } from '../catalogs/catalogs.service.js';
 
 export interface EnrichedTeamMember extends TeamMemberRecord {
   appearances: number;
@@ -26,6 +27,7 @@ export class TeamsService {
     private readonly records: RecordRepository,
     private readonly accounts: AccountsService,
     private readonly notifications: NotificationsService,
+    private readonly catalogs: CatalogsService,
   ) {}
 
   async list(filters: { query?: string; category?: string; city?: string } = {}) {
@@ -325,6 +327,8 @@ export class TeamsService {
     if (!cleanMessage) throw new BadRequestException('Ajoutez un message à votre demande.');
     const cleanPosition = sanitizeMultilineText(position, 100);
     if (!cleanPosition) throw new BadRequestException('Indiquez le poste souhaité.');
+    const positions = await this.catalogs.values('recruitmentPositions');
+    if (!positions.includes(cleanPosition)) throw new BadRequestException('Sélectionnez un poste valide.');
     const requests = await this.records.list<TeamJoinRequestRecord>('teamJoinRequests');
     if (requests.some((request) => request.teamId === team.id && request.userId === user.id && request.status === TEAM_JOIN_REQUEST_STATUSES.PENDING)) {
       throw new ConflictException('Une demande est déjà en attente pour cette équipe.');
@@ -359,6 +363,32 @@ export class TeamsService {
     const requests = await this.records.list<TeamJoinRequestRecord>('teamJoinRequests');
     return requests.filter((request) => request.userId === user.id)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  }
+
+  async updateMyJoinRequest(requestId: string, message: string, position: string) {
+    const user = await this.accounts.profile();
+    if (!user) throw new ForbiddenException('Connectez-vous pour modifier votre demande.');
+    const request = await this.records.find<TeamJoinRequestRecord>('teamJoinRequests', requestId);
+    if (!request || request.userId !== user.id) throw new NotFoundException('Demande introuvable.');
+    if (request.status !== TEAM_JOIN_REQUEST_STATUSES.PENDING) throw new ConflictException('Cette demande a déjà été traitée.');
+    const cleanMessage = sanitizeMultilineText(message, 500);
+    const cleanPosition = sanitizeMultilineText(position, 100);
+    if (!cleanMessage) throw new BadRequestException('Ajoutez un message à votre demande.');
+    const positions = await this.catalogs.values('recruitmentPositions');
+    if (!positions.includes(cleanPosition)) throw new BadRequestException('Sélectionnez un poste valide.');
+    const updatedRequest = { ...request, message: cleanMessage, position: cleanPosition, updatedAt: new Date().toISOString() };
+    await this.records.save('teamJoinRequests', request.id, updatedRequest);
+    return { success: true, request: updatedRequest };
+  }
+
+  async cancelMyJoinRequest(requestId: string) {
+    const user = await this.accounts.profile();
+    if (!user) throw new ForbiddenException('Connectez-vous pour annuler votre demande.');
+    const request = await this.records.find<TeamJoinRequestRecord>('teamJoinRequests', requestId);
+    if (!request || request.userId !== user.id) throw new NotFoundException('Demande introuvable.');
+    if (request.status !== TEAM_JOIN_REQUEST_STATUSES.PENDING) throw new ConflictException('Cette demande a déjà été traitée.');
+    await this.records.deleteOne('teamJoinRequests', request.id);
+    return { success: true };
   }
 
   async leaveCurrentTeam() {

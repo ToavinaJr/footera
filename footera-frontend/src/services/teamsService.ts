@@ -66,6 +66,14 @@ export const teamsService = {
     return apiClient<{ success: boolean; message: string }>(`teams/${encodeURIComponent(teamId)}/join`, { method: 'POST', body: JSON.stringify({ message, position }) });
   },
 
+  updateMyJoinRequest(requestId: string, message: string, position: string): Promise<{ success: boolean; request: TeamJoinRequest }> {
+    return apiClient<{ success: boolean; request: TeamJoinRequest }>(`teams/my-join-requests/${encodeURIComponent(requestId)}`, { method: 'PATCH', body: JSON.stringify({ message, position }) });
+  },
+
+  cancelMyJoinRequest(requestId: string): Promise<{ success: boolean }> {
+    return apiClient<{ success: boolean }>(`teams/my-join-requests/${encodeURIComponent(requestId)}`, { method: 'DELETE' });
+  },
+
   listMyJoinRequests(): Promise<TeamJoinRequest[]> {
     return apiClient<TeamJoinRequest[]>('teams/my-join-requests');
   },
