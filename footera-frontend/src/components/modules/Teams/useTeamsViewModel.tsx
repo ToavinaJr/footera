@@ -133,7 +133,7 @@ export function useTeamsViewModel() {
         const updated = await teamsService.getById(selectedTeam.id);
         setSelectedTeam(updated);
       } else {
-        showToast(res.message, 'error');
+        showToast('message' in res ? res.message : t('profile.teamRequestUpdateError'), 'error');
       }
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : 'Impossible de rejoindre l’équipe', 'error');

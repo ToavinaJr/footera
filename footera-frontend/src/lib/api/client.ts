@@ -13,6 +13,21 @@ function isApiErrorBody(value: unknown): value is ApiErrorBody {
 
 let refreshInFlight: Promise<boolean> | null = null;
 let sessionExpiredEventSent = false;
+const API_REQUEST_TIMEOUT_MS = 10_000;
+
+function requestSignal(signal?: AbortSignal): { signal: AbortSignal; cleanup: () => void } {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new Error('La requête API a dépassé le délai autorisé.')), API_REQUEST_TIMEOUT_MS);
+  const abort = () => controller.abort(signal?.reason);
+  signal?.addEventListener('abort', abort, { once: true });
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      clearTimeout(timeout);
+      signal?.removeEventListener('abort', abort);
+    },
+  };
+}
 
 function notifySessionExpired() {
   if (sessionExpiredEventSent || typeof window === 'undefined') return;
@@ -23,11 +38,14 @@ function notifySessionExpired() {
 function refreshSession(): Promise<boolean> {
   if (!refreshInFlight) {
     const refreshUrl = `${API_BASE_URL.replace(/\/$/, '')}/auth/refresh`;
+    const request = requestSignal();
     refreshInFlight = fetch(refreshUrl, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
+      signal: request.signal,
     }).then((response) => response.ok).catch(() => false).finally(() => {
+      request.cleanup();
       refreshInFlight = null;
     });
   }
@@ -38,12 +56,13 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
   const url = `${API_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
+  const request = requestSignal(options.signal ?? undefined);
 
   try {
-    let response = await fetch(url, { ...options, headers, credentials: 'include' });
+    let response = await fetch(url, { ...options, headers, credentials: 'include', signal: request.signal });
     const authEndpoint = /^auth\/(login|register|logout|refresh)$/.test(endpoint.replace(/^\//, ''));
     if (response.status === 401 && !authEndpoint) {
-      if (await refreshSession()) response = await fetch(url, { ...options, headers, credentials: 'include' });
+      if (await refreshSession()) response = await fetch(url, { ...options, headers, credentials: 'include', signal: request.signal });
       if (response.status === 401) notifySessionExpired();
     }
     if (authEndpoint && response.ok) sessionExpiredEventSent = false;
@@ -72,5 +91,7 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
       0,
       'NETWORK_OFFLINE',
     );
+  } finally {
+    request.cleanup();
   }
 }
