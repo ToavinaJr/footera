@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
-import { createApp } from './app.factory.js';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module.js';
+import { configureApp } from './app.factory.js';
 
 type ExpressHandler = (request: Request, response: Response) => unknown;
 
@@ -7,7 +9,9 @@ let handlerPromise: Promise<ExpressHandler> | undefined;
 
 async function getHandler(): Promise<ExpressHandler> {
   if (!handlerPromise) {
-    handlerPromise = createApp().then((app) => app.getHttpAdapter().getInstance() as ExpressHandler);
+    handlerPromise = NestFactory.create(AppModule)
+      .then((app) => configureApp(app))
+      .then((app) => app.getHttpAdapter().getInstance() as ExpressHandler);
   }
   return handlerPromise;
 }
