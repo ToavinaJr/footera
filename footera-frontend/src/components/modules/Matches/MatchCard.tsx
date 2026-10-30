@@ -35,50 +35,29 @@ export function MatchCard({ match, onOpen }: { match: Match; onOpen: () => void 
                 </div>
 
                 {/* Match Teams Row */}
-                <div className="grid grid-cols-7 items-center gap-3 py-2">
-                  {/* Home */}
-                  <div className="col-span-3 flex items-center gap-3">
-                    <img
-                      src={match.homeTeam.logoUrl}
-                      alt={match.homeTeam.name}
-                      className="w-11 h-11 rounded-2xl object-cover bg-slate-100 border border-pitch-line shrink-0"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="min-w-0">
-                      <h3 className="card-title text-sm sm:text-base font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors truncate">
-                        <EntityLink section="teams" id={match.homeTeam.id}>{match.homeTeam.name}</EntityLink>
-                      </h3>
-                      <span className="text-caption text-slate-400">{t('matches.home')}</span>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 sm:gap-4">
+                  <div className="flex min-w-0 flex-col items-center gap-1.5">
+                    <h3 className="card-title w-full truncate text-center text-xs font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors sm:text-sm">
+                      <EntityLink section="teams" id={match.homeTeam.id}>{match.homeTeam.name}</EntityLink>
+                    </h3>
+                    <div className="flex w-full items-center justify-center gap-2 sm:gap-3">
+                      <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-11 w-11 shrink-0 rounded-2xl border border-pitch-line bg-slate-100 object-cover sm:h-12 sm:w-12" referrerPolicy="no-referrer" />
+                      {match.status !== 'SCHEDULED' && <span className="text-2xl font-extrabold tracking-wider text-pitch-ink tabular-nums sm:text-3xl">{match.homeTeam.score}</span>}
                     </div>
+                    <span className="text-caption text-slate-400">{t('matches.home')}</span>
                   </div>
 
-                  {/* Score */}
-                  <div className="col-span-1 text-center">
-                    {match.status === 'SCHEDULED' ? (
-                      <span className="text-xs font-bold text-slate-600 px-2.5 py-1 rounded-full bg-slate-100">
-                        {match.time}
-                      </span>
-                    ) : (
-                      <div className="text-2xl font-extrabold text-pitch-ink tracking-wider tabular-nums">
-                        {match.homeTeam.score} - {match.awayTeam.score}
-                      </div>
-                    )}
-                  </div>
+                  <span className="px-1 text-sm font-bold text-slate-400 sm:text-base">{match.status === 'SCHEDULED' ? match.time : '–'}</span>
 
-                  {/* Away */}
-                  <div className="col-span-3 flex items-center justify-end gap-3 text-right">
-                    <div className="min-w-0">
-                      <h3 className="card-title text-sm sm:text-base font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors truncate">
-                        <EntityLink section="teams" id={match.awayTeam.id}>{match.awayTeam.name}</EntityLink>
-                      </h3>
-                      <span className="text-caption text-slate-400">{t('matches.away')}</span>
+                  <div className="flex min-w-0 flex-col items-center gap-1.5">
+                    <h3 className="card-title w-full truncate text-center text-xs font-extrabold text-pitch-ink group-hover:text-pitch-primary transition-colors sm:text-sm">
+                      <EntityLink section="teams" id={match.awayTeam.id}>{match.awayTeam.name}</EntityLink>
+                    </h3>
+                    <div className="flex w-full items-center justify-center gap-2 sm:gap-3">
+                      {match.status !== 'SCHEDULED' && <span className="text-2xl font-extrabold tracking-wider text-pitch-ink tabular-nums sm:text-3xl">{match.awayTeam.score}</span>}
+                      <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-11 w-11 shrink-0 rounded-2xl border border-pitch-line bg-slate-100 object-cover sm:h-12 sm:w-12" referrerPolicy="no-referrer" />
                     </div>
-                    <img
-                      src={match.awayTeam.logoUrl}
-                      alt={match.awayTeam.name}
-                      className="w-11 h-11 rounded-2xl object-cover bg-slate-100 border border-pitch-line shrink-0"
-                      referrerPolicy="no-referrer"
-                    />
+                    <span className="text-caption text-slate-400">{t('matches.away')}</span>
                   </div>
                 </div>
 
