@@ -4,15 +4,17 @@ import type { RecordRepository } from '../../database/record.repository.js';
 import type { UserContext } from '../auth/user-context.js';
 
 describe('Dashboard privacy and personalization', () => {
-  it('uses player membership before ownership and never trusts a free-text CV team', () => {
+  it('uses persisted membership first and only resolves a CV team to a known team', () => {
     const user = { id: 'u', name: 'U', email: 'u@example.com', sportsCv: { currentTeam: 'Fake team' } };
     expect(currentTeam(user, [{ id: 'p', userId: 'u', name: 'U', currentTeamId: 'joined' }], [{ id: 'owned', name: 'Owned', ownerId: 'u' }, { id: 'joined', name: 'Joined' }])?.id).toBe('joined');
+    expect(currentTeam(user, [{ id: 'p', userId: 'u', name: 'U' }], [{ id: 'owned', name: 'Owned', ownerId: 'u' }])?.id).toBe('owned');
+    expect(currentTeam({ ...user, sportsCv: { currentTeam: 'Betsileo FC' } }, [{ id: 'p', userId: 'u', name: 'U' }], [{ id: 'betsileo', name: 'Betsileo FC' }])?.id).toBe('betsileo');
     expect(currentTeam(user, [], [])).toBeNull();
   });
   it('returns real favorites, upcoming team match, private activity for the current user only', async () => {
     const rows: Record<string, unknown[]> = {
-      players: [{ id: 'p', name: 'Favorite', email: 'private@example.com' }, { id: 'me', userId: 'u', name: 'Me', currentTeamId: 't' }],
-      teams: [{ id: 't', name: 'Team', ownerId: 'other' }],
+      players: [{ id: 'p', name: 'Favorite', email: 'private@example.com' }, { id: 'me', userId: 'u', name: 'Me' }],
+      teams: [{ id: 't', name: 'Betsileo FC', ownerId: 'other' }],
       matches: [
         { id: 'old', status: 'SCHEDULED', scheduledAt: '2000-01-01T10:00:00Z', homeTeam: { id: 't' }, awayTeam: { id: 'x' } },
         { id: 'next', status: 'SCHEDULED', scheduledAt: '2099-01-01T10:00:00Z', homeTeam: { id: 't' }, awayTeam: { id: 'x' } },
@@ -21,7 +23,7 @@ describe('Dashboard privacy and personalization', () => {
       bookings: [{ id: 'secret-booking', userId: 'other' }], applications: [{ id: 'secret-application', userId: 'other' }],
       activity: [{ id: 'public', type: 'match', title: 'Score' }, { id: 'private', type: 'booking', recipientId: 'other' }],
     };
-    const records = { find: vi.fn(async () => ({ id: 'u', favoritePlayerIds: ['p'], favoriteTeamIds: ['t'], favoriteMatchIds: ['next'] })), list: vi.fn(async (key: string) => rows[key] ?? []) };
+    const records = { find: vi.fn(async () => ({ id: 'u', sportsCv: { currentTeam: 'Betsileo FC' }, favoritePlayerIds: ['p'], favoriteTeamIds: ['t'], favoriteMatchIds: ['next'] })), list: vi.fn(async (key: string) => rows[key] ?? []) };
     const result = await new DashboardService(records as unknown as RecordRepository, { userId: 'u' } as UserContext).get();
     expect(result.myTeam?.id).toBe('t');
     expect(result.canManageTeam).toBe(false);

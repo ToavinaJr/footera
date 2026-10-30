@@ -7,8 +7,8 @@ export const ListPageLayout: React.FC<React.PropsWithChildren> = ({ children }) 
 
 export const PageHeader: React.FC<{ title: string; description?: string; actions?: React.ReactNode }> = ({ title, description, actions }) => (
   <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-    <div><h1 className="text-2xl font-extrabold tracking-tight text-pitch-ink md:text-3xl">{title}</h1>
-      {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}</div>
+    <div><h1 className="font-display text-3xl font-extrabold leading-tight tracking-tight text-pitch-ink sm:text-4xl">{title}</h1>
+      {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>}</div>
     {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
   </header>
 );

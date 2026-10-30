@@ -55,16 +55,18 @@ export const LandingView: React.FC = () => {
   return (
     <main className="page-enter min-h-screen overflow-hidden bg-canvas-bg text-pitch-ink">
       {/* Header */}
-      <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5" aria-label={t('landing.brand')}>
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-pitch-primary font-display text-xl font-extrabold text-lime-volt">F</span>
-          <span className="font-display text-2xl font-extrabold tracking-tight">Footera</span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <LanguageSwitcher />
-          <Link to="/auth" className="inline-flex min-h-11 items-center justify-center rounded-full border border-pitch-line bg-white px-5 text-sm font-bold text-pitch-ink transition-colors hover:border-pitch-primary hover:text-pitch-primary">
-            {t('landing.login')}
+      <header className="header-glass sticky top-0 z-40 border-b border-pitch-line/70">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+          <Link to="/" className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-pitch-primary font-display text-xl font-extrabold text-lime-volt">F</span>
+            <span className="font-display text-2xl font-extrabold tracking-tight">Footera</span>
           </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link to="/auth" className="inline-flex min-h-11 items-center justify-center rounded-full border border-pitch-line bg-white px-5 text-sm font-bold text-pitch-ink transition-colors hover:border-pitch-primary hover:text-pitch-primary">
+              {t('landing.login')}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -75,10 +77,10 @@ export const LandingView: React.FC = () => {
             <Shield className="h-4 w-4" aria-hidden="true" />
             {t('landing.connectedFootball')}
           </span>
-          <h1 className="mt-6 max-w-2xl font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 max-w-2xl font-display text-[clamp(3rem,7vw,5.5rem)] font-extrabold leading-[0.96] tracking-[-0.055em]">
             {t('landing.titleLead')} <span className="text-pitch-primary">{t('landing.titleAccent')}</span>
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+          <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
             {t('landing.description')}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -89,7 +91,7 @@ export const LandingView: React.FC = () => {
               {t('landing.haveAccount')}
             </Link>
           </div>
-          <p className="mt-4 text-xs text-slate-500">{t('landing.oneAccount')}</p>
+          <p className="mt-4 text-xs text-slate-600">{t('landing.oneAccount')}</p>
         </div>
 
         <div className="relative mx-auto w-full max-w-lg">
@@ -124,7 +126,7 @@ export const LandingView: React.FC = () => {
         <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-6 px-5 py-10 sm:px-8 md:grid-cols-4 md:py-14">
           {stats.map(({ value, label }) => (
             <div key={label} className="text-center">
-              <p className="font-display text-3xl font-extrabold text-pitch-primary sm:text-4xl">{value}</p>
+              <p className="font-mono text-3xl font-bold tabular-nums text-pitch-primary sm:text-4xl">{value}</p>
               <p className="mt-1 text-sm font-semibold text-slate-600">{label}</p>
             </div>
           ))}
@@ -134,13 +136,13 @@ export const LandingView: React.FC = () => {
       {/* Features */}
       <section className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 md:py-24">
         <div className="mb-10 max-w-xl">
-          <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{t('landing.sectionTitle')}</h2>
+          <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{t('landing.sectionTitle')}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">{t('landing.sectionDescription')}</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(({ icon: Icon, title, description }) => (
-            <article key={title} className="hover-lift rounded-2xl border border-pitch-line bg-white p-5 shadow-sm sm:p-6">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-pitch-light text-pitch-primary">
+            <article key={title} className="hover-lift rounded-3xl border border-pitch-line bg-white p-5 shadow-sm sm:p-6">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pitch-light text-pitch-primary">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <h3 className="mt-4 font-display text-lg font-extrabold">{title}</h3>
@@ -154,13 +156,13 @@ export const LandingView: React.FC = () => {
       <section className="bg-pitch-ink">
         <div className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 md:py-24">
           <div className="mb-10 max-w-xl">
-            <h2 className="font-display text-2xl font-extrabold text-white sm:text-3xl">{t('landing.howItWorksTitle')}</h2>
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{t('landing.howItWorksTitle')}</h2>
             <p className="mt-2 text-sm leading-6 text-slate-400">{t('landing.howItWorksDescription')}</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {steps.map(({ number, title, description }) => (
               <div key={number} className="relative rounded-2xl border border-white/10 bg-white/5 p-6">
-                <span className="font-display text-4xl font-extrabold text-lime-volt/30">{number}</span>
+                <span aria-hidden="true" className="font-display text-4xl font-extrabold text-lime-volt/80">{number}</span>
                 <h3 className="mt-3 font-display text-lg font-extrabold text-white">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
                 <CheckCircle2 className="absolute right-5 top-5 h-5 w-5 text-lime-volt/40" aria-hidden="true" />
@@ -173,7 +175,7 @@ export const LandingView: React.FC = () => {
       {/* Testimonials */}
       <section className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8 md:py-24">
         <div className="mb-10 max-w-xl">
-          <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{t('landing.testimonialsTitle')}</h2>
+          <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{t('landing.testimonialsTitle')}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">{t('landing.testimonialsDescription')}</p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
@@ -203,7 +205,7 @@ export const LandingView: React.FC = () => {
           <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-lime-volt/15 blur-3xl" aria-hidden="true" />
           <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-lime-volt/10 blur-3xl" aria-hidden="true" />
           <div className="relative z-10">
-            <h2 className="mx-auto max-w-lg font-display text-2xl font-extrabold text-white sm:text-3xl lg:text-4xl">
+            <h2 className="mx-auto max-w-lg font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {t('landing.ctaTitle')}
             </h2>
             <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-white/80">
@@ -222,7 +224,7 @@ export const LandingView: React.FC = () => {
           <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
             {/* Brand */}
             <div>
-              <Link to="/" className="flex items-center gap-2.5" aria-label={t('landing.brand')}>
+              <Link to="/" className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-pitch-primary font-display text-lg font-extrabold text-lime-volt">F</span>
                 <span className="font-display text-xl font-extrabold tracking-tight">Footera</span>
               </Link>
@@ -233,7 +235,7 @@ export const LandingView: React.FC = () => {
 
             {/* Product */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-pitch-ink">{t('landing.footerProduct')}</h4>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-pitch-ink">{t('landing.footerProduct')}</h3>
               <ul className="mt-4 space-y-2.5">
                 {footerLinks.product.map(({ label, href }) => (
                   <li key={label}>
@@ -245,7 +247,7 @@ export const LandingView: React.FC = () => {
 
             {/* Community */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-pitch-ink">{t('landing.footerCommunity')}</h4>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-pitch-ink">{t('landing.footerCommunity')}</h3>
               <ul className="mt-4 space-y-2.5">
                 {footerLinks.community.map(({ label, href }) => (
                   <li key={label}>
@@ -257,7 +259,7 @@ export const LandingView: React.FC = () => {
 
             {/* Legal */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-pitch-ink">{t('landing.footerLegal')}</h4>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-pitch-ink">{t('landing.footerLegal')}</h3>
               <ul className="mt-4 space-y-2.5">
                 {footerLinks.legal.map(({ label, href }) => (
                   <li key={label}>

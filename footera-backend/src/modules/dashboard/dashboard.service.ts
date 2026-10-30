@@ -5,8 +5,13 @@ import type { MatchRecord, PlayerRecord, TeamRecord, UserRecord } from '../../ty
 
 export function currentTeam(user: UserRecord, players: PlayerRecord[], teams: TeamRecord[]) {
   const player = players.find((item) => item.userId === user.id || item.id === user.id);
+  const profileTeamName = user.sportsCv?.currentTeam?.trim() || player?.currentTeam?.trim();
   return teams.find((team) => team.id === player?.currentTeamId)
     ?? teams.find((team) => team.members?.some((member) => member.playerId === player?.id || member.playerId === user.id))
+    ?? (profileTeamName
+      ? teams.find((team) => team.name.trim().toLocaleLowerCase() === profileTeamName.toLocaleLowerCase()
+        || team.clubName?.trim().toLocaleLowerCase() === profileTeamName.toLocaleLowerCase())
+      : undefined)
     ?? teams.find((team) => team.ownerId === user.id || team.managerIds?.includes(user.id))
     ?? null;
 }
