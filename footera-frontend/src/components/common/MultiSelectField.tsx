@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from '../../i18n';
 
 interface MultiSelectOption {
   value: string;
@@ -20,6 +21,7 @@ interface MultiSelectFieldProps {
 }
 
 export function MultiSelectField({ value, onChange, options, placeholder, ariaLabel, className = '', searchable = false, searchPlaceholder = 'Search…', emptyMessage = 'No options found' }: MultiSelectFieldProps) {
+  const { t } = useTranslation();
   const id = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,10 +63,15 @@ export function MultiSelectField({ value, onChange, options, placeholder, ariaLa
   }, [open]);
 
   const filteredOptions = options.filter((option) => option.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  const allSelected = options.length > 0 && options.every((option) => value.includes(option.value));
   const menu = open && style && typeof document !== 'undefined' ? createPortal(
     <div ref={menuRef} style={style} className="z-120 overflow-hidden rounded-xl border border-pitch-line bg-white p-1 text-sm text-pitch-ink shadow-xl">
       {searchable && <label className="relative block border-b border-pitch-separator p-1"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" aria-hidden="true" /><input autoFocus type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlaceholder} aria-label={searchPlaceholder} className="min-h-10 w-full rounded-lg bg-pitch-panel pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-pitch-primary/20" /></label>}
       <div id={`${id}-options`} role="listbox" aria-label={ariaLabel} aria-multiselectable="true" className="max-h-60 overflow-y-auto overscroll-contain py-1">
+      <button type="button" role="option" aria-selected={allSelected} disabled={!options.length} onClick={() => onChange(allSelected ? [] : options.map((option) => option.value))} className="flex min-h-11 w-full items-center gap-3 rounded-lg border-b border-pitch-separator px-3 py-2 text-left font-semibold hover:bg-pitch-panel disabled:opacity-50">
+        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${allSelected ? 'border-pitch-primary bg-pitch-primary text-white' : 'border-slate-300 bg-white'}`}>{allSelected && <Check className="h-3 w-3" aria-hidden="true" />}</span>
+        <span>{allSelected ? t('common.deselectAll') : t('common.selectAll')}</span>
+      </button>
       {filteredOptions.map((option) => {
         const selected = value.includes(option.value);
         return <button key={option.value} type="button" role="option" aria-selected={selected} onClick={() => onChange(selected ? value.filter((item) => item !== option.value) : [...value, option.value])} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-pitch-panel">

@@ -64,7 +64,7 @@ export const RecruitmentView: React.FC = () => {
               />
             </div>
             <div>
-              <MultiSelectField label={t('recruitment.filterPosition')} placeholder={t('recruitment.allPositions')} options={positionOptions} value={positionFilter} onChange={setPositionFilter} className="[&>button]:w-full [&>button]:rounded-full [&>button]:bg-pitch-input [&>button]:px-4 [&>button]:py-2.5 [&>button]:text-xs [&>button]:md:text-sm" />
+              <MultiSelectField ariaLabel={t('recruitment.filterPosition')} placeholder={t('recruitment.allPositions')} options={positionOptions.map((position) => ({ value: position, label: position }))} value={positionFilter} onChange={setPositionFilter} className="w-full rounded-full bg-pitch-input px-4 py-2.5 text-xs md:text-sm" />
             </div>
           </div>
 

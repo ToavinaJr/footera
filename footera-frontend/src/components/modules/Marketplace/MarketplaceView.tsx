@@ -1,5 +1,6 @@
-import { ChevronDown, MapPin,Plus,Search,ShoppingBag } from 'lucide-react';
+import { Check, ChevronDown, MapPin,Plus,Search,ShoppingBag } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from '../../../i18n';
 import { EmptyState } from '../../common/EmptyState';
 import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
 import { ListToolbar } from '../../common/ListToolbar';
@@ -159,8 +160,10 @@ function MarketplaceMultiSelect({ label, options, value, onChange }: {
   value: string[];
   onChange: (value: string[]) => void;
 }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const summary = value.length ? `${label} (${value.length})` : label;
+  const allSelected = options.length > 0 && options.every((option) => value.includes(option));
 
   return (
     <div className="relative min-w-0">
@@ -176,6 +179,10 @@ function MarketplaceMultiSelect({ label, options, value, onChange }: {
       </button>
       {isOpen && (
         <div className="absolute left-0 top-full z-30 mt-2 max-h-60 w-full min-w-48 overflow-y-auto rounded-xl border border-pitch-line bg-white p-2 shadow-xl">
+          <button type="button" aria-pressed={allSelected} disabled={!options.length} onClick={() => onChange(allSelected ? [] : [...options])} className="flex min-h-10 w-full items-center gap-2 border-b border-pitch-separator px-2 text-left text-xs font-bold text-pitch-primary hover:bg-pitch-panel disabled:opacity-50">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-pitch-primary">{allSelected && <Check className="h-3 w-3" aria-hidden="true" />}</span>
+            {allSelected ? t('common.deselectAll') : t('common.selectAll')}
+          </button>
           {options.map((option) => {
             const checked = value.includes(option);
             return (

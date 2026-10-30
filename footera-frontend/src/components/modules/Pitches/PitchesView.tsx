@@ -164,12 +164,12 @@ export const PitchesView: React.FC = () => {
       <div className="relative z-50 p-4 rounded-3xl bg-white border border-pitch-line grid grid-cols-1 md:grid-cols-2 gap-3 shadow-2xs">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.surface')}</label>
-          <MultiSelectField label={t('pitch.surface')} placeholder={t('pitch.allSurfaces')} options={surfaces} value={surfaceFilter} onChange={setSurfaceFilter} className="[&>button]:w-full [&>button]:rounded-full [&>button]:bg-pitch-input [&>button]:px-4 [&>button]:py-2.5 [&>button]:text-xs [&>button]:md:text-sm" />
+          <MultiSelectField ariaLabel={t('pitch.surface')} placeholder={t('pitch.allSurfaces')} options={surfaces.map((surface) => ({ value: surface, label: surface }))} value={surfaceFilter} onChange={setSurfaceFilter} className="w-full rounded-full bg-pitch-input px-4 py-2.5 text-xs md:text-sm" />
         </div>
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">{t('pitch.location')}</label>
-          <MultiSelectField label={t('pitch.location')} placeholder={t('pitch.allCities')} options={['Fianarantsoa', 'Antananarivo', 'Toamasina', 'Paris']} value={cityFilter} onChange={setCityFilter} className="[&>button]:w-full [&>button]:rounded-full [&>button]:bg-pitch-input [&>button]:px-4 [&>button]:py-2.5 [&>button]:text-xs [&>button]:md:text-sm" />
+          <MultiSelectField ariaLabel={t('pitch.location')} placeholder={t('pitch.allCities')} options={['Fianarantsoa', 'Antananarivo', 'Toamasina', 'Paris'].map((city) => ({ value: city, label: city }))} value={cityFilter} onChange={setCityFilter} className="w-full rounded-full bg-pitch-input px-4 py-2.5 text-xs md:text-sm" />
         </div>
       </div>
 

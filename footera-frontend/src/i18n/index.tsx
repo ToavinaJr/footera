@@ -10,6 +10,7 @@ export { useTranslation } from './useTranslation';
 const messages = {
   fr: {
     ...screenMessages.fr,
+    'common.selectAll': 'Tout sélectionner', 'common.deselectAll': 'Tout désélectionner',
     'market.searchBrand': 'Rechercher une marque…', 'market.noBrandsFound': 'Aucune marque trouvée.',
     'profile.editTeamRequest': 'Modifier', 'profile.cancelTeamRequest': 'Annuler la demande', 'profile.teamRequestUpdated': 'Votre demande a été modifiée.', 'profile.teamRequestCancelled': 'Votre demande a été annulée.', 'profile.teamRequestEditError': 'Impossible de modifier la demande.', 'profile.teamRequestCancelError': 'Impossible d’annuler la demande.',
     'teams.editJoinTitle': 'Modifier ma demande pour {team}',
@@ -202,6 +203,7 @@ const messages = {
   },
   en: {
     ...screenMessages.en,
+    'common.selectAll': 'Select all', 'common.deselectAll': 'Deselect all',
     'market.searchBrand': 'Search brands…', 'market.noBrandsFound': 'No brands found.',
     'profile.editTeamRequest': 'Edit', 'profile.cancelTeamRequest': 'Cancel request', 'profile.teamRequestUpdated': 'Your request was updated.', 'profile.teamRequestCancelled': 'Your request was cancelled.', 'profile.teamRequestEditError': 'Could not update the request.', 'profile.teamRequestCancelError': 'Could not cancel the request.',
     'teams.editJoinTitle': 'Edit my request to join {team}',
@@ -390,6 +392,7 @@ const messages = {
   },
   mg: {
     ...screenMessages.mg,
+    'common.selectAll': 'Safidio daholo', 'common.deselectAll': 'Esory daholo ny safidy',
     'market.searchBrand': 'Mitadiava marika…', 'market.noBrandsFound': 'Tsy misy marika hita.',
     'profile.editTeamRequest': 'Ovay', 'profile.cancelTeamRequest': 'Foano ny fangatahana', 'profile.teamRequestUpdated': 'Novaina ny fangatahanao.', 'profile.teamRequestCancelled': 'Nofoanana ny fangatahanao.', 'profile.teamRequestEditError': 'Tsy afaka nanova ny fangatahana.', 'profile.teamRequestCancelError': 'Tsy afaka nanafoana ny fangatahana.',
     'teams.editJoinTitle': 'Hanova ny fangatahako hiditra ao amin’ny {team}',
