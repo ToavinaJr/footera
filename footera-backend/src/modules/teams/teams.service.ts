@@ -301,7 +301,7 @@ export class TeamsService {
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }
 
-  async requestJoin(id: string, message: string) {
+  async requestJoin(id: string, message: string, position: string) {
     const team = await this.records.find<TeamRecord>('teams', id);
     if (!team) throw new NotFoundException('Équipe introuvable.');
     const user = await this.accounts.profile();
@@ -323,6 +323,8 @@ export class TeamsService {
     }
     const cleanMessage = sanitizeMultilineText(message, 500);
     if (!cleanMessage) throw new BadRequestException('Ajoutez un message à votre demande.');
+    const cleanPosition = sanitizeMultilineText(position, 100);
+    if (!cleanPosition) throw new BadRequestException('Indiquez le poste souhaité.');
     const requests = await this.records.list<TeamJoinRequestRecord>('teamJoinRequests');
     if (requests.some((request) => request.teamId === team.id && request.userId === user.id && request.status === TEAM_JOIN_REQUEST_STATUSES.PENDING)) {
       throw new ConflictException('Une demande est déjà en attente pour cette équipe.');
@@ -330,7 +332,7 @@ export class TeamsService {
     const createdAt = new Date().toISOString();
     const request: TeamJoinRequestRecord = {
       id: `team_join_${randomUUID()}`, teamId: team.id, teamName: team.name,
-      playerId: player.id, playerName: player.name, userId: user.id, message: cleanMessage,
+      playerId: player.id, playerName: player.name, userId: user.id, position: cleanPosition, message: cleanMessage,
       status: TEAM_JOIN_REQUEST_STATUSES.PENDING, createdAt, updatedAt: createdAt,
     };
     await this.records.create('teamJoinRequests', request.id, request);

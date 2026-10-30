@@ -8,6 +8,7 @@ export interface TeamJoinRequest {
   playerId: string;
   playerName: string;
   userId: string;
+  position: string;
   message: string;
   status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
   createdAt: string;
@@ -61,8 +62,8 @@ export const teamsService = {
     return apiClient<Club>(`clubs/${encodeURIComponent(clubId)}/logo`, { method: 'PATCH', body: JSON.stringify({ logoUrl }) });
   },
 
-  joinTeam(teamId: string, message: string): Promise<{ success: boolean; message: string }> {
-    return apiClient<{ success: boolean; message: string }>(`teams/${encodeURIComponent(teamId)}/join`, { method: 'POST', body: JSON.stringify({ message }) });
+  joinTeam(teamId: string, message: string, position: string): Promise<{ success: boolean; message: string }> {
+    return apiClient<{ success: boolean; message: string }>(`teams/${encodeURIComponent(teamId)}/join`, { method: 'POST', body: JSON.stringify({ message, position }) });
   },
 
   listMyJoinRequests(): Promise<TeamJoinRequest[]> {

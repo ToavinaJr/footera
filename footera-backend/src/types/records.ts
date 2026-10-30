@@ -250,6 +250,7 @@ export interface TeamJoinRequestRecord {
   playerId: string;
   playerName: string;
   userId: string;
+  position: string;
   message: string;
   status: TeamJoinRequestStatus;
   createdAt: string;

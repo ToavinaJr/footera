@@ -1,7 +1,6 @@
 import React, { useState, type SubmitEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, Bell, User, X, BarChart3, LogOut } from 'lucide-react';
-import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
 import { NotificationsDrawer } from './NotificationsDrawer';
 import { Modal } from '../common/Modal';

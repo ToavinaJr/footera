@@ -81,8 +81,8 @@ export class TeamsController {
   }
 
   @Post(':id/join')
-  joinTeam(@Param('id') id: string, @Body('message') message?: string) {
-    return this.teams.requestJoin(id, message || 'Je souhaite rejoindre l’équipe.');
+  joinTeam(@Param('id') id: string, @Body('message') message?: string, @Body('position') position?: string) {
+    return this.teams.requestJoin(id, message || '', position || '');
   }
 
   @Post(':id/favorite')

@@ -36,6 +36,7 @@ export function useTeamsViewModel() {
   // Join Team Modal
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
+  const [joinPosition, setJoinPosition] = useState(user?.sportsCv.primaryPosition ?? '');
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
   const [updatingClubLogoId, setUpdatingClubLogoId] = useState<string | null>(null);
 
@@ -77,11 +78,12 @@ export function useTeamsViewModel() {
     if (!selectedTeam) return;
     setIsSubmittingJoin(true);
     try {
-      const res = await teamsService.joinTeam(selectedTeam.id, joinMessage);
+      const res = await teamsService.joinTeam(selectedTeam.id, joinMessage, joinPosition);
       if (res.success) {
         showToast(res.message);
         setIsJoinModalOpen(false);
         setJoinMessage('');
+        setJoinPosition('');
         const updated = await teamsService.getById(selectedTeam.id);
         setSelectedTeam(updated);
       } else {
@@ -93,5 +95,5 @@ export function useTeamsViewModel() {
       setIsSubmittingJoin(false);
     }
   };
-  return { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setSelectedTeam, setRosterTab, setIsJoinModalOpen, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite, selectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, teamScorers, teamAssisters, isJoinModalOpen, joinMessage, setJoinMessage, isSubmittingJoin, handleJoinTeam };
+  return { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setSelectedTeam, setRosterTab, setIsJoinModalOpen, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite, selectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, teamScorers, teamAssisters, isJoinModalOpen, joinMessage, setJoinMessage, joinPosition, setJoinPosition, isSubmittingJoin, handleJoinTeam };
 }

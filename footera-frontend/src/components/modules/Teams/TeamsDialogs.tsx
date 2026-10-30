@@ -7,7 +7,7 @@ import { Modal } from '../../common/Modal';
 import type { useTeamsViewModel } from './useTeamsViewModel';
 
 export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewModel> }) {
-  const { user, navigateToResource, selectedTeam, setSelectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, setRosterTab, teamScorers, teamAssisters, isJoinModalOpen, setIsJoinModalOpen, joinMessage, setJoinMessage, isSubmittingJoin, isTeamMember, handleJoinTeam } = model;
+  const { user, t, navigateToResource, selectedTeam, setSelectedTeam, isRosterModalOpen, setIsRosterModalOpen, rosterTab, setRosterTab, teamScorers, teamAssisters, isJoinModalOpen, setIsJoinModalOpen, joinMessage, setJoinMessage, joinPosition, setJoinPosition, isSubmittingJoin, isTeamMember, handleJoinTeam } = model;
   return <>
       {/* Roster / Membres de l'équipe Modal */}
       {isRosterModalOpen && selectedTeam && (
@@ -225,7 +225,7 @@ export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewM
                 className="w-full py-3 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>Rejoindre cet effectif</span>
+                <span>{t('teams.joinRoster')}</span>
               </button>
             </div>}
           </div>
@@ -237,7 +237,7 @@ export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewM
         <Modal
           isOpen={isJoinModalOpen}
           onClose={() => setIsJoinModalOpen(false)}
-          title={`Rejoindre ${selectedTeam.name}`}
+          title={t('teams.joinTitle', { team: selectedTeam.name })}
           subtitle={`Demande d'adhésion pour la division ${selectedTeam.division}`}
           maxWidth="md"
         >
@@ -246,8 +246,10 @@ export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewM
               Votre CV sportif ({user?.sportsCv.primaryPosition}, {user?.sportsCv.height}cm, {user?.sportsCv.strongFoot}) sera directement envoyé au coach <strong>{selectedTeam.coachName}</strong>.
             </p>
             <div>
+              <label htmlFor="team-join-position" className="block text-xs font-bold text-slate-700 mb-1">{t('teams.joinPosition')}</label>
+              <input id="team-join-position" name="position" required maxLength={100} value={joinPosition} onChange={(e) => setJoinPosition(e.target.value)} placeholder={t('teams.joinPositionPlaceholder')} className="mb-3 w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors" />
               <label htmlFor="team-join-message" className="block text-xs font-bold text-slate-700 mb-1">
-                Message au staff technique *
+                {t('teams.joinMessage')}
               </label>
               <textarea
                 id="team-join-message"
@@ -268,10 +270,10 @@ export function TeamsDialogs({ model }: { model: ReturnType<typeof useTeamsViewM
               </button>
               <button
                 onClick={handleJoinTeam}
-                disabled={!joinMessage.trim() || isSubmittingJoin}
+                disabled={!joinMessage.trim() || !joinPosition.trim() || isSubmittingJoin}
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isSubmittingJoin ? 'Envoi...' : 'Envoyer ma demande'}
+                {isSubmittingJoin ? t('teams.joinSending') : t('teams.joinSubmit')}
               </button>
             </div>
           </div>
