@@ -136,3 +136,34 @@ describe('TeamsService public roster statistics', () => {
     expect(records.save).toHaveBeenCalledWith('teams', 'team-1', expect.objectContaining({ membersCount: 2 }));
   });
 });
+
+describe('TeamsService listing and membership reads', () => {
+  it('filters public teams and removes private ownership fields', async () => {
+    const team = { id: 'team-1', ownerId: 'owner-1', name: 'FC Test', city: 'Antananarivo', category: 'Senior', members: [] };
+    const records = {
+      list: vi.fn(async (collection: string) => ({ teams: [team], matches: [], tournaments: [], players: [] }[collection] ?? [])),
+      find: vi.fn(async () => team),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+    };
+    const service = new TeamsService(records as unknown as never, {} as never, {} as never, {} as never);
+
+    await expect(service.list({ query: 'missing' })).resolves.toEqual([]);
+    await expect(service.list({ query: 'fc', category: 'Senior', city: 'tana' })).resolves.toMatchObject([{ id: 'team-1', membersCount: 0 }]);
+    const result = await service.getById('team-1');
+    expect(result).not.toHaveProperty('ownerId');
+  });
+
+  it('returns the current team and null for unknown teams', async () => {
+    const team = { id: 'team-1', ownerId: 'user-1', name: 'FC Test', members: [] };
+    const records = {
+      list: vi.fn(async (collection: string) => collection === 'teams' ? [team] : []),
+      find: vi.fn(async () => null),
+    };
+    const accounts = { profile: vi.fn(async () => ({ id: 'user-1' })) };
+    const service = new TeamsService(records as unknown as never, accounts as never, {} as never, {} as never);
+
+    await expect(service.myTeam()).resolves.toEqual(team);
+    await expect(service.getById('missing')).resolves.toBeNull();
+    await expect(service.listPlayers('missing')).resolves.toBeNull();
+  });
+});

@@ -28,6 +28,20 @@ export function normalizeOriginList(value: string | undefined, fallback: string)
   return (value || fallback).split(',').map((origin) => origin.trim().replace(/\/+$/, '')).filter(Boolean);
 }
 
+const PRODUCTION_FRONTEND_ORIGIN = 'https://footera-frontend.vercel.app';
+
+export function getFrontendOrigins(configuredOrigins: string | undefined): string[] {
+  return [...new Set([
+    ...normalizeOriginList(configuredOrigins, 'http://localhost:3001'),
+    PRODUCTION_FRONTEND_ORIGIN,
+  ])];
+}
+
+export function isAllowedFrontendOrigin(origin: string | undefined, configuredOrigins: string | undefined): boolean {
+  if (!origin) return true;
+  return getFrontendOrigins(configuredOrigins).includes(origin.replace(/\/+$/, ''));
+}
+
 export function isValidPhoneNumber(value: string): boolean {
   return /^[+()\d.\-\s]{7,32}$/.test(value);
 }

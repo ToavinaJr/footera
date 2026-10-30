@@ -19,4 +19,13 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
+
+  it('exposes a public PostgreSQL status payload for deployment healthchecks', () => {
+    expect(appController.getStatus()).toEqual({
+      name: 'Footera API',
+      version: '1.0.0',
+      status: 'operational',
+      database: 'PostgreSQL (Prisma ORM)',
+    });
+  });
 });

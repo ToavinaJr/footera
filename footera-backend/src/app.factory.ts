@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import express from 'express';
 import { resolve } from 'node:path';
 import { AppModule } from './app.module.js';
-import { normalizeOriginList } from './utils/text.utils.js';
+import { getFrontendOrigins } from './utils/text.utils.js';
 import { RequestBodyValidationPipe } from './common/pipes/request-body-validation.pipe.js';
 
 const logger = new Logger('Bootstrap');
@@ -16,11 +16,7 @@ export async function configureApp(app: INestApplication) {
     throw new Error('TRUST_PROXY_HOPS must be a non-negative integer.');
   }
   app.getHttpAdapter().getInstance().set('trust proxy', trustProxyHops);
-  const configuredFrontendOrigins = normalizeOriginList(process.env.FRONTEND_URL, 'http://localhost:3001');
-  const frontendOrigins = [...new Set([
-    ...configuredFrontendOrigins,
-    'https://footera-frontend.vercel.app',
-  ])];
+  const frontendOrigins = getFrontendOrigins(process.env.FRONTEND_URL);
 
   app.enableCors({
     origin: frontendOrigins,

@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { MatchesService } from './matches.service.js';
 
@@ -117,5 +117,79 @@ describe('MatchesService tournament organizer controls', () => {
     records.find.mockResolvedValueOnce({ ...pendingMatch, status: 'FINISHED' });
 
     await expect(service.update('match-pending', { venue: 'Nouveau stade' })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('finishes a live match and publishes the final score', async () => {
+    const { service, records } = managementService('organizer-1');
+    records.find.mockResolvedValueOnce({ ...pendingMatch, status: 'LIVE', minute: 45 });
+
+    await expect(service.finish('match-pending')).resolves.toMatchObject({ status: 'FINISHED', minute: 90 });
+    expect(records.save).toHaveBeenCalledWith('matches', 'match-pending', expect.objectContaining({ status: 'FINISHED', minute: 90 }));
+  });
+
+  it('rejects invalid match updates before persistence', async () => {
+    const { service } = managementService('organizer-1');
+
+    await expect(service.update('match-pending', {})).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.update('match-pending', { venue: '' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.update('match-pending', { scheduledAt: 'not-a-date' })).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('validates events and lineups, recalculates scores, and publishes the update', async () => {
+    const players = [
+      { id: 'player-home', name: 'Buteur', currentTeamId: 'team-1' },
+      { id: 'player-assist', name: 'Passeur', currentTeamId: 'team-1' },
+      { id: 'player-away', name: 'Défenseur', currentTeamId: 'team-2' },
+      { id: 'player-sub', name: 'Remplaçant', currentTeamId: 'team-2' },
+    ];
+    const teams = [{ id: 'team-1', name: 'Home', members: [] }, { id: 'team-2', name: 'Away', members: [] }];
+    const records = {
+      find: vi.fn(async (collection: string) => collection === 'matches' ? pendingMatch : { id: 'cup-1', organizerId: 'organizer-1' }),
+      list: vi.fn(async (collection: string) => collection === 'players' ? players : teams),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+      publishActivity: vi.fn(),
+    };
+    const service = new MatchesService(records as never, {} as never, { userId: 'organizer-1' } as never);
+
+    const result = await service.update('match-pending', {
+      date: '2026-10-30', time: '18:30',
+      events: [
+        { minute: 12, type: 'goal', teamId: 'team-1', playerId: 'player-home', assistPlayerId: 'player-assist', description: '<b>But</b>' },
+        { minute: 30, type: 'sub', teamId: 'team-2', playerId: 'player-away', substitutedPlayerId: 'player-sub' },
+      ],
+      lineups: [
+        { teamId: 'team-1', playerIds: ['player-home', 'player-assist'] },
+        { teamId: 'team-2', playerIds: ['player-away', 'player-sub'] },
+      ],
+    });
+
+    expect(result).toMatchObject({ homeTeam: { score: 1 }, awayTeam: { score: 0 }, scheduledAt: '2026-10-30T18:30:00.000Z' });
+    expect(result.events?.[0]).toMatchObject({ player: 'Buteur', assist: 'Passeur', description: '<b>But</b>' });
+    expect(records.publishActivity).toHaveBeenCalledOnce();
+  });
+
+  it('rejects invalid event and lineup references', async () => {
+    const records = {
+      find: vi.fn(async (collection: string) => collection === 'matches' ? pendingMatch : { id: 'cup-1', organizerId: 'organizer-1' }),
+      list: vi.fn(async () => []),
+      save: vi.fn(),
+    };
+    const service = new MatchesService(records as never, {} as never, { userId: 'organizer-1' } as never);
+    await expect(service.update('match-pending', { events: [{ minute: 200, type: 'goal', teamId: 'team-1', playerId: 'missing' }] })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.update('match-pending', { lineups: [{ teamId: 'team-1', playerIds: ['missing'] }] })).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('returns standings, manageable matches, filtered lists, and activity feed', async () => {
+    const tournament = { id: 'cup-1', title: 'Coupe', participantTeamIds: ['team-1', 'team-2'] };
+    const matches = [{ ...pendingMatch, status: 'FINISHED', homeTeam: { ...pendingMatch.homeTeam, score: 2 }, awayTeam: { ...pendingMatch.awayTeam, score: 0 } }];
+    const records = {
+      list: vi.fn(async (collection: string) => collection === 'tournaments' ? [tournament] : collection === 'teams' ? [pendingMatch.homeTeam, pendingMatch.awayTeam] : collection === 'matches' ? matches : collection === 'activity' ? [{ id: 'activity-1' }] : []),
+      find: vi.fn(async () => null),
+    };
+    const service = new MatchesService(records as never, {} as never, { userId: 'organizer-1' } as never);
+    await expect(service.standings('cup-1')).resolves.toHaveLength(2);
+    await expect(service.activityFeed()).resolves.toEqual([{ id: 'activity-1' }]);
+    await expect(service.list('FINISHED')).resolves.toHaveLength(1);
+    await expect(service.manageableMatchIds()).resolves.toEqual([]);
   });
 });

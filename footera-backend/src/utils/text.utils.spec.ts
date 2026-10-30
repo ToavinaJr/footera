@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeOriginList, normalizeSearchText, parseCookieValue, splitDelimitedText } from './text.utils.js';
+import { getFrontendOrigins, isAllowedFrontendOrigin, normalizeOriginList, normalizeSearchText, parseCookieValue, splitDelimitedText } from './text.utils.js';
 
 describe('text utilities', () => {
   it('normalizes accents and casing for search', () => {
@@ -19,5 +19,14 @@ describe('text utilities', () => {
     expect(normalizeOriginList(' https://a.test/, http://localhost:3001 ', 'https://fallback.test'))
       .toEqual(['https://a.test', 'http://localhost:3001']);
     expect(normalizeOriginList(undefined, 'https://fallback.test')).toEqual(['https://fallback.test']);
+  });
+
+  it('shares the production frontend origin between CORS and request guards', () => {
+    expect(getFrontendOrigins('https://custom.example')).toEqual([
+      'https://custom.example',
+      'https://footera-frontend.vercel.app',
+    ]);
+    expect(isAllowedFrontendOrigin('https://footera-frontend.vercel.app', 'https://custom.example')).toBe(true);
+    expect(isAllowedFrontendOrigin('https://attacker.example', 'https://custom.example')).toBe(false);
   });
 });

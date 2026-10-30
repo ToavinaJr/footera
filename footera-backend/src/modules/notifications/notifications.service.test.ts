@@ -31,4 +31,22 @@ describe('NotificationsService recipients', () => {
     expect(notification.recipientId).toBe('user-1');
     expect(records.create).toHaveBeenCalledWith('notifications', notification.id, expect.objectContaining({ recipientId: 'user-1' }));
   });
+
+  it('marks one notification and all current-user notifications as read', async () => {
+    const records = {
+      list: vi.fn().mockResolvedValue([
+        { id: 'mine-1', recipientId: 'user-1', createdAt: '2026-01-02', isRead: false },
+        { id: 'mine-2', recipientId: 'user-1', createdAt: '2026-01-01', isRead: false },
+      ]),
+      find: vi.fn().mockResolvedValue({ id: 'mine-1', recipientId: 'user-1', isRead: false }),
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    const context = new UserContext();
+    const service = new NotificationsService(records as unknown as never, context);
+
+    await context.run('user-1', () => service.markRead('mine-1'));
+    await context.run('user-1', () => service.markAllRead());
+    expect(records.save).toHaveBeenCalledWith('notifications', 'mine-1', expect.objectContaining({ isRead: true }));
+    expect(records.save).toHaveBeenCalledWith('notifications', 'mine-2', expect.objectContaining({ isRead: true }));
+  });
 });

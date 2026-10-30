@@ -9,10 +9,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: footera-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     name: Backend checks
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:17-alpine
@@ -42,17 +47,27 @@ jobs:
           cache: npm
           cache-dependency-path: footera-backend/package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run db:generate
       - run: npm run db:deploy
       - run: npm run db:seed
       - run: npm run lint
       - run: npm test
+      - run: npm run test:cov
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: footera-backend/coverage/
+          if-no-files-found: ignore
       - run: npm run test:e2e
       - run: npm run build
 
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: footera-frontend
@@ -64,13 +79,27 @@ jobs:
           cache: npm
           cache-dependency-path: footera-frontend/package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run lint
+      - run: npm run test:unit
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-playwright-report
+          path: |
+            footera-frontend/playwright-report/
+            footera-frontend/test-results/
+          if-no-files-found: ignore
       - run: npm run build
 
   containers:
     name: Build ${{ matrix.name }} container
     needs: [backend, frontend]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

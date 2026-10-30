@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Unauthor
 import { Reflector } from '@nestjs/core';
 import { AuthService } from './auth.service.js';
 import { IS_PUBLIC_ROUTE } from './public.decorator.js';
-import { normalizeOriginList, parseCookieValue } from '../../utils/text.utils.js';
+import { isAllowedFrontendOrigin, parseCookieValue } from '../../utils/text.utils.js';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -12,8 +12,7 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined>; method: string; user?: { id: string; sessionId: string } }>();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
       const origin = request.headers.origin;
-      const allowedOrigins = normalizeOriginList(process.env.FRONTEND_URL, 'http://localhost:3001');
-      if (origin && !allowedOrigins.includes(origin.replace(/\/+$/, ''))) throw new ForbiddenException('Origine de requête non autorisée.');
+      if (!isAllowedFrontendOrigin(origin, process.env.FRONTEND_URL)) throw new ForbiddenException('Origine de requête non autorisée.');
     }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_ROUTE, [context.getHandler(), context.getClass()]);
     const authorization = request.headers.authorization;
