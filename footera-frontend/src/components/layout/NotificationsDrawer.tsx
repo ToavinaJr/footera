@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { X, CheckCheck, Bell, ChevronRight } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
@@ -11,6 +11,7 @@ interface NotificationsDrawerProps {
 
 export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
+  const titleId = useId();
   const {
     notifications,
     unreadNotificationsCount,
@@ -26,6 +27,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
       className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs transition-opacity"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -36,7 +38,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
             <div className="w-8 h-8 rounded-xl bg-pitch-light flex items-center justify-center text-pitch-primary">
               <Bell className="w-4 h-4" />
             </div>
-            <h2 className="text-base font-extrabold text-pitch-ink">{t('notifications.title')}</h2>
+            <h2 id={titleId} className="text-base font-extrabold text-pitch-ink">{t('notifications.title')}</h2>
             {unreadNotificationsCount > 0 && (
               <span className="text-micro font-extrabold px-2 py-0.5 rounded-full bg-[#dc2626] text-white">
                 {unreadNotificationsCount}
@@ -46,18 +48,20 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
           <div className="flex items-center gap-2">
             {unreadNotificationsCount > 0 && (
               <button
+                type="button"
                 onClick={markAllNotificationsRead}
                 title={t('notifications.markAll')}
-                className="p-1.5 text-xs text-pitch-primary hover:bg-pitch-light rounded-xl font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                className="flex items-center gap-1 rounded-xl p-1.5 text-xs font-semibold text-pitch-primary transition-colors hover:bg-pitch-light focus-visible:outline-2 focus-visible:outline-pitch-primary"
               >
                 <CheckCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('notifications.readAll')}</span>
               </button>
             )}
             <button
+              type="button"
               onClick={onClose}
               aria-label={t('notifications.close')}
-              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-800 hover:bg-pitch-light cursor-pointer"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-pitch-light hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-pitch-primary"
             >
               <X className="w-5 h-5 stroke-[2.2]" />
             </button>
@@ -71,14 +75,15 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
             </div>
           ) : (
             notifications.map((notif) => (
-              <div
+              <button
                 key={notif.id}
+                type="button"
                 onClick={() => {
                   markNotificationRead(notif.id);
                   navigateToResource(notif.targetSection as NavigationSection, notif.targetId);
                 }}
-                className={`p-3.5 rounded-2xl cursor-pointer transition-all hover:bg-[#f3f7f1] flex items-start gap-3 ${
-                  notif.isRead ? 'opacity-70 bg-white' : 'bg-pitch-light/50 border border-[#d6e8d6]'
+                className={`flex w-full items-start gap-3 rounded-2xl p-3.5 text-left transition-colors hover:bg-pitch-notification-hover focus-visible:outline-2 focus-visible:outline-pitch-primary ${
+                  notif.isRead ? 'bg-white opacity-70' : 'border border-pitch-notification-border bg-pitch-light/50'
                 }`}
               >
                 <div
@@ -91,12 +96,12 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen
                     <p className={`text-xs font-bold ${notif.isRead ? 'text-slate-600' : 'text-pitch-ink'}`}>
                       {notif.title}
                     </p>
-                    <span className="text-micro text-slate-400 whitespace-nowrap">{notif.time}</span>
+                    <span className="whitespace-nowrap text-micro text-slate-600">{notif.time}</span>
                   </div>
                   <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 self-center" />
-              </div>
+              </button>
             ))
           )}
         </div>

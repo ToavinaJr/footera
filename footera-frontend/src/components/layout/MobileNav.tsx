@@ -28,11 +28,12 @@ export const MobileNav: React.FC = () => {
           return (
             <button
               key={tab.label}
+              type="button"
               onClick={() => {
                 setActiveSection(tab.section);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className={`flex flex-col items-center justify-center min-h-12 py-1 transition-all cursor-pointer relative ${
+              className={`relative flex min-h-12 cursor-pointer flex-col items-center justify-center py-1 transition-colors focus-visible:outline-2 focus-visible:outline-pitch-primary focus-visible:outline-offset-2 ${
                 isActive ? 'text-pitch-ink font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >

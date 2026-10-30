@@ -31,24 +31,24 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
 
   const content = (collapsed: boolean, mobile = false) => (
     <div className="pitch-tactical-grid flex h-full min-h-0 flex-col text-white">
-      <div className={`flex shrink-0 items-center border-b border-[#144f2f] ${mobile ? 'justify-between px-4' : 'justify-center px-2'} py-3`}>
+      <div className={`flex shrink-0 items-center border-b border-pitch-sidebar-line ${mobile ? 'justify-between px-4' : 'justify-center px-2'} py-3`}>
         {mobile ? (
           <>
             <button
               type="button"
               onClick={() => { setActiveSection('home'); onClose(); }}
               title="Footera"
-              className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg text-left"
+              className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-lime-volt focus-visible:outline-offset-2"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lime-volt font-display text-lg font-extrabold text-pitch-ink">F</span>
               <span className="font-display text-xl font-extrabold tracking-tight">Footera</span>
             </button>
-            <button type="button" onClick={onClose} aria-label={t('nav.closeMenu')} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-[#124227] hover:text-white">
+            <button type="button" onClick={onClose} aria-label={t('nav.closeMenu')} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-pitch-sidebar-hover hover:text-white focus-visible:outline-2 focus-visible:outline-lime-volt focus-visible:outline-offset-2">
               <X className="h-5 w-5" />
             </button>
           </>
         ) : (
-          <button type="button" onClick={onToggleCollapsed} aria-label={collapsed ? t('nav.open') : t('nav.closeMenu')} title={collapsed ? t('nav.open') : t('nav.closeMenu')} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-[#124227] hover:text-white">
+          <button type="button" onClick={onToggleCollapsed} aria-label={collapsed ? t('nav.open') : t('nav.closeMenu')} title={collapsed ? t('nav.open') : t('nav.closeMenu')} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-pitch-sidebar-hover hover:text-white focus-visible:outline-2 focus-visible:outline-lime-volt focus-visible:outline-offset-2">
             {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
         )}
@@ -66,7 +66,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
               onClick={() => { setActiveSection(item.section); if (mobile) onClose(); }}
-              className={`flex min-h-11 w-full cursor-pointer items-center rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-all ${collapsed && !mobile ? 'justify-center' : 'gap-3.5'} ${isActive ? 'bg-lime-volt text-pitch-ink shadow-md shadow-lime-volt/10' : 'text-slate-200 hover:bg-[#0f4427] hover:text-white'}`}
+              className={`flex min-h-11 w-full cursor-pointer items-center rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${collapsed && !mobile ? 'justify-center' : 'gap-3'} ${isActive ? 'bg-lime-volt text-pitch-ink shadow-md shadow-lime-volt/10' : 'text-slate-200 hover:bg-pitch-sidebar-hover hover:text-white'} focus-visible:outline-2 focus-visible:outline-lime-volt focus-visible:outline-offset-2`}
             >
               <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-pitch-ink' : 'text-slate-300'}`} />
               {(!collapsed || mobile) && <span className="truncate">{item.label}</span>}
@@ -79,7 +79,9 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
         type="button"
         onClick={() => { setActiveSection('profile'); if (mobile) onClose(); }}
         title={collapsed && !mobile ? user?.name : undefined}
-        className={`flex shrink-0 items-center border-t border-[#144f2f] py-3 text-left transition-colors hover:bg-[#0f4427] ${collapsed && !mobile ? 'justify-center px-2' : 'gap-3 px-4'}`}
+        aria-label={collapsed && !mobile ? (user?.name ?? t('nav.profile')) : undefined}
+        aria-current={activeSection === 'profile' ? 'page' : undefined}
+        className={`flex shrink-0 items-center border-t border-pitch-sidebar-line py-3 text-left transition-colors hover:bg-pitch-sidebar-hover ${collapsed && !mobile ? 'justify-center px-2' : 'gap-3 px-4'} focus-visible:outline-2 focus-visible:outline-lime-volt focus-visible:outline-offset-2`}
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-lime-volt bg-slate-900 text-xs font-bold text-white">
           {user?.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : (user?.name?.charAt(0) || 'U')}
@@ -96,12 +98,12 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({ isOpen, isCollapse
 
   return (
     <>
-      <aside className={`sidebar-desktop sticky top-16 hidden h-[calc(100dvh-4rem)] shrink-0 overflow-hidden border-r border-[#155a36] shadow-xl transition-[width] duration-200 md:block ${isCollapsed ? 'w-16' : 'w-64'}`}>
+      <aside className={`sidebar-desktop sticky top-16 hidden h-[calc(100dvh-4rem)] shrink-0 overflow-hidden border-r border-pitch-sidebar-border shadow-xl transition-[width] duration-200 md:block ${isCollapsed ? 'w-16' : 'w-64'}`}>
         {content(isCollapsed)}
       </aside>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs md:hidden" role="dialog" aria-modal="true" aria-label={t('nav.sidebar')} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-          <aside className="sidebar-drawer-panel h-dvh max-h-dvh min-h-0 w-72 max-w-[85vw] shrink-0 overflow-hidden border-r border-[#155a36] shadow-2xl animate-in slide-in-from-left duration-200">
+          <aside className="sidebar-drawer-panel h-dvh max-h-dvh min-h-0 w-72 max-w-[85vw] shrink-0 overflow-hidden border-r border-pitch-sidebar-border shadow-2xl animate-in slide-in-from-left duration-200">
             {content(false, true)}
           </aside>
         </div>

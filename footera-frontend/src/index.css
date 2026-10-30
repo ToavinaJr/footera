@@ -30,6 +30,11 @@
   --color-canvas-bg: #f6f5ef;
   --color-card-bg: #ffffff;
   --color-border-subtle: #e3e5da;
+  --color-pitch-sidebar-line: #144f2f;
+  --color-pitch-sidebar-hover: #0f4427;
+  --color-pitch-sidebar-border: #155a36;
+  --color-pitch-notification-hover: #f3f7f1;
+  --color-pitch-notification-border: #d6e8d6;
 }
 
 :root {
