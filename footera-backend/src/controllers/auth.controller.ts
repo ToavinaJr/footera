@@ -1,9 +1,11 @@
-import { Controller, Get, Put, Post, Body, HttpCode, HttpStatus, Res, ForbiddenException, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Param, Body, HttpCode, HttpStatus, Res, ForbiddenException, Req, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AccountsService } from '../modules/accounts/accounts.service.js';
 import { SeedService } from '../database/seed.service.js';
 import { AuthService } from '../modules/auth/auth.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
+import { parseCookieValue } from '../utils/text.utils.js';
+import { loginBodyPipe, profileBodyPipe, registerBodyPipe } from '../modules/auth/auth-request.validation.js';
 
 @Controller('auth')
 export class AuthController {
@@ -12,7 +14,7 @@ export class AuthController {
   @Post('register')
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() body: { name?: unknown; email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
+  async register(@Body(registerBodyPipe) body: { name?: unknown; email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
     const result = await this.auth.register(body);
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };
@@ -21,8 +23,8 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: { email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
-    const result = await this.auth.login(body);
+  async login(@Body(loginBodyPipe) body: { email?: unknown; password?: unknown }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const result = await this.auth.login(body, request.ip || request.socket.remoteAddress || 'unknown');
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };
   }
@@ -54,8 +56,26 @@ export class AuthController {
   }
 
   @Put('profile')
-  updateProfile(@Body() body: Record<string, unknown>) {
+  updateProfile(@Body(profileBodyPipe) body: Record<string, unknown>) {
     return this.accounts.updateProfile(body);
+  }
+
+  @Put('preferences')
+  preferences(@Body() body: unknown) { return this.accounts.updatePreferences(body); }
+
+  @Get('sessions')
+  sessions(@Req() request: Request & { user: { id: string; sessionId: string } }) {
+    return this.auth.listSessions(request.user.id, request.user.sessionId);
+  }
+
+  @Delete('sessions/:id')
+  revokeSession(@Req() request: Request & { user: { id: string } }, @Param('id') id: string) {
+    return this.auth.revokeSession(request.user.id, id);
+  }
+
+  @Put('password')
+  changePassword(@Req() request: Request & { user: { id: string } }, @Body() body: unknown) {
+    return this.auth.changePassword(request.user.id, body);
   }
 
   @Put('sports-cv')
@@ -91,8 +111,6 @@ export class AuthController {
   }
 
   private readCookie(request: Request, name: string) {
-    const prefix = `${name}=`;
-    const value = request.headers.cookie?.split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix))?.slice(prefix.length);
-    return value ? decodeURIComponent(value) : undefined;
+    return parseCookieValue(request.headers.cookie, name);
   }
 }

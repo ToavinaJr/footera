@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
 import { UserContext } from '../auth/user-context.js';
-import type { NotificationRecord } from '../../database/domain-records.js';
+import type { NotificationRecord } from '../../types/records.js';
 
 @Injectable()
 export class NotificationsService {

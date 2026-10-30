@@ -4,6 +4,7 @@ import { BookingsService } from './bookings.service.js';
 
 const catalogOptions = {
   pitchSurfaces: ['Indoor Five', 'Synthétique dernière génération'],
+  pitchFormats: ['11v11', '9v9', '7v7', '5v5', '4v4'],
   pitchAmenities: ['Lighting'],
 };
 
@@ -21,7 +22,7 @@ function makeService(profile: { activeRole: string; roles: string[] }) {
 describe('BookingsService pitch permissions', () => {
   const pitch = {
     name: 'Terrain test', complexName: 'Complexe test', city: 'Antananarivo', address: 'Centre',
-    surface: 'Synthétique dernière génération', dimensions: '5v5', imageUrl: 'https://images.unsplash.com/photo-123', hourlyRate: 50, amenities: [],
+    surface: 'Synthétique dernière génération', gameFormat: '5v5', dimensions: '5v5', imageUrl: 'https://images.unsplash.com/photo-123', hourlyRate: 50, amenities: [],
   };
 
   it('allows pitch creation when Gestionnaire Terrain is assigned, regardless of active mode', async () => {
@@ -38,7 +39,7 @@ describe('BookingsService pitch permissions', () => {
 
   it('exposes surface and amenity options from the database catalog', async () => {
     const { service } = makeService({ activeRole: 'Joueur', roles: ['Joueur'] });
-    await expect(service.getPitchOptions()).resolves.toEqual({ surfaces: catalogOptions.pitchSurfaces, amenities: catalogOptions.pitchAmenities });
+    await expect(service.getPitchOptions()).resolves.toEqual({ surfaces: catalogOptions.pitchSurfaces, formats: catalogOptions.pitchFormats, amenities: catalogOptions.pitchAmenities });
   });
 });
 
@@ -63,6 +64,11 @@ describe('BookingsService bookings and ratings', () => {
       find: vi.fn(async (collection: string, id: string) => collection === 'pitches' && id === pitch.id ? pitch : null),
       list: vi.fn(async (collection: string) => collection === 'bookings' ? created : []),
       create: vi.fn(async (_collection: string, _id: string, payload: unknown) => { created.push(payload); return payload; }),
+      reserveBookingsAtomically: vi.fn(async (entries: Array<{ payload: unknown }>) => { created.push(...entries.map((entry) => entry.payload)); return true; }),
+      cancelBookingAndReleaseSlot: vi.fn(async (id: string, payload: unknown) => {
+        const index = created.findIndex((booking) => (booking as { id: string }).id === id);
+        if (index >= 0) created[index] = payload;
+      }),
       save: vi.fn(async (_collection: string, _id: string, payload: unknown) => { pitch = payload; return payload; }),
     };
     const accounts = { profile: vi.fn(async () => ({ id: 'user-1', name: 'Alex', roles: ['Joueur'], sportsCv: {} })) };
@@ -89,11 +95,36 @@ describe('BookingsService bookings and ratings', () => {
   });
 
   it('creates bookings using the current backend slot price', async () => {
-    const { service } = makeBookingService();
+    const { service, records } = makeBookingService();
     const created = await service.createBookings({
       pitchId: 'pitch-test', selections: [{ date: '2026-10-24', time: '18:00 - 19:30' }],
     });
     expect(created[0].totalPrice).toBe(65);
+    expect(records.reserveBookingsAtomically).toHaveBeenCalledWith([
+      expect.objectContaining({ pitchId: 'pitch-test', dateKey: '2026-10-24', time: '18:00 - 19:30' }),
+    ]);
+  });
+
+  it('rejects a concurrent slot claim and does not report a false success', async () => {
+    const { service, records, created } = makeBookingService();
+    records.reserveBookingsAtomically.mockResolvedValue(false);
+
+    await expect(service.createBookings({
+      pitchId: 'pitch-test', selections: [{ date: '2026-10-24', time: '18:00 - 19:30' }],
+    })).rejects.toBeInstanceOf(ConflictException);
+    expect(created).toHaveLength(0);
+  });
+
+  it('persists a multi-slot booking batch atomically', async () => {
+    const { service, records } = makeBookingService();
+    await service.createBookings({
+      pitchId: 'pitch-test', selections: [
+        { date: '2026-10-24', time: '09:00 - 10:30' },
+        { date: '2026-10-25', time: '18:00 - 19:30' },
+      ],
+    });
+    expect(records.reserveBookingsAtomically).toHaveBeenCalledOnce();
+    expect(records.reserveBookingsAtomically.mock.calls[0][0]).toHaveLength(2);
   });
 
   it('persists one review per user and recalculates the public aggregate', async () => {
@@ -124,5 +155,22 @@ describe('BookingsService bookings and ratings', () => {
     await expect(service.listBookings()).resolves.toEqual([expect.objectContaining({ id: 'mine' })]);
     records.find.mockImplementation(async (collection: string, id: string) => collection === 'bookings' ? created.find((booking) => booking.id === id) : null);
     await expect(service.cancelBooking('other')).resolves.toBe(false);
+  });
+
+  it('updates cancellation and releases its slot claim through the atomic repository operation', async () => {
+    const { service, records, created } = makeBookingService();
+    const booking = {
+      id: 'mine', userId: 'user-1', pitchId: 'pitch-test', date: '2026-10-24', time: '09:00 - 10:30',
+      status: 'CONFIRMED', createdAt: '2026-10-20T00:00:00.000Z',
+    };
+    created.push(booking);
+    records.find.mockImplementation(async (collection: string, id: string) => {
+      if (collection === 'bookings') return created.find((item) => (item as { id: string }).id === id) ?? null;
+      return null;
+    });
+
+    await expect(service.cancelBooking('mine')).resolves.toBe(true);
+
+    expect(records.cancelBookingAndReleaseSlot).toHaveBeenCalledWith('mine', expect.objectContaining({ status: 'CANCELLED' }));
   });
 });

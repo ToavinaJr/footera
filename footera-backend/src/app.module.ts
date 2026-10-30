@@ -19,6 +19,10 @@ import { StatsModule } from './modules/stats/stats.module.js';
 import { TeamsModule } from './modules/teams/teams.module.js';
 import { TournamentsModule } from './modules/tournaments/tournaments.module.js';
 import { UploadsModule } from './modules/uploads/uploads.module.js';
+import { GalleriesModule } from './modules/galleries/galleries.module.js';
+import { RoleRequestsModule } from './modules/role-requests/role-requests.module.js';
+import { DashboardModule } from './modules/dashboard/dashboard.module.js';
+import { ListPaginationInterceptor } from './common/pipes/list-pagination.interceptor.js';
 
 @Module({
   imports: [
@@ -37,8 +41,11 @@ import { UploadsModule } from './modules/uploads/uploads.module.js';
     NotificationsModule,
     StatsModule,
     UploadsModule,
+    GalleriesModule,
+    RoleRequestsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_INTERCEPTOR, useClass: UserContextInterceptor }],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, { provide: APP_INTERCEPTOR, useClass: UserContextInterceptor }, { provide: APP_INTERCEPTOR, useClass: ListPaginationInterceptor }],
 })
 export class AppModule {}

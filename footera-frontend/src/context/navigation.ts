@@ -6,6 +6,8 @@ export type NavigationSection =
   | 'tournaments'
   | 'pitches'
   | 'recruitment'
+  | 'mercato'
+  | 'settings'
   | 'marketplace'
   | 'notifications'
   | 'bookings'

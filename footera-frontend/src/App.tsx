@@ -1,12 +1,14 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
 import { Header } from './components/layout/Header';
-import { DemoBanner } from './components/layout/DemoBanner';
 import { MobileNav } from './components/layout/MobileNav';
+import { SidebarDrawer } from './components/layout/SidebarDrawer';
 import { ToastContainer } from './components/common/Toast';
 import { AuthView } from './components/modules/Auth/AuthView';
+import { LanguageProvider, useTranslation } from './i18n';
+import { legacyPath } from './context/routes';
 
 const HomeView = lazy(() => import('./components/modules/Home/HomeView').then((module) => ({ default: module.HomeView })));
 const PlayersView = lazy(() => import('./components/modules/Players/PlayersView').then((module) => ({ default: module.PlayersView })));
@@ -18,6 +20,7 @@ const PitchesView = lazy(() => import('./components/modules/Pitches/PitchesView'
 const RecruitmentView = lazy(() => import('./components/modules/Recruitment/RecruitmentView').then((module) => ({ default: module.RecruitmentView })));
 const MarketplaceView = lazy(() => import('./components/modules/Marketplace/MarketplaceView').then((module) => ({ default: module.MarketplaceView })));
 const ProfileView = lazy(() => import('./components/modules/Profile/ProfileView').then((module) => ({ default: module.ProfileView })));
+const SettingsView = lazy(() => import('./components/modules/Settings/SettingsView').then((module) => ({ default: module.SettingsView })));
 const StatsView = lazy(() => import('./components/modules/Stats/StatsView').then((module) => ({ default: module.StatsView })));
 const LandingView = lazy(() => import('./components/modules/Landing/LandingView').then((module) => ({ default: module.LandingView })));
 
@@ -26,15 +29,23 @@ const LegacyPlayerRedirect: React.FC = () => {
   return <Navigate to={`/profile/${encodeURIComponent(playerId)}`} replace />;
 };
 
+const LegacyRouteRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={legacyPath(location.pathname) + location.search + location.hash} state={location.state} replace />;
+};
+
 const AppContent: React.FC = () => {
-  const { setActiveSection, user, isLoadingUser, login, register } = useApp();
+  const { user, isLoadingUser, login, register } = useApp();
+  const { t } = useTranslation();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
-  if (isLoadingUser) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement de votre session…</div>;
+  if (isLoadingUser) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">{t('common.loadingSession')}</div>;
   if (!user) {
     return (
-      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Chargement...</div>}>
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">{t('common.loading')}</div>}>
         <Routes>
           <Route path="/" element={<LandingView />} />
           <Route path="/auth" element={<AuthView onLogin={login} onRegister={register} />} />
@@ -45,16 +56,23 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full flex flex-col bg-canvas-bg text-[#12281e] font-sans selection:bg-lime-volt selection:text-pitch-ink">
-      {/* Discreet Demo / Data Mode Banner */}
-      <DemoBanner />
-
+    <div className="app-shell min-h-full flex flex-col bg-canvas-bg text-pitch-ink font-sans selection:bg-lime-volt selection:text-pitch-ink">
       {/* Top Navigation Bar */}
-      <Header />
+      <Header onMenuClick={() => {
+        if (window.matchMedia('(min-width: 768px)').matches) setIsSidebarCollapsed((collapsed) => !collapsed);
+        else setIsMobileSidebarOpen(true);
+      }} />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
-        <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Chargement de la page…</div>}>
+      <div className="flex min-h-0 flex-1">
+      <SidebarDrawer
+        isOpen={isMobileSidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapsed={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
+      <main className="min-w-0 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-16">
+        <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">{t('common.loading')}</div>}>
         <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/auth" element={<Navigate to="/home" replace />} />
@@ -73,23 +91,27 @@ const AppContent: React.FC = () => {
           <Route path="/pitches" element={<PitchesView />} />
           <Route path="/pitches/:pitchId/book" element={<PitchesView />} />
           <Route path="/pitches/:pitchId" element={<PitchesView />} />
-          <Route path="/recruitment" element={<RecruitmentView />} />
-          <Route path="/recruitment/:adId" element={<RecruitmentView />} />
+          <Route path="/recruitment/*" element={<LegacyRouteRedirect />} />
+          <Route path="/mercato" element={<RecruitmentView />} />
+          <Route path="/mercato/:adId" element={<RecruitmentView />} />
           <Route path="/marketplace" element={<MarketplaceView />} />
           <Route path="/marketplace/new" element={<MarketplaceView />} />
           <Route path="/marketplace/:listingId" element={<MarketplaceView />} />
           <Route path="/pitches/new" element={<PitchesView />} />
-          <Route path="/profile" element={<ProfileView />} />
-          <Route path="/profile/edit-cv" element={<ProfileView />} />
-          <Route path="/profile/bookings" element={<ProfileView />} />
-          <Route path="/profile/bookings/:bookingId" element={<ProfileView />} />
-          <Route path="/profile/applications" element={<ProfileView />} />
-          <Route path="/notifications" element={<HomeView />} />
+          <Route path="/profile" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/edit-cv" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/bookings" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/bookings/:bookingId" element={<LegacyRouteRedirect />} />
+          <Route path="/profile/applications" element={<LegacyRouteRedirect />} />
+          <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
+          <Route path="/settings/*" element={<SettingsView />} />
+          <Route path="/notifications" element={<Navigate to="/settings/notifications" replace />} />
           <Route path="/stats" element={<StatsView />} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
         </Suspense>
       </main>
+      </div>
 
       {/* Mobile Ergonomic Bottom Tab Navigation */}
       <MobileNav />
@@ -97,38 +119,6 @@ const AppContent: React.FC = () => {
       {/* Global Notifications and Mutation Feedback Toasts */}
       <ToastContainer />
 
-      {/* Footer */}
-      <footer className="border-t border-border-subtle bg-white py-8 px-4 text-center text-xs text-slate-500 hidden md:block">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-pitch-primary flex items-center justify-center font-bold text-lime-volt text-xs">
-              F
-            </div>
-            <span className="font-extrabold text-pitch-ink">FOOTERA</span>
-            <span>— Plateforme unifiée de l&apos;écosystème footballistique</span>
-          </div>
-          <div className="flex items-center gap-5 text-slate-500 font-medium">
-            <button onClick={() => setActiveSection('players')} className="hover:text-pitch-primary cursor-pointer">
-              Joueurs
-            </button>
-            <button onClick={() => setActiveSection('teams')} className="hover:text-pitch-primary cursor-pointer">
-              Équipes
-            </button>
-            <button onClick={() => setActiveSection('matches')} className="hover:text-pitch-primary cursor-pointer">
-              Matchs
-            </button>
-            <button onClick={() => setActiveSection('stats')} className="hover:text-pitch-primary cursor-pointer font-bold text-pitch-primary">
-              Stats & Buteurs
-            </button>
-            <button onClick={() => setActiveSection('pitches')} className="hover:text-pitch-primary cursor-pointer">
-              Terrains
-            </button>
-            <button onClick={() => setActiveSection('marketplace')} className="hover:text-pitch-primary cursor-pointer">
-              Marketplace
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
@@ -136,9 +126,11 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <LanguageProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

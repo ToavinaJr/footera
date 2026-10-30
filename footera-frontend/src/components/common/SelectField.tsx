@@ -14,6 +14,7 @@ interface SelectFieldProps {
   disabled?: boolean;
   required?: boolean;
   name?: string;
+  id?: string;
   'aria-label'?: string;
 }
 
@@ -45,9 +46,11 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   disabled = false,
   required = false,
   name,
+  id: providedId,
   'aria-label': ariaLabel,
 }) => {
-  const id = useId();
+  const generatedId = useId();
+  const id = providedId ?? generatedId;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -194,7 +197,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         aria-label={ariaLabel}
         aria-activedescendant={`${id}-option-${activeIndex}`}
         onKeyDown={handleListboxKeyDown}
-        className="fixed z-50 overflow-y-auto overscroll-contain rounded-xl border border-pitch-line bg-white py-1 text-sm text-pitch-ink shadow-xl outline-hidden"
+        className="fixed z-110 overflow-y-auto overscroll-contain rounded-xl border border-pitch-line bg-white py-1 text-sm text-pitch-ink shadow-xl outline-hidden"
         style={{ top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
       >
         {options.map((option, index) => (
@@ -207,7 +210,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
             aria-disabled={option.disabled || undefined}
             onMouseEnter={() => { if (!option.disabled) setActiveIndex(index); }}
             onClick={() => chooseOption(option)}
-            className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 whitespace-normal break-words ${
+            className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2 whitespace-normal wrap-break ${
               option.disabled
                 ? 'cursor-not-allowed text-slate-400'
                 : index === activeIndex
@@ -225,8 +228,9 @@ export const SelectField: React.FC<SelectFieldProps> = ({
     : null;
 
   return (
-    <div className="relative w-full min-w-0">
+    <div className="relative min-w-0">
       <button
+        id={id}
         ref={buttonRef}
         type="button"
         role="combobox"

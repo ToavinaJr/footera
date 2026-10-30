@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { MatchesService } from './matches.service.js';
 
@@ -8,7 +8,7 @@ function createService(status: string, favoriteMatchIds: string[] = []) {
     profile: vi.fn().mockResolvedValue({ favoriteMatchIds }),
     toggleFavoriteMatch: vi.fn().mockResolvedValue(false),
   };
-  return { service: new MatchesService(records as never, accounts as never), accounts };
+  return { service: new MatchesService(records as never, accounts as never, { userId: 'organizer-1' } as never), accounts };
 }
 
 describe('MatchesService.toggleFavorite', () => {
@@ -36,9 +36,86 @@ describe('MatchesService.toggleFavorite', () => {
   it('rejects an unknown match', async () => {
     const records = { find: vi.fn().mockResolvedValue(null) };
     const accounts = { profile: vi.fn(), toggleFavoriteMatch: vi.fn() };
-    const service = new MatchesService(records as never, accounts as never);
+    const service = new MatchesService(records as never, accounts as never, { userId: 'organizer-1' } as never);
 
     await expect(service.toggleFavorite('unknown')).rejects.toBeInstanceOf(NotFoundException);
     expect(accounts.profile).not.toHaveBeenCalled();
+  });
+});
+
+describe('MatchesService event player profiles', () => {
+  it('creates and persists player IDs for legacy match events', async () => {
+    const match = {
+      id: 'match-legacy', status: 'FINISHED',
+      homeTeam: { id: 'team-1', name: 'Team One', score: 1 },
+      awayTeam: { id: 'team-2', name: 'Team Two', score: 0 },
+      events: [{ minute: 12, type: 'goal', teamId: 'team-1', player: 'Buteur Test', assist: 'Passeur Test' }],
+    };
+    const savedPlayers: Array<{ id: string; name: string }> = [];
+    const savedMatches: unknown[] = [];
+    const records = {
+      list: vi.fn(async (collection: string) => collection === 'matches' ? [match]
+        : collection === 'teams' ? [{ id: 'team-1', name: 'Team One', city: 'Antananarivo', members: [] }]
+          : []),
+      find: vi.fn(async () => null),
+      save: vi.fn(async (collection: string, _id: string, payload: unknown) => {
+        if (collection === 'players') savedPlayers.push(payload as { id: string; name: string });
+        if (collection === 'matches') savedMatches.push(payload);
+        return payload;
+      }),
+    };
+    const service = new MatchesService(records as never, {} as never, { userId: 'organizer-1' } as never);
+
+    const [result] = await service.list();
+
+    expect(result.events?.[0]).toMatchObject({
+      player: 'Buteur Test',
+      playerId: expect.stringMatching(/^match_player_[a-f0-9]{24}$/),
+      assist: 'Passeur Test',
+      assistPlayerId: expect.stringMatching(/^match_player_[a-f0-9]{24}$/),
+    });
+    expect(savedPlayers).toHaveLength(2);
+    expect(savedMatches).toHaveLength(1);
+  });
+});
+
+describe('MatchesService tournament organizer controls', () => {
+  const pendingMatch = {
+    id: 'match-pending', tournamentId: 'cup-1', status: 'SCHEDULED', minute: 0,
+    homeTeam: { id: 'team-1', name: 'Home', score: 0 },
+    awayTeam: { id: 'team-2', name: 'Away', score: 0 },
+    events: [],
+  };
+
+  function managementService(userId: string) {
+    const records = {
+      find: vi.fn(async (collection: string) => collection === 'matches'
+        ? pendingMatch : { id: 'cup-1', organizerId: 'organizer-1' }),
+      list: vi.fn(async () => []),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+    };
+    const service = new MatchesService(records as never, {} as never, { userId } as never);
+    return { service, records };
+  }
+
+  it('lets the tournament organizer launch a scheduled match', async () => {
+    const { service, records } = managementService('organizer-1');
+
+    await expect(service.start('match-pending')).resolves.toMatchObject({ status: 'LIVE', minute: 0 });
+    expect(records.save).toHaveBeenCalledWith('matches', 'match-pending', expect.objectContaining({ status: 'LIVE' }));
+  });
+
+  it('rejects match management by a non-organizer', async () => {
+    const { service, records } = managementService('another-user');
+
+    await expect(service.start('match-pending')).rejects.toBeInstanceOf(ForbiddenException);
+    expect(records.save).not.toHaveBeenCalled();
+  });
+
+  it('does not allow changes after the match has finished', async () => {
+    const { service, records } = managementService('organizer-1');
+    records.find.mockResolvedValueOnce({ ...pendingMatch, status: 'FINISHED' });
+
+    await expect(service.update('match-pending', { venue: 'Nouveau stade' })).rejects.toBeInstanceOf(ConflictException);
   });
 });

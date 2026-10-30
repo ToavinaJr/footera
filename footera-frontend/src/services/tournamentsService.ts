@@ -1,7 +1,5 @@
-import { IS_MOCK_MODE } from '../config/dataMode';
-import { apiClient, mockDelay } from '../lib/api/client';
-import { mockStorage } from '../mocks/mockStorage';
-import { Tournament } from '../types';
+import { apiClient } from '../lib/api/client';
+import type { Pitch, Team, Tournament, TournamentStadium } from '../types';
 
 export interface CreateTournamentInput {
   title: string;
@@ -15,44 +13,42 @@ export interface CreateTournamentInput {
   prizePool: number;
   bannerUrl: string;
   organizer: string;
+  pitchIds: string[];
 }
 
 export const tournamentsService = {
-  async list(): Promise<Tournament[]> {
-    if (IS_MOCK_MODE) {
-      return mockDelay(mockStorage.getTournaments(), 200);
-    }
+  list(): Promise<Tournament[]> {
     return apiClient<Tournament[]>('tournaments');
   },
 
-  async getById(id: string): Promise<Tournament> {
-    if (IS_MOCK_MODE) {
-      const tourn = mockStorage.getTournamentById(id);
-      if (!tourn) throw new Error('Tournoi introuvable');
-      return mockDelay(tourn, 150);
-    }
-    return apiClient<Tournament>(`tournaments/${id}`);
+  listMyPitches(): Promise<Pitch[]> {
+    return apiClient<Pitch[]>('tournaments/my-pitches');
   },
 
-  async registerTeam(tournamentId: string, teamId: string): Promise<boolean> {
-    if (IS_MOCK_MODE) {
-      const ok = mockStorage.registerTeamForTournament(tournamentId, teamId);
-      return mockDelay(ok, 300);
-    }
-    return apiClient<boolean>(`tournaments/${tournamentId}/register`, {
-      method: 'POST',
-      body: JSON.stringify({ teamId }),
-    });
+  getById(id: string): Promise<Tournament> {
+    return apiClient<Tournament>(`tournaments/${encodeURIComponent(id)}`);
   },
 
-  async create(input: CreateTournamentInput): Promise<Tournament> {
-    if (IS_MOCK_MODE) {
-      const created = mockStorage.createTournament(input);
-      return mockDelay(created, 350);
-    }
-    return apiClient<Tournament>('tournaments', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
+  listParticipatingTeams(id: string): Promise<Team[]> {
+    return apiClient<Team[]>(`tournaments/${encodeURIComponent(id)}/teams`);
+  },
+
+  listPitches(id: string): Promise<TournamentStadium[]> {
+    return apiClient<Array<{ id: string; name: string; complexName: string; city: string; address?: string }>>(`tournaments/${encodeURIComponent(id)}/pitches`)
+      .then((pitches) => pitches.map((pitch) => ({
+        id: pitch.id,
+        name: pitch.complexName || pitch.name,
+        pitchId: pitch.id,
+        city: pitch.city,
+        address: pitch.address,
+      })));
+  },
+
+  registerTeam(tournamentId: string, teamId: string): Promise<boolean> {
+    return apiClient<boolean>(`tournaments/${encodeURIComponent(tournamentId)}/register`, { method: 'POST', body: JSON.stringify({ teamId }) });
+  },
+
+  create(input: CreateTournamentInput): Promise<Tournament> {
+    return apiClient<Tournament>('tournaments', { method: 'POST', body: JSON.stringify(input) });
   },
 };

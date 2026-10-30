@@ -13,7 +13,7 @@ describe('PlayersService linked profile fields', () => {
     const service = new PlayersService({
       list: vi.fn((collection: string) => Promise.resolve(collections[collection] ?? [])),
       find: vi.fn(async (collection: string, id: string) => collections[collection]?.find((item) => typeof item === 'object' && item !== null && 'id' in item && item.id === id) ?? null),
-    } as unknown as never, {} as unknown as never);
+    } as unknown as never, {} as unknown as never, { aggregate: vi.fn().mockResolvedValue(new Map()) } as unknown as never, {} as unknown as never);
 
     await expect(service.getById('player-1')).resolves.toMatchObject({ age: expectedAge, avatarUrl: '/profile.png' });
   });
@@ -28,7 +28,7 @@ describe('PlayersService linked profile fields', () => {
     const service = new PlayersService({
       list: vi.fn((collection: string) => Promise.resolve(collections[collection] ?? [])),
       find: vi.fn(async (collection: string, id: string) => collections[collection]?.find((item) => typeof item === 'object' && item !== null && 'id' in item && item.id === id) ?? null),
-    } as unknown as never, {} as unknown as never);
+    } as unknown as never, {} as unknown as never, { aggregate: vi.fn().mockResolvedValue(new Map()) } as unknown as never, {} as unknown as never);
 
     const player = await service.getById('player-1');
     expect(player?.age).toBeUndefined();
@@ -45,7 +45,7 @@ describe('PlayersService linked profile fields', () => {
     const service = new PlayersService({
       list: vi.fn((collection: string) => Promise.resolve(collections[collection] ?? [])),
       find: vi.fn(async (collection: string, id: string) => collections[collection]?.find((item) => typeof item === 'object' && item !== null && 'id' in item && item.id === id) ?? null),
-    } as unknown as never, {} as unknown as never);
+    } as unknown as never, {} as unknown as never, { aggregate: vi.fn().mockResolvedValue(new Map()) } as unknown as never, {} as unknown as never);
 
     const directory = await service.list();
     expect(directory[0]).not.toHaveProperty('email');

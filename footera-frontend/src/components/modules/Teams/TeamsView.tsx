@@ -1,120 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { SelectField } from '../../common/SelectField';
-import { Search, Shield, Users, Trophy, UserPlus, MapPin, Heart, ChevronRight, User, Target, Sparkles, BarChart3 } from 'lucide-react';
+import { BarChart3,Heart,Search,Shield,UserPlus,Users } from 'lucide-react';
+import React from 'react';
 import { teamsService } from '../../../services/teamsService';
-import { statsService } from '../../../services/statsService';
-import { Team, Club, TeamMember, TopScorerItem, TopAssisterItem } from '../../../types';
-import { Badge, FormIndicator } from '../../common/Badge';
-import { Modal } from '../../common/Modal';
-import { CardSkeleton } from '../../common/Skeleton';
+import { Badge,FormIndicator } from '../../common/Badge';
 import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
-import { useApp } from '../../../context/useApp';
-import { useSearchParams } from 'react-router-dom';
-import { formatFiniteNumber } from '../../../utils/numberFormat';
 import { ImageUploadField } from '../../common/ImageUploadField';
+import { ListError,ListPageLayout,Pagination } from '../../common/ListPage';
+import { SelectField } from '../../common/SelectField';
+import { CardSkeleton } from '../../common/Skeleton';
+import { TeamsDialogs } from './TeamsDialogs';
+import { useTeamsViewModel } from './useTeamsViewModel';
 
 export const TeamsView: React.FC = () => {
-  const { showToast, selectedResourceId, toggleFavoriteTeam, user, navigateToResource } = useApp();
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'teams' | 'clubs'>('teams');
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [clubs, setClubs] = useState<Club[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Filters
-  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('query') ?? '');
-  const [categoryFilter, setCategoryFilter] = useState('Toutes');
-  const [showFavoriteTeams, setShowFavoriteTeams] = useState(false);
-  const [updatingFavoriteTeamIds, setUpdatingFavoriteTeamIds] = useState<string[]>([]);
-
-  // Detail Modal & Members Roster Modal
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [isRosterModalOpen, setIsRosterModalOpen] = useState(false);
-  const [rosterTab, setRosterTab] = useState<'members' | 'stats'>('members');
-  const [teamScorers, setTeamScorers] = useState<TopScorerItem[]>([]);
-  const [teamAssisters, setTeamAssisters] = useState<TopAssisterItem[]>([]);
-
-  // Join Team Modal
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [joinMessage, setJoinMessage] = useState('');
-  const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
-  const [updatingClubLogoId, setUpdatingClubLogoId] = useState<string | null>(null);
-
-  const isTeamMember = (team: Team) => Boolean(user && team.members?.some((member) => member.playerId === user.id));
-  const visibleTeams = showFavoriteTeams
-    ? teams.filter((team) => user?.favoriteTeamIds?.includes(team.id))
-    : teams;
-
-  const handleToggleFavorite = async (teamId: string) => {
-    if (updatingFavoriteTeamIds.includes(teamId)) return;
-    setUpdatingFavoriteTeamIds((current) => [...current, teamId]);
-    try {
-      await toggleFavoriteTeam(teamId);
-    } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : 'Impossible de mettre à jour vos équipes favorites.', 'error');
-    } finally {
-      setUpdatingFavoriteTeamIds((current) => current.filter((id) => id !== teamId));
-    }
-  };
-
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const [teamsData, clubsData] = await Promise.all([
-          teamsService.list({ query: searchQuery, category: categoryFilter }),
-          teamsService.listClubs(),
-        ]);
-        setTeams(teamsData);
-        setClubs(clubsData);
-
-        if (selectedResourceId) {
-          const match = teamsData.find((t) => t.id === selectedResourceId);
-          if (match) {
-            setSelectedTeam(match);
-            setIsRosterModalOpen(true);
-          }
-        }
-      } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Erreur lors du chargement des équipes', 'error');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, [searchQuery, categoryFilter, selectedResourceId, showToast]);
-
-  useEffect(() => {
-    if (selectedTeam) {
-      statsService.getTopScorers({ teamId: selectedTeam.id, limit: 5 }).then(setTeamScorers);
-      statsService.getTopAssisters({ teamId: selectedTeam.id, limit: 5 }).then(setTeamAssisters);
-    }
-  }, [selectedTeam?.id]);
-
-  const handleJoinTeam = async () => {
-    if (!selectedTeam) return;
-    setIsSubmittingJoin(true);
-    try {
-      const res = await teamsService.joinTeam(selectedTeam.id, joinMessage);
-      if (res.success) {
-        showToast(res.message);
-        setIsJoinModalOpen(false);
-        setJoinMessage('');
-        const updated = await teamsService.getById(selectedTeam.id);
-        setSelectedTeam(updated);
-      } else {
-        showToast(res.message, 'error');
-      }
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'Impossible de rejoindre l’équipe', 'error');
-    } finally {
-      setIsSubmittingJoin(false);
-    }
-  };
+  const model = useTeamsViewModel();
+  const { showToast, user, navigateToResource, t, activeTab, setActiveTab, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, showFavoriteTeams, setShowFavoriteTeams, teamList, clubList, teams, clubs, setClubs, isLoading, updatingFavoriteTeamIds, setRosterTab, updatingClubLogoId, setUpdatingClubLogoId, isTeamMember, visibleTeams, teamPage, clubPage, handleToggleFavorite, myJoinRequests, editJoinRequest, startJoinRequest, cancelJoinRequest } = model;
 
   return (
-    <div className="space-y-6 pb-16">
+    <ListPageLayout>
+      <ListError error={teamList.error || clubList.error} onRetry={() => { teamList.refresh(); clubList.refresh(); }} />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -212,7 +115,7 @@ export const TeamsView: React.FC = () => {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleTeams.map((team) => {
+            {teamPage.items.map((team) => {
               const isFav = user?.favoriteTeamIds?.includes(team.id) ?? false;
               const isMember = isTeamMember(team);
               return (
@@ -220,7 +123,7 @@ export const TeamsView: React.FC = () => {
                   key={team.id}
                   onClick={() => navigateToResource('teams', team.id)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
+                    if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                       event.preventDefault();
                       navigateToResource('teams', team.id);
                     }
@@ -266,7 +169,7 @@ export const TeamsView: React.FC = () => {
                     <div className="p-5 space-y-4">
                       {/* Team Name and City */}
                       <div>
-                        <h2 className="text-xl font-extrabold text-pitch-ink tracking-tight">{team.name}</h2>
+                        <h2 className="card-title text-xl font-extrabold text-pitch-ink tracking-tight">{team.name}</h2>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {team.clubName || team.name} · {team.city}
                         </p>
@@ -325,18 +228,21 @@ export const TeamsView: React.FC = () => {
 
                   {/* Primary CTA button matching Screenshot 3: Demander à rejoindre */}
                   {!isMember && user && <div className="p-5 pt-0">
-                    <button
+                    {myJoinRequests.find((request) => request.teamId === team.id) ? <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                      <span className="w-full text-center text-xs font-bold text-amber-800">{t('profile.teamRequestPending')}</span>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); const request = myJoinRequests.find((item) => item.teamId === team.id); if (request) editJoinRequest(request, team); }} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-pitch-ink">{t('profile.editTeamRequest')}</button>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); const request = myJoinRequests.find((item) => item.teamId === team.id); if (request) void cancelJoinRequest(request); }} className="rounded-xl px-3 py-2 text-xs font-bold text-rose-700">{t('profile.cancelTeamRequest')}</button>
+                    </div> : <button
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        setSelectedTeam(team);
-                        setIsJoinModalOpen(true);
+                        startJoinRequest(team);
                       }}
                       className="w-full py-3.5 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-extrabold text-sm transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactical"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>Demander à rejoindre</span>
-                    </button>
+                    </button>}
                   </div>}
                 </div>
               );
@@ -346,7 +252,7 @@ export const TeamsView: React.FC = () => {
       ) : (
         /* Clubs Omnisports view */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {clubs.map((club) => (
+          {clubPage.items.map((club) => (
             <div
               key={club.id}
               className="p-6 rounded-3xl bg-white border border-pitch-line space-y-4 shadow-xs"
@@ -360,7 +266,7 @@ export const TeamsView: React.FC = () => {
                     referrerPolicy="no-referrer"
                   />
                   <div>
-                    <h2 className="text-lg font-extrabold text-pitch-ink">{club.name}</h2>
+                    <h2 className="card-title text-lg font-extrabold text-pitch-ink">{club.name}</h2>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Fondé en {club.foundedYear} · {club.city}
                     </p>
@@ -395,7 +301,7 @@ export const TeamsView: React.FC = () => {
               </div>
 
               <div className="pt-3 border-t border-pitch-separator">
-                <h3 className="text-xs font-bold text-slate-400 mb-2">Sections & Équipes engagées :</h3>
+                <h3 className="card-title text-xs font-bold text-slate-400 mb-2">Sections & Équipes engagées :</h3>
                 <div className="flex flex-wrap gap-2">
                   {club.teams.map((t) => (
                     <span
@@ -412,274 +318,8 @@ export const TeamsView: React.FC = () => {
         </div>
       )}
 
-      {/* Roster / Membres de l'équipe Modal */}
-      {isRosterModalOpen && selectedTeam && (
-        <Modal
-          isOpen={isRosterModalOpen}
-          onClose={() => {
-            setIsRosterModalOpen(false);
-            setSelectedTeam(null);
-            navigateToResource('teams');
-          }}
-          title={`Effectif officiel — ${selectedTeam.name}`}
-          subtitle={`${selectedTeam.members.length} joueurs inscrits · Coach ${selectedTeam.coachName}`}
-          maxWidth="lg"
-        >
-          <div className="space-y-4">
-            {/* Modal Sub-Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-pitch-panel border border-pitch-line rounded-2xl">
-              <button
-                type="button"
-                onClick={() => setRosterTab('members')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  rosterTab === 'members'
-                    ? 'bg-pitch-primary text-white shadow-xs'
-                    : 'text-slate-600 hover:text-pitch-ink'
-                }`}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>Effectif ({selectedTeam.members.length})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRosterTab('stats')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  rosterTab === 'stats'
-                    ? 'bg-pitch-primary text-white shadow-xs'
-                    : 'text-slate-600 hover:text-pitch-ink'
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5" />
-                <span>Buteurs & Stats Club</span>
-              </button>
-            </div>
-
-            {rosterTab === 'members' && (
-              <div className="divide-y divide-pitch-separator max-h-[50vh] overflow-y-auto pr-1">
-                {selectedTeam.members.map((member) => (
-                  <div
-                    key={member.playerId}
-                    className="py-3 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-7 text-center font-extrabold text-sm text-pitch-primary tabular-nums">
-                        #{member.jerseyNumber}
-                      </span>
-                      <img
-                        src={member.avatarUrl}
-                        alt={member.name}
-                        className="w-10 h-10 rounded-full object-cover bg-slate-100"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div>
-                        <h4 className="text-xs font-bold text-pitch-ink"><EntityLink section="players" id={member.playerId}>{member.name}</EntityLink></h4>
-                        <p className="text-caption text-slate-500">
-                          {member.position} {member.age && `· ${member.age} ans`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Badge variant={member.role === 'Capitaine' ? 'lime' : 'slate'} size="sm">
-                        {member.role}
-                      </Badge>
-                      {member.goals !== undefined && member.goals > 0 && (
-                        <span className="text-xs font-bold text-pitch-primary px-2 py-0.5 rounded-full bg-[#e8f5e6]">
-                          🎯 {member.goals} buts
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {rosterTab === 'stats' && (
-              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-                {/* Team metrics row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
-                  <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                    <span className="text-micro text-slate-400 block font-medium">Bilan</span>
-                    <strong className="text-sm font-black text-pitch-ink">
-                      {selectedTeam.stats.wins}V · {selectedTeam.stats.draws}N · {selectedTeam.stats.losses}D
-                    </strong>
-                    <span className="text-micro text-pitch-primary block font-semibold mt-0.5">
-                      {selectedTeam.stats.points} Points
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-[#e8f5e6] border border-[#d4e7d4]">
-                    <span className="text-micro text-pitch-primary block font-semibold">Attaque</span>
-                    <strong className="text-base font-black text-pitch-primary tabular-nums">
-                      {selectedTeam.stats.goalsFor} buts
-                    </strong>
-                    <span className="text-micro text-slate-600 block mt-0.5">
-                      {formatFiniteNumber(selectedTeam.stats.goalsPerMatch, 1)} / match
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                    <span className="text-micro text-slate-400 block font-medium">Défense</span>
-                    <strong className="text-base font-black text-rose-600 tabular-nums">
-                      {selectedTeam.stats.goalsAgainst} concédés
-                    </strong>
-                    <span className="text-micro text-slate-500 block mt-0.5">
-                      Diff : {selectedTeam.stats.goalDifference > 0 ? `+${selectedTeam.stats.goalDifference}` : selectedTeam.stats.goalDifference}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-pitch-panel border border-pitch-line">
-                    <span className="text-micro text-slate-400 block font-medium">Rang</span>
-                    <strong className="text-base font-black text-pitch-ink tabular-nums">
-                      #{selectedTeam.stats.position}
-                    </strong>
-                    <span className="text-micro text-slate-500 block mt-0.5">
-                      {selectedTeam.division}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Top scorers of the team */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-pitch-ink flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5 text-pitch-primary" />
-                    <span>Meilleurs buteurs de l&apos;équipe</span>
-                  </h4>
-                  <div className="rounded-2xl border border-pitch-line overflow-hidden text-xs">
-                    <table className="w-full text-left">
-                      <thead className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-separator">
-                        <tr>
-                          <th className="py-2 px-3">Joueur</th>
-                          <th className="py-2 px-3 text-center">Poste</th>
-                          <th className="py-2 px-3 text-center text-pitch-primary font-black">Buts</th>
-                          <th className="py-2 px-3 text-center">Ratio</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-pitch-separator">
-                      {teamScorers.map((s) => (
-                          <tr key={s.playerId} className="hover:bg-[#f6f9f5]">
-                            <td className="py-2 px-3 font-extrabold text-pitch-ink">
-                              <div className="flex items-center gap-2">
-                                <img src={s.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                                <EntityLink section="players" id={s.playerId}>{s.playerName}</EntityLink>
-                              </div>
-                            </td>
-                            <td className="py-2 px-3 text-center text-slate-500">{s.position}</td>
-                            <td className="py-2 px-3 text-center font-black text-pitch-primary tabular-nums">
-                              {s.goals}
-                            </td>
-                            <td className="py-2 px-3 text-center font-bold text-slate-700 tabular-nums">
-                              {s.ratio}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Top assisters of the team */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-pitch-ink flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-pitch-primary" />
-                    <span>Meilleurs passeurs de l&apos;équipe</span>
-                  </h4>
-                  <div className="rounded-2xl border border-pitch-line overflow-hidden text-xs">
-                    <table className="w-full text-left">
-                      <thead className="bg-pitch-panel text-slate-500 font-bold border-b border-pitch-separator">
-                        <tr>
-                          <th className="py-2 px-3">Passeur</th>
-                          <th className="py-2 px-3 text-center">Poste</th>
-                          <th className="py-2 px-3 text-center text-pitch-primary font-black">Passes</th>
-                          <th className="py-2 px-3 text-center">Clés</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-pitch-separator">
-                      {teamAssisters.map((a) => (
-                          <tr key={a.playerId} className="hover:bg-[#f6f9f5]">
-                            <td className="py-2 px-3 font-extrabold text-pitch-ink">
-                              <div className="flex items-center gap-2">
-                                <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                                <EntityLink section="players" id={a.playerId}>{a.playerName}</EntityLink>
-                              </div>
-                            </td>
-                            <td className="py-2 px-3 text-center text-slate-500">{a.position}</td>
-                            <td className="py-2 px-3 text-center font-black text-pitch-primary tabular-nums">
-                              {a.assists}
-                            </td>
-                            <td className="py-2 px-3 text-center font-bold text-slate-700 tabular-nums">
-                              {a.keyPasses}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {!isTeamMember(selectedTeam) && user && <div className="pt-3 border-t border-pitch-separator">
-              <button
-                onClick={() => {
-                  setIsRosterModalOpen(false);
-                  setIsJoinModalOpen(true);
-                }}
-                className="w-full py-3 rounded-2xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Rejoindre cet effectif</span>
-              </button>
-            </div>}
-          </div>
-        </Modal>
-      )}
-
-      {/* Join Team Modal */}
-      {isJoinModalOpen && selectedTeam && (
-        <Modal
-          isOpen={isJoinModalOpen}
-          onClose={() => setIsJoinModalOpen(false)}
-          title={`Rejoindre ${selectedTeam.name}`}
-          subtitle={`Demande d'adhésion pour la division ${selectedTeam.division}`}
-          maxWidth="md"
-        >
-          <div className="space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Votre CV sportif ({user?.sportsCv.primaryPosition}, {user?.sportsCv.height}cm, {user?.sportsCv.strongFoot}) sera directement envoyé au coach <strong>{selectedTeam.coachName}</strong>.
-            </p>
-            <div>
-              <label htmlFor="team-join-message" className="block text-xs font-bold text-slate-700 mb-1">
-                Message au staff technique *
-              </label>
-              <textarea
-                id="team-join-message"
-                name="message"
-                rows={4}
-                value={joinMessage}
-                onChange={(e) => setJoinMessage(e.target.value)}
-                placeholder="Ex: Bonjour coach, je suis disponible pour les entraînements et souhaite intégrer l'équipe..."
-                className="w-full p-3 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary transition-colors"
-              />
-            </div>
-            <div className="flex items-center justify-end gap-3 pt-3">
-              <button
-                onClick={() => setIsJoinModalOpen(false)}
-                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleJoinTeam}
-                disabled={!joinMessage.trim() || isSubmittingJoin}
-                className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-              >
-                {isSubmittingJoin ? 'Envoi...' : 'Envoyer ma demande'}
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </div>
+      <Pagination {...(activeTab === 'teams' ? teamPage : clubPage)} />
+      <TeamsDialogs model={model} />
+    </ListPageLayout>
   );
 };

@@ -1,9 +1,10 @@
 import React from 'react';
+import { FootballLoader } from './FootballPitch';
 
 export const Skeleton: React.FC<{ className?: string }> = ({ className = 'h-4 w-full' }) => {
   return (
     <div
-      className={`animate-pulse rounded-xl bg-slate-200/80 ${className}`}
+      className={`skeleton-shimmer rounded-xl bg-slate-200/80 ${className}`}
       aria-hidden="true"
     />
   );
@@ -11,7 +12,8 @@ export const Skeleton: React.FC<{ className?: string }> = ({ className = 'h-4 w-
 
 export const CardSkeleton: React.FC = () => {
   return (
-    <div className="p-5 bg-white border border-[#e2ece0] rounded-3xl space-y-4 shadow-xs">
+    <div className="relative p-5 bg-white border border-[#e2ece0] rounded-3xl space-y-4 shadow-xs" aria-busy="true">
+      <FootballLoader />
       <div className="flex items-center gap-3">
         <Skeleton className="w-12 h-12 rounded-2xl" />
         <div className="space-y-2 flex-1">

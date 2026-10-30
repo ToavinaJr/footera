@@ -1,11 +1,12 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { RecordRepository } from '../../database/record.repository.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
-import type { MarketplaceRecord } from '../../database/domain-records.js';
+import type { MarketplaceRecord } from '../../types/records.js';
+import { APP_SECTIONS, NOTIFICATION_TYPES } from '../../types/domain.js';
 
 export interface CreateMarketplaceInput {
   title: string;
@@ -16,6 +17,7 @@ export interface CreateMarketplaceInput {
   imageUrl: string;
   city: string;
   description: string;
+  size?: string;
 }
 
 @Injectable()
@@ -35,12 +37,24 @@ export class MarketplaceService {
     return this.catalogs.options();
   }
 
-  async list(filters: { query?: string; category?: string; maxPrice?: number } = {}) {
+  addBrand(brand: string) {
+    return this.catalogs.addMarketplaceBrand(brand);
+  }
+
+  async list(filters: { query?: string; category?: string; minPrice?: number; maxPrice?: number } = {}) {
     const items = await this.records.list<MarketplaceRecord>('marketplace');
     return items.filter((item) => item.isAvailable !== false
       && (!filters.query || `${item.title} ${item.brand} ${item.city}`.toLowerCase().includes(filters.query.toLowerCase()))
       && (!filters.category || filters.category === 'Toutes' || item.category === filters.category)
-      && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice));
+      && (filters.minPrice === undefined || item.price >= filters.minPrice)
+      && (!filters.maxPrice || filters.maxPrice <= 0 || item.price <= filters.maxPrice))
+      .map((item) => ({ ...item, isMine: !!this.accounts.authenticatedUserId && item.sellerId === this.accounts.authenticatedUserId }));
+  }
+
+  async get(id: string) {
+    const item = await this.records.find('marketplace', id);
+    if (!item) throw new NotFoundException('Annonce introuvable.');
+    return { ...item, isMine: !!this.accounts.authenticatedUserId && item.sellerId === this.accounts.authenticatedUserId };
   }
 
   async create(input: CreateMarketplaceInput) {
@@ -65,16 +79,18 @@ export class MarketplaceService {
       ...input,
       id,
       sellerName: user.name || 'Vendeur Footera',
+      sellerId: user.id,
       sellerRating: 5,
-      createdAt: "À l’instant",
+      createdAt: new Date().toISOString(),
       isAvailable: true,
     };
     await this.records.create('marketplace', id, item);
+    await this.records.publishActivity?.('marketplace', id, item.title, `${item.city} · ${item.price} €`);
     await this.notifications.add({
       title: 'Annonce mise en ligne',
       message: `Votre article "${item.title}" (${item.price} €) est publié.`,
-      type: 'marketplace',
-      targetSection: 'marketplace',
+      type: NOTIFICATION_TYPES.MARKETPLACE,
+      targetSection: APP_SECTIONS.MARKETPLACE,
       targetId: id,
     });
     return item;

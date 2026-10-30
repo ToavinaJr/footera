@@ -4,7 +4,9 @@ export type StrongFoot = string;
 
 export interface CatalogOptions {
   pitchSurfaces: string[];
+  pitchFormats: string[];
   pitchAmenities: string[];
+  tournamentFormats: string[];
   marketplaceCategories: string[];
   marketplaceConditions: string[];
   marketplaceBrands: string[];
@@ -44,8 +46,8 @@ export interface Player {
   assists: number;
   yellowCards: number;
   redCards?: number;
+  minutesPlayed?: number | null;
   isAvailableForTransfer: boolean;
-  rating?: number; // e.g. 7.8
   bio: string;
   previousClubs: string[];
   teamHistoryStats?: Array<{
@@ -56,6 +58,7 @@ export interface Player {
     assists: number;
     yellowCards: number;
     redCards?: number;
+    minutesPlayed?: number | null;
   }>;
 }
 
@@ -146,10 +149,11 @@ export interface MatchEvent {
   minute: number;
   type: 'goal' | 'yellow_card' | 'red_card' | 'sub' | 'penalty';
   teamId: string;
-  playerId?: string;
+  playerId: string;
   player: string;
   assistPlayerId?: string;
   assist?: string;
+  substitutedPlayerId?: string;
   description?: string;
 }
 
@@ -188,7 +192,26 @@ export interface Match {
   competition: string;
   minute?: number;
   events: MatchEvent[];
+  lineups?: Array<{ teamId: string; playerIds: string[] }>;
   stats?: MatchStats;
+}
+
+export interface MatchUpdateInput {
+  date: string;
+  time: string;
+  venue: string;
+  events: MatchEventInput[];
+  lineups?: Array<{ teamId: string; playerIds: string[] }>;
+}
+
+export interface MatchEventInput {
+  minute: number;
+  type: MatchEvent['type'];
+  teamId: string;
+  playerId: string;
+  assistPlayerId?: string;
+  substitutedPlayerId?: string;
+  description?: string;
 }
 
 export interface TeamMatch extends Match {
@@ -254,7 +277,7 @@ export interface TournamentStadium {
 export interface Tournament {
   id: string;
   title: string;
-  format: '11v11' | '9v9' | '7v7' | '5v5 (Five)' | 'Futsal';
+  format: string;
   city: string;
   venue: string;
   startDate: string;
@@ -273,12 +296,14 @@ export interface Tournament {
   organizer: string;
   standings: TournamentStanding[];
   fixtures: TournamentMatchFixture[];
+  canManageGallery?: boolean;
 }
 
 export type SurfaceType = string;
 
 export interface PitchOptions {
   surfaces: SurfaceType[];
+  formats: string[];
   amenities: string[];
 }
 
@@ -304,6 +329,7 @@ export interface Pitch {
   city: string;
   address: string;
   surface: SurfaceType;
+  gameFormat?: string;
   dimensions: string; // e.g. "105m x 68m" or "30m x 18m"
   imageUrl: string;
   hourlyRate: number;
@@ -317,6 +343,7 @@ export interface Pitch {
   myReview?: PitchReview;
   amenities: string[];
   availableSlots: PitchSlot[];
+  canManageGallery?: boolean;
 }
 
 export type BookingStatus = 'CONFIRMED' | 'PENDING' | 'CANCELLED';
@@ -367,10 +394,11 @@ export interface Application {
   phone: string;
   message: string;
   submittedAt: string;
-  status: 'EN_REVUE' | 'ACCEPTEE' | 'REFUSEE';
+  status: 'EN_REVUE' | 'ACCEPTEE' | 'REFUSEE' | 'RETIRÉE';
 }
 
 export interface MarketplaceListing {
+  isMine?: boolean;
   id: string;
   title: string;
   category: string;
@@ -441,6 +469,8 @@ export interface UserProfile {
   favoriteTeamIds: string[];
   favoriteMatchIds: string[];
   favoriteTournamentIds: string[];
+  favoritePlayerIds?: string[];
+  preferences?: { language?: 'fr' | 'en' | 'mg'; showPersonalActivity?: boolean };
   sportsCv: {
     height: number;
     weight: number;
@@ -479,7 +509,7 @@ export interface TopScorerItem {
   goals: number;
   penalties: number;
   ratio: number;
-  minutesPerGoal: number;
+  minutesPerGoal: number | null;
 }
 
 export interface TopAssisterItem {
@@ -519,9 +549,9 @@ export interface TeamStatsItem {
   goalsPerMatch: number;
   goalsAgainstPerMatch: number;
   cleanSheets: number;
-  possessionAvg: number; // in %
-  passAccuracy: number; // in %
-  shotsPerMatch: number;
+  possessionAvg: number | null; // unavailable until tracked per match
+  passAccuracy: number | null;
+  shotsPerMatch: number | null;
   yellowCards: number;
   redCards: number;
   points: number;
@@ -541,12 +571,9 @@ export interface PlayerStatsItem {
   strongFoot: StrongFoot;
   age?: number;
   appearances: number;
-  minutesPlayed: number;
+  minutesPlayed: number | null;
   goals: number;
   assists: number;
-  rating: number;
-  shotsOnTarget: number;
-  passAccuracy: number;
   yellowCards: number;
   redCards: number;
   cleanSheets?: number;

@@ -13,7 +13,7 @@ function makeService(existingInvitations: unknown[] = []) {
   };
   const accounts = { profile: vi.fn(async () => user) };
   const notifications = { add: vi.fn(async (payload: unknown) => payload) };
-  return { service: new TeamsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never), records, notifications };
+  return { service: new TeamsService(records as unknown as never, accounts as unknown as never, notifications as unknown as never, { values: vi.fn(async () => ['Avant-centre']) } as unknown as never), records, notifications };
 }
 
 describe('TeamsService player invitations', () => {
@@ -42,6 +42,31 @@ describe('TeamsService player invitations', () => {
   });
 });
 
+describe('TeamsService join requests', () => {
+  it('stores a pending request and does not add the player to the roster', async () => {
+    const team = { id: 'team-1', ownerId: 'owner-1', name: 'FC Test', members: [] };
+    const player = { id: 'player-1', userId: 'usr_player', name: 'Joueur Test' };
+    const user = { id: 'usr_player', name: 'Joueur Test', roles: ['Joueur'] };
+    const records = {
+      find: vi.fn(async () => team),
+      list: vi.fn(async (collection: string) => collection === 'players' ? [player] : []),
+      create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
+    };
+    const notifications = { add: vi.fn(async (payload: unknown) => payload) };
+    const service = new TeamsService(records as unknown as never, { profile: vi.fn(async () => user) } as unknown as never, notifications as unknown as never, { values: vi.fn(async () => ['Avant-centre']) } as unknown as never);
+
+    const result = await service.requestJoin('team-1', 'Disponible les week-ends.', 'Avant-centre');
+
+    expect(result).toMatchObject({ success: true, status: 'PENDING' });
+    expect(records.create).toHaveBeenCalledWith('teamJoinRequests', expect.any(String), expect.objectContaining({
+      teamId: 'team-1', playerId: 'player-1', userId: 'usr_player', position: 'Avant-centre', status: 'PENDING',
+    }));
+    expect(records.save).not.toHaveBeenCalledWith('teams', expect.anything(), expect.anything());
+    expect(notifications.add).toHaveBeenCalledWith(expect.objectContaining({ recipientId: 'owner-1' }));
+  });
+});
+
 describe('TeamsService public roster statistics', () => {
   it('returns per-competition goal and assist totals for the team roster', async () => {
     const team = { id: 'team-1', name: 'FC Test', competitionId: 'cup-1', members: [
@@ -65,8 +90,9 @@ describe('TeamsService public roster statistics', () => {
       list: vi.fn(async (collection: string) => ({
         teams: [team, opponent], matches: [match], tournaments: [tournament], players, users: [],
       }[collection] ?? [])),
+      save: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     };
-    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never);
+    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never, {} as unknown as never);
 
     const detail = await service.getDetail('team-1');
 
@@ -83,5 +109,30 @@ describe('TeamsService public roster statistics', () => {
     const filteredDetail = await service.getDetail('team-1', { competitionId: 'cup-1', sortBy: 'assists' });
     expect(filteredDetail?.members[0]).toMatchObject({ playerId: 'player-2', assists: 1 });
     expect(filteredDetail?.stats.goalDifference).toBe(1);
+  });
+
+  it('creates a player profile for every roster entry and normalizes the count', async () => {
+    const team = { id: 'team-1', name: 'FC Test', membersCount: 2, members: [
+      { playerId: 'legacy-1', name: 'Joueur historique', position: 'Défenseur' },
+      { playerId: 'legacy-2', name: 'Deuxième joueur', position: 'Milieu' },
+    ] };
+    const savedProfiles: Array<{ id: string; name: string }> = [];
+    const records = {
+      find: vi.fn(async (collection: string) => collection === 'teams' ? team : null),
+      list: vi.fn(async (collection: string) => ({ teams: [team], matches: [], tournaments: [], players: [], users: [] }[collection] ?? [])),
+      save: vi.fn(async (collection: string, id: string, payload: unknown) => {
+        if (collection === 'players') savedProfiles.push(payload as { id: string; name: string });
+        return payload;
+      }),
+    };
+    const service = new TeamsService(records as unknown as never, {} as unknown as never, {} as unknown as never, {} as unknown as never);
+
+    const detail = await service.getDetail('team-1');
+
+    expect(savedProfiles).toHaveLength(2);
+    expect(detail?.members).toHaveLength(2);
+    expect(detail?.membersCount).toBe(2);
+    expect(detail?.members.every((member) => savedProfiles.some((profile) => profile.id === member.playerId))).toBe(true);
+    expect(records.save).toHaveBeenCalledWith('teams', 'team-1', expect.objectContaining({ membersCount: 2 }));
   });
 });

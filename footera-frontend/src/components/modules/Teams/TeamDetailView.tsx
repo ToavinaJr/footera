@@ -9,6 +9,7 @@ import { CardSkeleton } from '../../common/Skeleton';
 import { EmptyState } from '../../common/EmptyState';
 import { EntityLink } from '../../common/EntityLink';
 import { useApp } from '../../../context/useApp';
+import { PhotoGallery } from '../../common/PhotoGallery';
 
 const MatchCard: React.FC<{ match: TeamMatch; onOpen: (id: string) => void }> = ({ match, onOpen }) => (
   <button
@@ -93,7 +94,7 @@ export const TeamDetailView: React.FC = () => {
   if (!team) return <EmptyState icon={Trophy} title="Équipe introuvable" description="Cette équipe n’existe pas ou n’est plus disponible." actionLabel="Retour aux équipes" onAction={() => navigate('/teams')} />;
 
   return (
-    <div className="min-w-0 space-y-6 overflow-x-clip pb-16">
+    <div className="page-enter min-w-0 space-y-6 overflow-x-clip pb-16">
       <button type="button" onClick={() => navigate('/teams')} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-bold text-pitch-primary hover:bg-pitch-light">
         <ArrowLeft className="h-4 w-4" /> Retour aux équipes
       </button>
@@ -117,11 +118,13 @@ export const TeamDetailView: React.FC = () => {
         </div>
       </section>
 
+      {team.clubId && <PhotoGallery entity="clubs" id={team.clubId} />}
+
       <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
         <article className="min-w-0 rounded-2xl border border-pitch-line bg-white p-5 shadow-xs">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-pitch-primary" />
-            <h2 className="text-lg font-extrabold text-pitch-ink">Entraîneur</h2>
+            <h2 className="card-title text-lg font-extrabold text-pitch-ink">Entraîneur</h2>
           </div>
           <p className="mt-4 wrap-break-words text-base font-bold text-pitch-ink">{team.coachName?.trim() || 'Entraîneur non renseigné'}</p>
           <p className="mt-1 wrap-break-words text-sm text-slate-500">Staff de {team.name}</p>
@@ -131,7 +134,7 @@ export const TeamDetailView: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-pitch-primary" />
-              <h2 className="text-lg font-extrabold text-pitch-ink">Effectif</h2>
+              <h2 className="card-title text-lg font-extrabold text-pitch-ink">Effectif</h2>
             </div>
             <span className="text-sm text-slate-500">{team.members.length} joueur{team.members.length === 1 ? '' : 's'}</span>
           </div>
@@ -150,7 +153,7 @@ export const TeamDetailView: React.FC = () => {
                   <SelectField value={rosterSort} onChange={(event) => setRosterSort(event.target.value as typeof rosterSort)} className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-white px-3 text-sm text-pitch-ink focus:border-pitch-primary">
                     <option value="goals">Buts</option>
                     <option value="assists">Passes décisives</option>
-                    <option value="appearances">Matchs joués*</option>
+                    <option value="appearances">Matchs joués</option>
                     <option value="yellowCards">Cartons jaunes</option>
                     <option value="redCards">Cartons rouges</option>
                   </SelectField>
@@ -159,7 +162,7 @@ export const TeamDetailView: React.FC = () => {
               <div className="mt-4 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
                 <table className="w-full min-w-160 text-left text-xs">
                   <thead className="border-b border-pitch-line text-slate-500">
-                    <tr><th className="py-3 pr-3">Joueur</th><th className="px-3 py-3 text-center">Matchs*</th><th className="px-3 py-3 text-center">Buts</th><th className="px-3 py-3 text-center">Passes D</th><th className="px-3 py-3 text-center">Jaunes</th><th className="px-3 py-3 text-center">Rouges</th><th className="px-3 py-3 text-center">Minutes</th></tr>
+                    <tr><th className="py-3 pr-3">Joueur</th><th className="px-3 py-3 text-center">Matchs</th><th className="px-3 py-3 text-center">Buts</th><th className="px-3 py-3 text-center">Passes D</th><th className="px-3 py-3 text-center">Jaunes</th><th className="px-3 py-3 text-center">Rouges</th><th className="px-3 py-3 text-center">Minutes</th></tr>
                   </thead>
                   <tbody className="divide-y divide-pitch-separator">
                     {team.members.map((member) => (
@@ -170,13 +173,13 @@ export const TeamDetailView: React.FC = () => {
                         <td className="px-3 py-3 text-center tabular-nums">{member.assists ?? 0}</td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.yellowCards ?? 0}</td>
                         <td className="px-3 py-3 text-center tabular-nums">{member.redCards ?? 0}</td>
-                        <td className="px-3 py-3 text-center text-slate-400">—</td>
+                        <td className="px-3 py-3 text-center text-slate-400">{member.minutesPlayed ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-3 text-caption text-slate-500">* Les matchs joués sont comptabilisés à partir des événements enregistrés. Les feuilles de match et les minutes individuelles ne sont pas encore disponibles.</p>
+              <p className="mt-3 text-caption text-slate-500">Les statistiques sont calculées à partir des événements et feuilles de match enregistrés. Les minutes restent non renseignées si la composition ou la durée jouée manque.</p>
             </>
           ) : (
             <p className="mt-4 rounded-xl bg-pitch-panel p-4 text-sm text-slate-500">Aucun joueur n’est encore renseigné dans l’effectif.</p>
@@ -186,16 +189,16 @@ export const TeamDetailView: React.FC = () => {
 
       <section className="grid min-w-0 gap-6 lg:grid-cols-2">
         <div className="space-y-3">
-          <div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-pitch-primary" /><h2 className="text-lg font-extrabold text-pitch-ink">Résultats récents</h2></div>
+          <div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-pitch-primary" /><h2 className="card-title text-lg font-extrabold text-pitch-ink">Résultats récents</h2></div>
           {team.recentMatches.length ? team.recentMatches.map((match) => <MatchCard key={match.id} match={match} onOpen={(id) => navigate(`/matches/${encodeURIComponent(id)}`)} />) : <p className="rounded-2xl border border-pitch-line bg-white p-5 text-sm text-slate-500">Aucun résultat enregistré pour cette équipe.</p>}
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-pitch-primary" /><h2 className="text-lg font-extrabold text-pitch-ink">Matchs à venir</h2></div>
+          <div className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-pitch-primary" /><h2 className="card-title text-lg font-extrabold text-pitch-ink">Matchs à venir</h2></div>
           {team.upcomingMatches.length ? team.upcomingMatches.map((match) => <MatchCard key={match.id} match={match} onOpen={(id) => navigate(`/matches/${encodeURIComponent(id)}`)} />) : <p className="rounded-2xl border border-pitch-line bg-white p-5 text-sm text-slate-500">Aucun match à venir programmé.</p>}
           {team.topScorers.length > 0 && (
             <div className="rounded-2xl border border-pitch-line bg-white p-4">
-              <h3 className="text-sm font-extrabold text-pitch-ink">Meilleurs buteurs de l’équipe</h3>
+              <h3 className="card-title text-sm font-extrabold text-pitch-ink">Meilleurs buteurs de l’équipe</h3>
               <ul className="mt-3 divide-y divide-pitch-separator">
                 {team.topScorers.map((scorer) => <li key={scorer.playerId} className="flex items-center justify-between gap-3 py-2 text-sm"><EntityLink section="players" id={scorer.playerId}>{scorer.playerName}</EntityLink><span className="font-bold tabular-nums text-pitch-primary">{scorer.goals} buts</span></li>)}
               </ul>

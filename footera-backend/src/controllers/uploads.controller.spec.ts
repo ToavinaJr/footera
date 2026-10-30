@@ -1,28 +1,35 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UploadsController } from './uploads.controller.js';
 import { UploadsService } from '../modules/uploads/uploads.service.js';
 import { AccountsService } from '../modules/accounts/accounts.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 const onePixelPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/g1sAAAAASUVORK5CYII=', 'base64');
 
 describe('UploadsController security', () => {
   let app: INestApplication;
-  let uploadDirectory: string;
+  const imageRows = new Map<string, { id: string; mimeType: string; content: Uint8Array }>();
 
   beforeEach(async () => {
-    uploadDirectory = await mkdtemp(join(tmpdir(), 'footera-upload-http-'));
-    vi.stubEnv('UPLOAD_DIR', uploadDirectory);
+    imageRows.clear();
+    const prisma = {
+      uploadedImageRecord: {
+        create: vi.fn(async ({ data }: { data: { id: string; mimeType: string; content: Uint8Array } }) => {
+          imageRows.set(data.id, data);
+          return data;
+        }),
+        findUnique: vi.fn(async ({ where }: { where: { id: string } }) => imageRows.get(where.id) ?? null),
+      },
+    };
     const module = await Test.createTestingModule({
       controllers: [UploadsController],
       providers: [
         UploadsService,
-        { provide: AccountsService, useValue: { profile: async () => ({ activeRole: 'Joueur' }) } },
+        { provide: AccountsService, useValue: { profile: async () => ({ activeRole: 'Joueur', roles: ['Joueur'] }) } },
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
     app = module.createNestApplication();
@@ -32,11 +39,9 @@ describe('UploadsController security', () => {
 
   afterEach(async () => {
     await app?.close();
-    vi.unstubAllEnvs();
-    await rm(uploadDirectory, { recursive: true, force: true });
   });
 
-  it('accepts a valid image upload and does not preserve the supplied filename', async () => {
+  it('accepts an image and generates a persistent URL without preserving the supplied filename', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/uploads/images')
       .field('purpose', 'avatar')
@@ -44,6 +49,7 @@ describe('UploadsController security', () => {
       .expect(201);
     expect(response.body.filename).toMatch(/^[0-9a-f-]{36}\.png$/);
     expect(response.body.url).toContain(response.body.filename);
+    expect(imageRows.has(response.body.filename)).toBe(true);
   });
 
   it('rejects SVG and content whose signature does not match its MIME type', async () => {

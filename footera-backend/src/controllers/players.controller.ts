@@ -16,13 +16,18 @@ export class PlayersController {
     return this.players.options();
   }
 
+  @Get('me')
+  getMine() {
+    return this.players.getCurrentUserPlayer();
+  }
+
   @Get()
   @Public()
   list(
     @Query('q') query?: string,
-    @Query('position') position?: string,
+    @Query('position') position?: string | string[],
     @Query('city') city?: string,
-    @Query('level') level?: string,
+    @Query('level') level?: string | string[],
     @Query('transferOnly') transferOnly?: string,
   ) {
     return this.players.list({
@@ -40,6 +45,14 @@ export class PlayersController {
     const player = await this.players.getById(id);
     if (!player) throw new NotFoundException('Joueur introuvable');
     return player;
+  }
+
+  @Get(':id/stats')
+  @Public()
+  async getStats(@Param('id') id: string, @Query('competitionId') competitionId?: string) {
+    const stats = await this.players.getMatchStats(id, competitionId);
+    if (!stats) throw new NotFoundException('Joueur introuvable');
+    return stats;
   }
 
   @Post(':id/invite')

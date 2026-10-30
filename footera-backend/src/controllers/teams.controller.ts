@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Post, Body, NotFoundException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Patch, Body, NotFoundException, HttpCode, HttpStatus, Delete } from '@nestjs/common';
 import { TeamsService } from '../modules/teams/teams.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
@@ -22,6 +22,46 @@ export class TeamsController {
     return this.teams.listMyTeamInvitations();
   }
 
+  @Get('my-team/join-requests')
+  listMyTeamJoinRequests() {
+    return this.teams.listMyTeamJoinRequests();
+  }
+
+  @Get('my-join-requests')
+  listMyJoinRequests() {
+    return this.teams.listMyJoinRequests();
+  }
+
+  @Patch('my-join-requests/:requestId')
+  updateMyJoinRequest(@Param('requestId') requestId: string, @Body() body: { message?: string; position?: string }) {
+    return this.teams.updateMyJoinRequest(requestId, body.message ?? '', body.position ?? '');
+  }
+
+  @Delete('my-join-requests/:requestId')
+  cancelMyJoinRequest(@Param('requestId') requestId: string) {
+    return this.teams.cancelMyJoinRequest(requestId);
+  }
+
+  @Delete('my-team/membership')
+  leaveCurrentTeam() {
+    return this.teams.leaveCurrentTeam();
+  }
+
+  @Post('my-team/join-requests/:requestId/accept')
+  acceptJoinRequest(@Param('requestId') requestId: string) {
+    return this.teams.respondToJoinRequest(requestId, true);
+  }
+
+  @Post('my-team/join-requests/:requestId/decline')
+  declineJoinRequest(@Param('requestId') requestId: string) {
+    return this.teams.respondToJoinRequest(requestId, false);
+  }
+
+  @Post(':id/reminders')
+  remindMembers(@Param('id') id: string, @Body('message') message: unknown) {
+    return this.teams.remindMembers(id, message);
+  }
+
   @Get(':id/detail')
   @Public()
   async getDetail(
@@ -34,6 +74,14 @@ export class TeamsController {
     return team;
   }
 
+  @Get(':id/players')
+  @Public()
+  async listPlayers(@Param('id') id: string, @Query('competitionId') competitionId?: string) {
+    const players = await this.teams.listPlayers(id, competitionId);
+    if (!players) throw new NotFoundException('Équipe introuvable');
+    return players;
+  }
+
   @Get(':id')
   @Public()
   async getById(@Param('id') id: string) {
@@ -43,8 +91,8 @@ export class TeamsController {
   }
 
   @Post(':id/join')
-  joinTeam(@Param('id') id: string, @Body('message') message?: string) {
-    return this.teams.join(id, message || 'Je souhaite rejoindre l équipe');
+  joinTeam(@Param('id') id: string, @Body('message') message?: string, @Body('position') position?: string) {
+    return this.teams.requestJoin(id, message || '', position || '');
   }
 
   @Post(':id/favorite')

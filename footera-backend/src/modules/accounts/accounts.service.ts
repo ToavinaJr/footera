@@ -4,8 +4,11 @@ import { validateSportsCvPayload } from './sports-cv.validation.js';
 import { validateImageUrl } from '../uploads/image-url.validation.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
 import { UserContext } from '../auth/user-context.js';
-import type { PlayerRecord, UserRecord } from '../../database/domain-records.js';
+import type { PlayerRecord, UserRecord } from '../../types/records.js';
 import { calculateAge } from './calculate-age.js';
+import { isDateOnOrBeforeToday, parseIsoDateOnly } from '../../utils/date.utils.js';
+import { isValidEmailAddress, isValidPhoneNumber } from '../../utils/text.utils.js';
+import { sanitizePlainText } from '../../utils/sanitize.utils.js';
 
 @Injectable()
 export class AccountsService {
@@ -15,6 +18,8 @@ export class AccountsService {
     if (!this.userContext.userId) throw new UnauthorizedException('Contexte utilisateur absent.');
     return this.userContext.userId;
   }
+
+  get authenticatedUserId() { return this.userContext.userId; }
 
   async profile(): Promise<UserRecord | null> {
     const user = await this.records.find<UserRecord>('users', this.userId);
@@ -36,19 +41,16 @@ export class AccountsService {
       if (typeof value !== 'string') {
         throw new BadRequestException(`${field} doit être une chaîne de caractères.`);
       }
-      const normalized = value.trim();
+      const normalized = sanitizePlainText(value, 2000);
       if (field === 'phone') {
-        if (normalized.length > 32 || (normalized && !/^[+()\d.\-\s]{7,32}$/.test(normalized))) {
+        if (normalized && !isValidPhoneNumber(normalized)) {
           throw new BadRequestException('Le numéro de téléphone est invalide.');
         }
         continue;
       }
       if (field === 'dateOfBirth') {
         if (normalized) {
-          const parsed = new Date(`${normalized}T00:00:00.000Z`);
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized) || Number.isNaN(parsed.valueOf())
-            || parsed.toISOString().slice(0, 10) !== normalized
-            || normalized > new Date().toISOString().slice(0, 10)) {
+          if (!parseIsoDateOnly(normalized) || !isDateOnOrBeforeToday(normalized)) {
             throw new BadRequestException('La date de naissance est invalide.');
           }
         }
@@ -58,7 +60,7 @@ export class AccountsService {
         throw new BadRequestException(`${field} doit contenir entre 1 et 160 caractères.`);
       }
     }
-    if (typeof partial.email === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(partial.email)) {
+    if (typeof partial.email === 'string' && !isValidEmailAddress(partial.email)) {
       throw new BadRequestException('Adresse e-mail invalide.');
     }
     if (partial.avatarUrl !== undefined) partial.avatarUrl = validateImageUrl(partial.avatarUrl, 'Photo de profil');
@@ -66,7 +68,10 @@ export class AccountsService {
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, {
       ...current,
-      ...Object.fromEntries(Object.entries(partial).map(([key, value]) => [key, (value as string).trim()])),
+      ...Object.fromEntries(Object.entries(partial).map(([key, value]) => [
+        key,
+        key === 'dateOfBirth' ? (value as string).trim() : sanitizePlainText(value, key === 'name' ? 80 : key === 'phone' ? 32 : key === 'city' ? 160 : 2000),
+      ])),
     });
     if (typeof partial.dateOfBirth === 'string' || typeof partial.avatarUrl === 'string' || typeof partial.name === 'string') {
       const players = await this.records.list<PlayerRecord>('players');
@@ -99,6 +104,16 @@ export class AccountsService {
     if (!current) return null;
     const updated = await this.records.save('users', this.userId, { ...current, activeRole: role });
     return this.withoutPasswordHash({ ...updated, age: calculateAge(updated.dateOfBirth) });
+  }
+
+  async updatePreferences(input: unknown) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new BadRequestException('Préférences invalides.');
+    const values = input as Record<string, unknown>;
+    if (!Object.keys(values).length || Object.keys(values).some((key) => !['language', 'showPersonalActivity'].includes(key))
+      || (values.language !== undefined && !['fr', 'en', 'mg'].includes(String(values.language)))
+      || (values.showPersonalActivity !== undefined && typeof values.showPersonalActivity !== 'boolean')) throw new BadRequestException('Préférences invalides.');
+    await this.records.updateUserPreferences(this.userId, values);
+    return this.profile();
   }
 
   private async toggleFavorite(field: 'favoriteTeamIds' | 'favoriteMatchIds', id: string) {

@@ -3,13 +3,18 @@ import { NestFactory } from '@nestjs/core';
 import express from 'express';
 import { resolve } from 'node:path';
 import { AppModule } from './app.module.js';
+import { normalizeOriginList } from './utils/text.utils.js';
+import { RequestBodyValidationPipe } from './common/pipes/request-body-validation.pipe.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const frontendOrigins = (process.env.FRONTEND_URL || 'http://localhost:3001')
-    .split(',')
-    .map((origin) => origin.trim().replace(/\/+$/, ''))
-    .filter(Boolean);
+  app.useGlobalPipes(new RequestBodyValidationPipe());
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
+  if (!Number.isSafeInteger(trustProxyHops) || trustProxyHops < 0) {
+    throw new Error('TRUST_PROXY_HOPS must be a non-negative integer.');
+  }
+  app.getHttpAdapter().getInstance().set('trust proxy', trustProxyHops);
+  const frontendOrigins = normalizeOriginList(process.env.FRONTEND_URL, 'http://localhost:3001');
 
   app.enableCors({
     origin: frontendOrigins,

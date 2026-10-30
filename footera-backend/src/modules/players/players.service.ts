@@ -1,28 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { RecordRepository } from '../../database/record.repository.js';
 import { CatalogsService } from '../catalogs/catalogs.service.js';
-import { aggregatePlayerMatchStats } from './player-match-stats.js';
-import type { MatchRecord, PlayerRecord, TeamRecord, TournamentRecord, UserRecord } from '../../database/domain-records.js';
+import type { PlayerRecord, TeamRecord, UserRecord } from '../../types/records.js';
+import { PlayerMatchStatsService } from './player-match-stats.service.js';
 import { calculateAge } from '../accounts/calculate-age.js';
+import { AccountsService } from '../accounts/accounts.service.js';
 
 @Injectable()
 export class PlayersService {
-  constructor(private readonly records: RecordRepository, private readonly catalogs: CatalogsService) {}
+  constructor(
+    private readonly records: RecordRepository,
+    private readonly catalogs: CatalogsService,
+    private readonly matchStats: PlayerMatchStatsService,
+    private readonly accounts: AccountsService,
+  ) {}
+
+  async getCurrentUserPlayer() {
+    const user = await this.accounts.profile();
+    if (!user) throw new UnauthorizedException('Authentification requise.');
+    const player = (await this.records.list<PlayerRecord>('players')).find((record) => record.userId === user.id);
+    if (!player) throw new NotFoundException('Aucun profil joueur n’est associé à ce compte.');
+    return this.getById(player.id);
+  }
 
   async options() {
     const options = await this.catalogs.options();
     return { positions: options.playerPositions, levels: options.playerLevels };
   }
 
-  async list(filters: { query?: string; position?: string; city?: string; level?: string; transferOnly?: boolean } = {}) {
-    const [players, matches, users, tournaments, teams] = await Promise.all([
+  async list(filters: { query?: string; position?: string | string[]; city?: string; level?: string | string[]; transferOnly?: boolean; competitionId?: string } = {}) {
+    const [players, users, teams] = await Promise.all([
       this.records.list<PlayerRecord>('players'),
-      this.records.list<MatchRecord>('matches'),
       this.records.list<UserRecord>('users'),
-      this.records.list<TournamentRecord>('tournaments'),
       this.records.list<TeamRecord>('teams'),
     ]);
-    const matchStats = aggregatePlayerMatchStats(players, matches, undefined, tournaments);
+    const matchStats = await this.matchStats.aggregate({ competitionId: filters.competitionId }, players);
     const enrichedPlayers = players.map((player) => {
       const stats = matchStats.get(player.id);
       const user = users.find((record) => record.id === player.userId);
@@ -51,14 +63,27 @@ export class PlayersService {
         yellowCards: stats?.yellowCards ?? 0,
         redCards: stats?.redCards ?? 0,
         ...(stats ? { appearances: stats.appearances } : { appearances: 0 }),
+        minutesPlayed: stats?.minutesPlayed ?? 0,
+        teamHistoryStats: stats ? [...stats.teamStats.values()].map((teamStats) => ({
+          teamId: teamStats.teamId,
+          teamName: teams.find((team) => team.id === teamStats.teamId)?.name ?? 'Équipe historique',
+          appearances: teamStats.appearances,
+          minutesPlayed: teamStats.minutesPlayed,
+          goals: teamStats.goals,
+          assists: teamStats.assists,
+          yellowCards: teamStats.yellowCards,
+          redCards: teamStats.redCards,
+        })) : [],
       };
     });
+    const positions = (Array.isArray(filters.position) ? filters.position : filters.position?.split(',') ?? []).filter(Boolean);
+    const levels = (Array.isArray(filters.level) ? filters.level : filters.level?.split(',') ?? []).filter(Boolean);
     return enrichedPlayers.filter((player) => {
       const query = filters.query?.toLowerCase();
       return (!query || `${player.name} ${player.city}`.toLowerCase().includes(query))
-        && (!filters.position || filters.position === 'Toutes' || player.primaryPosition === filters.position || player.secondaryPosition === filters.position)
+        && (!positions.length || positions.includes('Toutes') || Boolean(player.primaryPosition && positions.includes(player.primaryPosition)) || Boolean(player.secondaryPosition && positions.includes(player.secondaryPosition)))
         && (!filters.city || filters.city === 'Toutes' || player.city?.toLowerCase() === filters.city.toLowerCase())
-        && (!filters.level || filters.level === 'Tous' || player.level === filters.level)
+        && (!levels.length || levels.includes('Tous') || Boolean(player.level && levels.includes(player.level)))
         && (!filters.transferOnly || player.isAvailableForTransfer);
     });
   }
@@ -74,6 +99,10 @@ export class PlayersService {
       ...(user?.email ? { email: user.email } : {}),
       ...(user?.phone?.trim() ? { phone: user.phone } : {}),
     };
+  }
+
+  async getMatchStats(id: string, competitionId?: string) {
+    return competitionId ? this.matchStats.competition(id, competitionId) : this.matchStats.career(id);
   }
 
 }

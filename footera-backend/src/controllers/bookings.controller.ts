@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { BookingsService } from '../modules/bookings/bookings.service.js';
 import type { CreateBookingInput } from '../modules/bookings/bookings.service.js';
+import { createBookingBatchBodyPipe, createBookingBodyPipe, quoteBookingsBodyPipe } from '../modules/bookings/booking-request.validation.js';
 
 @Controller('bookings')
 export class BookingsController {
@@ -12,21 +13,22 @@ export class BookingsController {
   }
 
   @Post('quote')
-  quote(@Body() body: { pitchId: string; selections: Array<{ date: string; time: string }> }) {
+  quote(@Body(quoteBookingsBodyPipe) body: { pitchId: string; selections: Array<{ date: string; time: string }> }) {
     return this.bookings.quoteBookings(body);
   }
 
   @Post('batch')
-  createBatch(@Body() body: { pitchId: string; selections: Array<{ date: string; time: string }>; teamName?: string }) {
+  createBatch(@Body(createBookingBatchBodyPipe) body: { pitchId: string; selections: Array<{ date: string; time: string }>; teamName?: string }) {
     return this.bookings.createBookings(body);
   }
 
   @Post()
-  create(@Body() body: CreateBookingInput) {
+  create(@Body(createBookingBodyPipe) body: CreateBookingInput) {
     return this.bookings.createBooking(body);
   }
 
   @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
   cancel(@Param('id') id: string) {
     return this.bookings.cancelBooking(id);
   }

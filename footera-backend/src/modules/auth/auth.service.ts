@@ -1,11 +1,13 @@
-import { ConflictException, Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { createHash, createHmac, randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { RecordRepository } from '../../database/record.repository.js';
-import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
+import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../types/records.js';
 import { calculateAge } from '../accounts/calculate-age.js';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const LOGIN_FAILURE_LIMIT = 10;
+const LOGIN_FAILURE_WINDOW_MS = 15 * 60 * 1000;
 
 function derivePasswordKey(password: string, salt: Buffer, length: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -74,16 +76,30 @@ export class AuthService {
     return { user: this.toPublicUser(user), ...(await this.createSession(id)) };
   }
 
-  async login(input: { email?: unknown; password?: unknown }) {
+  async login(input: { email?: unknown; password?: unknown }, clientAddress = 'unknown') {
     const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
     const password = typeof input.password === 'string' ? input.password : '';
+    const now = new Date();
+    const bucket = Math.floor(now.getTime() / LOGIN_FAILURE_WINDOW_MS);
+    const expiresAt = new Date((bucket + 1) * LOGIN_FAILURE_WINDOW_MS);
+    const normalizedAddress = clientAddress.trim().slice(0, 100) || 'unknown';
+    const rateLimitId = createHash('sha256').update(`${email}\u0000${normalizedAddress}\u0000${bucket}`).digest('hex');
+    if (await this.records.getLoginFailureCount(rateLimitId, now) >= LOGIN_FAILURE_LIMIT) {
+      throw new HttpException('Trop de tentatives de connexion. Réessayez plus tard.', HttpStatus.TOO_MANY_REQUESTS);
+    }
     const credential = await this.records.find<AuthCredentialRecord>('authCredentials', email);
     const user = credential ? await this.records.find<UserRecord>('users', credential.userId) : null;
-    if (password.length > 256) throw new UnauthorizedException('Adresse e-mail ou mot de passe incorrect.');
-    const valid = credential?.passwordHash
+    const valid = password.length <= 256 && (credential?.passwordHash
       ? await this.verifyPassword(password, credential.passwordHash)
-      : (await this.hashPassword('invalid-login-attempt'), false);
-    if (!valid || !user) throw new UnauthorizedException('Adresse e-mail ou mot de passe incorrect.');
+      : (await this.hashPassword('invalid-login-attempt'), false));
+    if (!valid || !user) {
+      const failureCount = await this.records.recordLoginFailure(rateLimitId, now, expiresAt);
+      if (failureCount >= LOGIN_FAILURE_LIMIT) {
+        throw new HttpException('Trop de tentatives de connexion. Réessayez plus tard.', HttpStatus.TOO_MANY_REQUESTS);
+      }
+      throw new UnauthorizedException('Adresse e-mail ou mot de passe incorrect.');
+    }
+    await this.records.clearLoginFailures(rateLimitId);
     return { user: this.toPublicUser(user), ...(await this.createSession(user.id)) };
   }
 
@@ -121,6 +137,41 @@ export class AuthService {
     if (!user) return null;
     const { passwordHash: _passwordHash, ...safeUser } = user;
     return { ...safeUser, age: calculateAge(user.dateOfBirth) };
+  }
+
+  async listSessions(userId: string, currentSessionId: string) {
+    return (await this.records.listUserSessions(userId)).filter((session) => Date.parse(session.expiresAt) > Date.now())
+      .map((session) => ({ id: session.id, expiresAt: session.expiresAt, current: session.id === currentSessionId }));
+  }
+
+  async revokeSession(userId: string, id: string) {
+    const session = await this.records.find('authSessions', id);
+    if (!session || session.userId !== userId) throw new UnauthorizedException('Session introuvable.');
+    await this.records.consumeAuthSession(id);
+    return { success: true };
+  }
+
+  async changePassword(userId: string, body: unknown) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestException('Formulaire invalide.');
+    const input = body as Record<string, unknown>;
+    if (Object.keys(input).some((key) => !['currentPassword', 'newPassword'].includes(key))
+      || typeof input.currentPassword !== 'string' || input.currentPassword.length > 256
+      || typeof input.newPassword !== 'string' || input.newPassword.length < 12 || input.newPassword.length > 256) {
+      throw new BadRequestException('Le nouveau mot de passe doit contenir entre 12 et 256 caractères.');
+    }
+    const now = new Date();
+    const bucket = Math.floor(now.getTime() / LOGIN_FAILURE_WINDOW_MS);
+    const key = createHash('sha256').update(`password-change:${userId}:${bucket}`).digest('hex');
+    if (await this.records.getLoginFailureCount(key, now) >= LOGIN_FAILURE_LIMIT) throw new HttpException('Trop de tentatives.', HttpStatus.TOO_MANY_REQUESTS);
+    const user = await this.records.find('users', userId);
+    const credential = user ? await this.records.find('authCredentials', user.email.toLowerCase()) : null;
+    if (!user || !credential || !await this.verifyPassword(input.currentPassword, credential.passwordHash)) {
+      await this.records.recordLoginFailure(key, now, new Date((bucket + 1) * LOGIN_FAILURE_WINDOW_MS));
+      throw new UnauthorizedException('Mot de passe actuel incorrect.');
+    }
+    const hash = await this.hashPassword(input.newPassword);
+    if (!await this.records.changePasswordAndRevokeSessions(user.email.toLowerCase(), userId, credential.passwordHash, hash)) throw new ConflictException('Le mot de passe a déjà été modifié. Reconnectez-vous.');
+    return { success: true };
   }
 
   verifyToken(token: string): { id: string; sessionId: string } {

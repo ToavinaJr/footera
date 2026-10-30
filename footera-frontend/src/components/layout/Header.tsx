@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, type SubmitEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, Bell, User, X, BarChart3, LogOut } from 'lucide-react';
-import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
 import { NotificationsDrawer } from './NotificationsDrawer';
-import { SidebarDrawer } from './SidebarDrawer';
 import { Modal } from '../common/Modal';
+import { LanguageSwitcher, useTranslation } from '../../i18n';
 
-export const Header: React.FC = () => {
-  const { activeSection, setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
+interface HeaderProps { onMenuClick: () => void }
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const { t } = useTranslation();
+  const { setActiveSection, unreadNotificationsCount, user, logout, showToast } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const isNotifOpen = location.pathname === '/notifications';
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
+  const notificationBadgeLabel = unreadNotificationsCount > 99 ? '99+' : String(unreadNotificationsCount);
 
   const confirmLogout = async () => {
     try {
@@ -40,23 +42,23 @@ export const Header: React.FC = () => {
     else navigate('/home', { replace: true });
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (headerSearch.trim()) {
-      setActiveSection('players');
+      navigate(`/players?query=${encodeURIComponent(headerSearch.trim())}`);
     }
   };
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e5ece2] shadow-xs">
+      <header className="header-glass sticky top-0 z-40 border-b border-[#e5ece2]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-6">
           {/* Left: Hamburger menu + Brand (Desktop) */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsSidebarOpen(true)}
-              aria-label="Ouvrir le menu de navigation"
-              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer"
+              onClick={onMenuClick}
+              aria-label={t('nav.open')}
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer md:hidden"
             >
               <Menu className="w-6 h-6 stroke-[2.2]" />
             </button>
@@ -84,13 +86,15 @@ export const Header: React.FC = () => {
               type="text"
               value={headerSearch}
               onChange={(e) => setHeaderSearch(e.target.value)}
-              placeholder="Rechercher un joueur, une équipe..."
+              placeholder={t('nav.searchPlaceholder')}
+              aria-label={t('nav.searchPlaceholder')}
               className="w-full bg-[#f4f7f2] border border-pitch-line focus:border-pitch-primary focus:bg-white rounded-full pl-10 pr-4 py-2 text-xs sm:text-sm text-pitch-ink placeholder:text-slate-400 transition-all outline-hidden"
             />
             {headerSearch && (
               <button
                 type="button"
                 onClick={() => setHeaderSearch('')}
+                aria-label={t('common.cancel')}
                 className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
@@ -100,29 +104,26 @@ export const Header: React.FC = () => {
 
           {/* Right: Stats Shortcut + Notifications Bell + User Avatar */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="hidden lg:block"><LanguageSwitcher /></div>
             <button
               onClick={() => setActiveSection('stats')}
-              aria-label="Statistiques & Buteurs"
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                activeSection === 'stats'
-                  ? 'bg-pitch-primary text-white shadow-xs'
-                  : 'bg-[#f4f7f2] hover:bg-pitch-light text-pitch-ink border border-pitch-line'
-              }`}
+              aria-label={t('nav.stats')}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer bg-[#f4f7f2] hover:bg-pitch-light text-pitch-ink border border-pitch-line"
             >
-              <BarChart3 className={`w-3.5 h-3.5 ${activeSection === 'stats' ? 'text-white' : 'text-pitch-primary'}`} />
-              <span>Stats & Buteurs</span>
+              <BarChart3 className="w-3.5 h-3.5 text-pitch-primary" />
+              <span>{t('nav.stats')}</span>
             </button>
 
             {/* Notification Trigger with Red Badge */}
             <button
               onClick={openNotifications}
-              aria-label={`Notifications (${unreadNotificationsCount} non lues)`}
+              aria-label={t('nav.notificationsUnread', { count: unreadNotificationsCount })}
               className="relative min-h-11 min-w-11 flex items-center justify-center rounded-full text-[#0d3822] hover:bg-pitch-light transition-colors cursor-pointer"
             >
               <Bell className="w-5 h-5 stroke-[2.2]" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#dc2626] text-white text-micro font-extrabold flex items-center justify-center ring-2 ring-white">
-                  {unreadNotificationsCount}
+                <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#dc2626] px-1 text-micro font-extrabold leading-none text-white ring-2 ring-white">
+                  {notificationBadgeLabel}
                 </span>
               )}
             </button>
@@ -130,7 +131,7 @@ export const Header: React.FC = () => {
             {/* Profile Avatar with Green Jersey */}
             <button
               onClick={() => setActiveSection('profile')}
-              aria-label="Accéder à mon espace personnel"
+              aria-label={t('nav.profile')}
               className="w-10 h-10 rounded-full border-2 border-pitch-primary overflow-hidden hover:ring-2 hover:ring-lime-volt transition-all cursor-pointer shrink-0"
             >
               {user?.avatarUrl ? (
@@ -149,8 +150,8 @@ export const Header: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsLogoutConfirmOpen(true)}
-              aria-label="Se déconnecter"
-              title="Se déconnecter"
+              aria-label={t('nav.logout')}
+              title={t('nav.logout')}
               className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-700"
             >
               <LogOut className="h-4 w-4" />
@@ -159,34 +160,31 @@ export const Header: React.FC = () => {
         </div>
       </header>
 
-      {/* Side Tactical Grid Drawer */}
-      <SidebarDrawer isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
       {/* Notifications Drawer */}
       <NotificationsDrawer isOpen={isNotifOpen} onClose={closeNotifications} />
 
       <Modal
         isOpen={isLogoutConfirmOpen}
         onClose={() => setIsLogoutConfirmOpen(false)}
-        title="Confirmer la déconnexion"
-        subtitle="Vous pourrez vous reconnecter à tout moment."
+        title={t('auth.logoutTitle')}
+        subtitle={t('auth.logoutSubtitle')}
         maxWidth="sm"
       >
-        <p className="text-sm text-slate-600">Voulez-vous vraiment vous déconnecter de votre compte ?</p>
+        <p className="text-sm text-slate-600">{t('auth.logoutPrompt')}</p>
         <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={() => setIsLogoutConfirmOpen(false)}
             className="min-h-11 rounded-xl border border-pitch-line px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-pitch-panel"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             type="button"
             onClick={() => void confirmLogout()}
             className="min-h-11 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700"
           >
-            Oui, me déconnecter
+            {t('auth.logoutConfirm')}
           </button>
         </div>
       </Modal>

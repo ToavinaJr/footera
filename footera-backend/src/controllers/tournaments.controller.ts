@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Post, Body, NotFoundException } from '@nestjs/common';
 import { TournamentsService } from '../modules/tournaments/tournaments.service.js';
 import type { CreateTournamentInput } from '../modules/tournaments/tournaments.service.js';
+import { createTournamentBodyPipe, registerTournamentTeamBodyPipe } from '../modules/tournaments/tournament-request.validation.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('tournaments')
@@ -13,6 +14,11 @@ export class TournamentsController {
     return this.tournaments.list();
   }
 
+  @Get('my-pitches')
+  listOwnedPitches() {
+    return this.tournaments.listOwnedPitches();
+  }
+
   @Get(':id')
   @Public()
   async getById(@Param('id') id: string) {
@@ -21,13 +27,29 @@ export class TournamentsController {
     return tournament;
   }
 
+  @Get(':id/teams')
+  @Public()
+  async listParticipatingTeams(@Param('id') id: string) {
+    const teams = await this.tournaments.listParticipatingTeams(id);
+    if (!teams) throw new NotFoundException('Tournoi introuvable');
+    return teams;
+  }
+
+  @Get(':id/pitches')
+  @Public()
+  async listPitches(@Param('id') id: string) {
+    const pitches = await this.tournaments.listPitches(id);
+    if (!pitches) throw new NotFoundException('Tournoi introuvable');
+    return pitches;
+  }
+
   @Post()
-  create(@Body() body: CreateTournamentInput) {
+  create(@Body(createTournamentBodyPipe) body: CreateTournamentInput) {
     return this.tournaments.create(body);
   }
 
   @Post(':id/register')
-  registerTeam(@Param('id') id: string, @Body('teamId') teamId: string) {
-    return this.tournaments.register(id, teamId);
+  registerTeam(@Param('id') id: string, @Body(registerTournamentTeamBodyPipe) body: { teamId: string }) {
+    return this.tournaments.register(id, body.teamId);
   }
 }

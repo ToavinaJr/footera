@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from './prisma.service.js';
 import { seedDatabase } from './seed-data.js';
 
@@ -7,12 +7,16 @@ export class SeedService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    // Seed inserts missing fixtures without overwriting records already stored in PostgreSQL.
-    // Running this on every startup also applies additions to existing demo databases.
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') return;
+    // Demo fixtures are synchronized only in non-production environments.
     await seedDatabase(this.prisma);
   }
 
   resetDemo() {
-    return seedDatabase(this.prisma, { reset: true });
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
+      throw new ForbiddenException('La synchronisation des données de démonstration est désactivée en production.');
+    }
+    // Synchronize canonical demo records without deleting users or records created in the database.
+    return seedDatabase(this.prisma);
   }
 }

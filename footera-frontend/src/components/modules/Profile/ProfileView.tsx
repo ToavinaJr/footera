@@ -5,7 +5,6 @@ import {
   MapPin, 
   Phone, 
   Mail, 
-  RotateCcw, 
   Edit3, 
   Check, 
   Calendar, 
@@ -29,25 +28,32 @@ import { validateSportsCv, type SportsCvErrors } from './sportsCvValidation';
 import { ImageUploadField } from '../../common/ImageUploadField';
 import { catalogsService } from '../../../services/catalogsService';
 import { formatDateForDisplay } from '../../../utils/date';
+import { PhotoGallery } from '../../common/PhotoGallery';
+import { RoleRequestsPanel } from './RoleRequestsPanel';
+import { ProfileTeamPanel } from './ProfileTeamPanel';
+import { CurrentTeamSelectField } from './CurrentTeamSelectField';
+import { useTranslation } from '../../../i18n';
 
-export const ProfileView: React.FC = () => {
-  const { user, updateProfile, updateSportsCv, resetDemo, showToast, selectedResourceId } = useApp();
+export const ProfileView: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
+  const { t } = useTranslation();
+  const { user, updateProfile, updateSportsCv, showToast, selectedResourceId } = useApp();
   const { profileId } = useParams();
   const isOwner = !profileId;
   const location = useLocation();
   const navigate = useNavigate();
-  const isEditCvOpen = location.pathname === '/profile/edit-cv';
-  const activeTab: 'profile' | 'bookings' | 'applications' = location.pathname.startsWith('/profile/bookings')
+  const isEditCvOpen = location.pathname === '/profile/edit-cv' || location.pathname === '/settings/sports-cv';
+  const activeTab: 'profile' | 'bookings' | 'applications' = /\/(?:profile|settings)\/bookings/.test(location.pathname)
     ? 'bookings'
-    : location.pathname === '/profile/applications'
+    : location.pathname === '/profile/applications' || location.pathname === '/settings/applications'
       ? 'applications'
       : 'profile';
   const setActiveTab = (tab: 'profile' | 'bookings' | 'applications') => {
-    const path = tab === 'profile' ? '/profile' : `/profile/${tab}`;
+    const path = `/settings/${tab}`;
     navigate(path);
   };
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [cancellingApplicationId, setCancellingApplicationId] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [myPlayer, setMyPlayer] = useState<Player | null>(null);
   const [publicPlayer, setPublicPlayer] = useState<Player | null>(null);
@@ -78,7 +84,7 @@ export const ProfileView: React.FC = () => {
         setPositionOptions(options.playerPositions);
         setStrongFootOptions(options.strongFeet);
       })
-      .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Impossible de charger les options du CV sportif.', 'error'));
+      .catch((error: unknown) => showToast(error instanceof Error ? error.message : t('common.loadOptionsError'), 'error'));
   }, [showToast]);
 
   useEffect(() => {
@@ -128,11 +134,11 @@ export const ProfileView: React.FC = () => {
   }, [isOwner, user]);
 
   useEffect(() => {
-    if (!isOwner || !user?.name) return;
-    playersService.list({ query: user.name })
-      .then((players) => setMyPlayer(players.find((player) => player.name.toLowerCase() === user.name.toLowerCase()) ?? null))
+    if (!isOwner || !user) return;
+    playersService.getMine()
+      .then(setMyPlayer)
       .catch(() => setMyPlayer(null));
-  }, [isOwner, user?.name, user?.dateOfBirth, user?.avatarUrl]);
+  }, [isOwner, user?.id, user?.name, user?.dateOfBirth, user?.avatarUrl]);
 
   const handleSaveCv = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,21 +157,21 @@ export const ProfileView: React.FC = () => {
     setIsSavingCv(true);
     const saved = await updateSportsCv(cv);
     setIsSavingCv(false);
-    if (saved) navigate('/profile', { replace: true });
+    if (saved) navigate('/settings/profile', { replace: true });
   };
 
-  const closeEditCv = () => navigate('/profile', { replace: true });
+  const closeEditCv = () => navigate('/settings/profile', { replace: true });
 
   const handleSavePersonalInfo = async (event: React.FormEvent) => {
     event.preventDefault();
     const name = contactName.trim();
     if (name.length < 2 || name.length > 80) {
-      setPersonalInfoError('Le nom doit contenir entre 2 et 80 caractères.');
+      setPersonalInfoError(t('profile.nameValidation'));
       return;
     }
     const phone = contactPhone.trim();
     if (phone && !/^[+()\d.\-\s]{7,32}$/.test(phone)) {
-      setPersonalInfoError('Saisissez un numéro de téléphone valide.');
+      setPersonalInfoError(t('profile.phoneValidation'));
       return;
     }
     if (dateOfBirth) {
@@ -173,7 +179,7 @@ export const ProfileView: React.FC = () => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) || Number.isNaN(parsed.valueOf())
         || parsed.toISOString().slice(0, 10) !== dateOfBirth
         || dateOfBirth > new Date().toISOString().slice(0, 10)) {
-        setPersonalInfoError('Saisissez une date de naissance valide.');
+        setPersonalInfoError(t('profile.birthDateValidation'));
         return;
       }
     }
@@ -186,24 +192,38 @@ export const ProfileView: React.FC = () => {
     try {
       const ok = await bookingsService.cancelBooking(bookingId);
       if (ok) {
-        showToast('Réservation annulée avec succès');
+        showToast(t('profile.bookingCancelled'), 'success');
         setBookings((current) => current.map((booking) =>
           booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking,
         ));
       } else {
-        showToast('Réservation introuvable ou déjà supprimée.', 'error');
+        showToast(t('profile.bookingNotFound'), 'error');
       }
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, 'error');
         return;
       }
-      showToast('Erreur lors de l’annulation', 'error');
+      showToast(t('profile.bookingCancelError'), 'error');
     }
   };
 
-  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-500">Chargement du profil joueur…</div>;
-  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-600">Ce profil joueur est introuvable ou indisponible.</div>;
+  const handleCancelApplication = async (application: Application) => {
+    if (application.status !== 'EN_REVUE' || cancellingApplicationId) return;
+    setCancellingApplicationId(application.id);
+    try {
+      const updated = await recruitmentService.cancelApplication(application.id);
+      setApplications((current) => current.map((item) => item.id === updated.id ? updated : item));
+      showToast(t('recruitment.applicationCancelled'), 'success');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : t('recruitment.cancelApplicationError'), 'error');
+    } finally {
+      setCancellingApplicationId(null);
+    }
+  };
+
+  if (profileId && isLoadingPublicPlayer) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-500">{t('profile.loading')}</div>;
+  if (profileId && (publicPlayerNotFound || !publicPlayer)) return <div className="rounded-3xl border border-pitch-line bg-white p-8 text-sm text-slate-600">{t('profile.notFound')}</div>;
   if (isOwner && !user) return null;
 
   const displayedPlayer = isOwner ? myPlayer : publicPlayer;
@@ -214,7 +234,7 @@ export const ProfileView: React.FC = () => {
   const displayedAge = isOwner ? user!.age ?? myPlayer?.age : displayedPlayer?.age;
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="page-enter space-y-8 pb-16">
       {/* Profile Header */}
       <section className="relative isolate overflow-hidden rounded-3xl border border-pitch-line bg-white shadow-xs">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-2 bg-pitch-primary" />
@@ -227,8 +247,8 @@ export const ProfileView: React.FC = () => {
             setPersonalInfoError('');
             setIsEditInfoOpen(true);
           }}
-          aria-label="Modifier mes informations personnelles"
-          title="Modifier mes informations"
+          aria-label={t('profile.editInfoLabel')}
+          title={t('profile.editInfoTitle')}
           className="absolute right-4 top-5 z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pitch-line bg-white text-pitch-primary shadow-xs transition-colors hover:bg-pitch-panel-hover sm:right-6 sm:top-6"
         >
           <Edit3 className="h-4 w-4" />
@@ -244,7 +264,7 @@ export const ProfileView: React.FC = () => {
               />
               {isOwner && <ImageUploadField
                 purpose="avatar"
-                label="Changer la photo"
+                label={t('profile.changePhoto')}
                 variant="avatar"
                 onUploaded={(avatarUrl) => { void updateProfile({ avatarUrl }); }}
               />}
@@ -257,29 +277,29 @@ export const ProfileView: React.FC = () => {
                   onClick={() => navigate(`/profile/${encodeURIComponent(myPlayer.id)}`)}
                   className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pitch-line px-3 text-xs font-bold text-pitch-primary transition-colors hover:bg-pitch-panel-hover"
                 >
-                  <ExternalLink className="h-4 w-4" /> Voir le profil public
+                  <ExternalLink className="h-4 w-4" /> {t('profile.publicProfile')}
                 </button>}
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {(isOwner ? user!.city : publicPlayer!.city) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Ville</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.city')}</span>
                   <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><MapPin className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.city : publicPlayer!.city}</span>
                 </div>}
                 {(isOwner || publicPlayer!.email) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Adresse e-mail</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.email')}</span>
                   <span className="mt-1 flex min-w-0 items-start gap-2 break-all text-sm font-semibold text-pitch-ink"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.email : publicPlayer!.email}</span>
                 </div>}
                 {(isOwner ? user!.phone?.trim() : publicPlayer!.phone?.trim()) && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Téléphone</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.phone')}</span>
                   <span className="mt-1 flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-pitch-ink"><Phone className="h-4 w-4 shrink-0 text-pitch-primary" />{isOwner ? user!.phone : publicPlayer!.phone}</span>
                 </div>}
                 {displayedAge !== undefined && displayedAge > 0 && <div className="min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3">
-                  <span className="block text-caption font-semibold text-slate-500">Âge</span>
-                  <span className="mt-1 block text-sm font-semibold text-pitch-ink">{displayedAge} ans</span>
+                  <span className="block text-caption font-semibold text-slate-500">{t('profile.age')}</span>
+                  <span className="mt-1 block text-sm font-semibold text-pitch-ink">{t('profile.ageYears', { age: displayedAge })}</span>
                 </div>}
               </div>
               <p className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-pitch-panel px-3 py-2 text-sm text-slate-600">
-                <span>Équipe officielle :</span><strong className="text-pitch-ink">{displayedTeam || 'Sans équipe actuellement'}</strong>
+                <span>{t('profile.officialTeam')}</span><strong className="text-pitch-ink">{displayedTeam || t('profile.noCurrentTeam')}</strong>
               </p>
             </div>
           </div>
@@ -287,11 +307,11 @@ export const ProfileView: React.FC = () => {
       </section>
 
       {/* Tabs */}
-      {isOwner && <div className="flex items-center gap-2 border-b border-pitch-line pb-2">
+      {isOwner && !embedded && <div className="flex items-center gap-2 border-b border-pitch-line pb-2">
         {[
-          { label: 'CV Sportif & Infos', tab: 'profile' },
-          { label: `Mes Réservations (${bookings.length})`, tab: 'bookings' },
-          { label: `Mes Candidatures (${applications.length})`, tab: 'applications' },
+          { label: t('profile.sportsCv'), tab: 'profile' },
+          { label: t('profile.bookingsTab', { count: bookings.length }), tab: 'bookings' },
+          { label: t('profile.applicationsTab', { count: applications.length }), tab: 'applications' },
         ].map((t) => (
           <button
             key={t.tab}
@@ -313,8 +333,8 @@ export const ProfileView: React.FC = () => {
           <div className="p-6 rounded-3xl bg-white border border-pitch-line space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-extrabold text-pitch-ink">CV Sportif Vérifié</h2>
-                <p className="text-xs text-slate-500">{isOwner ? 'Transmis lors de vos candidatures d’équipe' : 'Profil sportif public'}</p>
+                <h2 className="card-title text-base font-extrabold text-pitch-ink">{t('profile.sportsCv')}</h2>
+                <p className="text-xs text-slate-500">{isOwner ? t('profile.cvApplicationsNote') : t('profile.publicSportsProfile')}</p>
               </div>
               {isOwner && <button
                 onClick={() => {
@@ -324,79 +344,66 @@ export const ProfileView: React.FC = () => {
                   setCvFoot(user!.sportsCv.strongFoot);
                   setCvBio(user!.sportsCv.bio);
                   setCvCurrentTeam(user!.sportsCv.currentTeam);
-                  navigate('/profile/edit-cv');
+                  navigate('/settings/sports-cv');
                 }}
                 className="px-4 py-2 min-h-11 rounded-2xl bg-pitch-light hover:bg-[#d5edd9] text-pitch-primary text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Modifier mon CV</span>
+                <span>{t('profile.editCv')}</span>
               </button>}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Poste principal</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.primaryPosition')}</span>
                 <strong className="text-pitch-ink text-sm block mt-0.5">{isOwner ? user!.sportsCv.primaryPosition : publicPlayer!.primaryPosition}</strong>
               </div>
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Pied fort</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.strongFoot')}</span>
                 <strong className="text-pitch-ink text-sm block mt-0.5">{isOwner ? user!.sportsCv.strongFoot : publicPlayer!.strongFoot}</strong>
               </div>
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Mensurations</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.measurements')}</span>
                 <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner ? user!.sportsCv.height : publicPlayer!.height} cm · {isOwner ? user!.sportsCv.weight : publicPlayer!.weight} kg
                 </strong>
               </div>
               <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line">
-                <span className="text-slate-400 block text-caption font-semibold">Expérience</span>
+                <span className="text-slate-400 block text-caption font-semibold">{t('profile.experience')}</span>
                 <strong className="text-pitch-ink text-sm tabular-nums block mt-0.5">
                   {isOwner
                     ? `${user!.sportsCv.experienceYears} ans`
                     : Number.isInteger(publicPlayer!.experienceYears) && publicPlayer!.experienceYears! > 0
                       ? `${publicPlayer!.experienceYears} ans`
-                      : 'Non renseigné'}
+                      : t('profile.experienceUnknown')}
                 </strong>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-pitch-panel border border-pitch-line text-xs text-slate-700 leading-relaxed">
-              <h3 className="font-bold text-pitch-ink mb-1">Présentation sportive :</h3>
+              <h3 className="card-title font-bold text-pitch-ink mb-1">{t('profile.sportsPresentation')}</h3>
               {isOwner ? user!.sportsCv.bio : publicPlayer!.bio}
             </div>
           </div>
 
-          {/* Reset Demo Data */}
-          {isOwner && <div className="p-5 rounded-3xl bg-[#fdf2f2] border border-[#fecaca] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-bold text-rose-800">Données de test locales</h3>
-              <p className="text-xs text-rose-600 mt-0.5">
-                Restaurez les fixtures d&apos;origine du projet Footera (équipes Betsileo FC, AS Analakely, etc.).
-              </p>
-            </div>
-            <button
-              onClick={resetDemo}
-              className="px-4 py-2 min-h-11 rounded-2xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shrink-0 shadow-2xs"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Réinitialiser les données</span>
-            </button>
-          </div>}
           {displayedPlayer && <PlayerCareerPanel player={displayedPlayer} />}
+          {displayedPlayer && <PhotoGallery entity="players" id={displayedPlayer.id} />}
+          {isOwner && !embedded && <RoleRequestsPanel />}
+          {isOwner && !embedded && <ProfileTeamPanel currentTeamId={myPlayer?.currentTeamId} currentTeamName={myPlayer?.currentTeam ?? user?.sportsCv.currentTeam} />}
           {displayedPlayer && <section className="rounded-3xl border border-pitch-line bg-white p-5 shadow-xs md:p-6">
-            <h2 className="text-lg font-extrabold text-pitch-ink">Parcours en club</h2>
+            <h2 className="card-title text-lg font-extrabold text-pitch-ink">{t('profile.clubCareer')}</h2>
             {displayedPlayer.previousClubs.length ? <ol className="mt-4 space-y-3 border-l-2 border-pitch-line pl-4">
               {displayedPlayer.previousClubs.map((club) => {
                 const matchingTeam = teams.find((team) => team.name.toLowerCase() === club.toLowerCase())
                   ?? teams.find((team) => team.clubName?.toLowerCase() === club.toLowerCase());
                 return <li key={club} className="text-sm font-semibold text-slate-700"><button type="button" onClick={() => matchingTeam ? navigate(`/teams/${encodeURIComponent(matchingTeam.id)}`) : navigate(`/teams?query=${encodeURIComponent(club)}`)} className="cursor-pointer text-left hover:text-pitch-primary hover:underline">{club}</button></li>;
               })}
-            </ol> : <p className="mt-3 text-sm text-slate-500">Aucun ancien club renseigné.</p>}
+            </ol> : <p className="mt-3 text-sm text-slate-500">{t('profile.noPreviousClubs')}</p>}
             {displayedPlayer.currentTeam && <p className="mt-3 text-sm font-bold text-pitch-primary">
-              <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">(actuel)</span>
+              <button type="button" onClick={() => displayedPlayer.currentTeamId ? navigate(`/teams/${encodeURIComponent(displayedPlayer.currentTeamId)}`) : navigate(`/teams?query=${encodeURIComponent(displayedPlayer.currentTeam ?? '')}`)} className="cursor-pointer hover:underline">{displayedPlayer.currentTeam}</button> <span className="text-xs font-medium text-slate-500">{t('profile.currentSuffix')}</span>
             </p>}
           </section>}
-          {!isOwner && <p className="text-center text-xs text-slate-400">Cette fiche publique n’affiche ni coordonnées privées, ni réservations, ni candidatures.</p>}
+          {!isOwner && <p className="text-center text-xs text-slate-400">{t('profile.publicPrivacyNotice')}</p>}
         </div>
       )}
 
@@ -405,7 +412,7 @@ export const ProfileView: React.FC = () => {
         <div className="space-y-4">
           {bookings.length === 0 ? (
             <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-pitch-line">
-              Aucune réservation active.
+              {t('profile.bookingEmpty')}
             </div>
           ) : (
             bookings.map((b) => (
@@ -415,19 +422,19 @@ export const ProfileView: React.FC = () => {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-extrabold text-pitch-ink"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
+                    <h2 className="card-title text-base font-extrabold text-pitch-ink"><EntityLink section="pitches" id={b.pitchId}>{b.pitchName}</EntityLink></h2>
                     <Badge
                       variant={b.status === 'CONFIRMED' ? 'emerald' : b.status === 'PENDING' ? 'amber' : 'rose'}
                       size="sm"
                     >
-                      {b.status === 'CONFIRMED' ? 'Confirmée' : b.status === 'PENDING' ? 'En attente' : 'Annulée'}
+                      {b.status === 'CONFIRMED' ? t('profile.bookingConfirmed') : b.status === 'PENDING' ? t('profile.bookingPending') : t('profile.bookingCancelledStatus')}
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
                     {b.complexName} · <strong className="text-pitch-ink">{formatDateForDisplay(b.date)}</strong> à{' '}
                     <strong className="text-pitch-primary">{b.time}</strong>
                   </p>
-                  <p className="text-xs text-slate-600">Montant total : {b.totalPrice} € TTC</p>
+                  <p className="text-xs text-slate-600">{t('profile.bookingTotal', { amount: b.totalPrice })}</p>
                 </div>
 
                 {b.status !== 'CANCELLED' && (
@@ -436,7 +443,7 @@ export const ProfileView: React.FC = () => {
                     className="px-4 py-2 min-h-11 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
-                    <span>Annuler</span>
+                    <span>{t('profile.cancelBooking')}</span>
                   </button>
                 )}
               </div>
@@ -450,7 +457,7 @@ export const ProfileView: React.FC = () => {
         <div className="space-y-4">
           {applications.length === 0 ? (
             <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-3xl border border-pitch-line">
-              Aucune candidature transmise.
+              {t('profile.applicationEmpty')}
             </div>
           ) : (
             applications.map((app) => (
@@ -460,16 +467,19 @@ export const ProfileView: React.FC = () => {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
-                    <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : 'amber'} size="sm">
-                      {app.status === 'EN_REVUE' ? 'En cours d’examen' : 'Acceptée'}
+                    <h2 className="card-title text-sm font-extrabold text-pitch-ink">{app.adTitle}</h2>
+                    <Badge variant={app.status === 'ACCEPTEE' ? 'emerald' : app.status === 'RETIRÉE' ? 'rose' : 'amber'} size="sm">
+                      {app.status === 'EN_REVUE' ? t('recruitment.inReview') : app.status === 'ACCEPTEE' ? t('recruitment.accepted') : app.status === 'RETIRÉE' ? t('recruitment.withdrawn') : t('recruitment.rejected')}
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Club : <EntityLink section="teams" id={teams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink> · Candidat : {app.applicantName} ({app.applicantPosition})
+                    {t('profile.applicationClub')} <EntityLink section="teams" id={teams.find((team) => team.name === app.teamName)?.id}>{app.teamName}</EntityLink> · {t('profile.applicationCandidate')} {app.applicantName} ({app.applicantPosition})
                   </p>
                   <p className="text-xs text-slate-600 italic mt-1">« {app.message} »</p>
                 </div>
+                {app.status === 'EN_REVUE' && <button type="button" disabled={cancellingApplicationId !== null} onClick={() => void handleCancelApplication(app)} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60">
+                  <XCircle className="h-4 w-4" aria-hidden="true" />{cancellingApplicationId === app.id ? t('recruitment.cancelling') : t('recruitment.cancelApplication')}
+                </button>}
               </div>
             ))
           )}
@@ -479,13 +489,13 @@ export const ProfileView: React.FC = () => {
       {isEditInfoOpen && isOwner && <Modal
         isOpen={isEditInfoOpen}
         onClose={() => setIsEditInfoOpen(false)}
-        title="Mes informations personnelles"
-        subtitle="Votre date de naissance reste privée. Elle sert uniquement à calculer votre âge."
+        title={t('profile.personalInfoTitle')}
+        subtitle={t('profile.birthDatePrivacy')}
         maxWidth="md"
       >
         <form onSubmit={handleSavePersonalInfo} className="space-y-4">
           <label className="block text-xs font-bold text-slate-700">
-            Nom affiché
+            {t('profile.displayName')}
             <input
               type="text"
               autoComplete="name"
@@ -498,19 +508,19 @@ export const ProfileView: React.FC = () => {
             />
           </label>
           <label className="block text-xs font-bold text-slate-700">
-            Numéro de téléphone
+            {t('profile.phoneLabel')}
             <input
               type="tel"
               autoComplete="tel"
               maxLength={32}
               value={contactPhone}
               onChange={(event) => setContactPhone(event.target.value)}
-              placeholder="Ex. +261 34 00 000 00"
+              placeholder={t('profile.phoneExample')}
               className="mt-1 min-h-11 w-full rounded-xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
             />
           </label>
           <label className="block text-xs font-bold text-slate-700">
-            Date de naissance
+            {t('profile.birthDate')}
             <input
               type="date"
               max={new Date().toISOString().slice(0, 10)}
@@ -521,8 +531,8 @@ export const ProfileView: React.FC = () => {
           </label>
           {personalInfoError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">{personalInfoError}</p>}
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setIsEditInfoOpen(false)} className="min-h-11 rounded-xl px-4 text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button>
-            <button type="submit" className="min-h-11 rounded-xl bg-pitch-action px-4 text-xs font-bold text-white hover:bg-pitch-action-hover">Enregistrer</button>
+            <button type="button" onClick={() => setIsEditInfoOpen(false)} className="min-h-11 rounded-xl px-4 text-xs font-bold text-slate-600 hover:bg-slate-100">{t('common.cancel')}</button>
+            <button type="submit" className="min-h-11 rounded-xl bg-pitch-action px-4 text-xs font-bold text-white hover:bg-pitch-action-hover">{t('common.save')}</button>
           </div>
         </form>
       </Modal>}
@@ -532,31 +542,36 @@ export const ProfileView: React.FC = () => {
         <Modal
           isOpen={isEditCvOpen}
           onClose={closeEditCv}
-          title="Modifier mon CV Sportif"
-          subtitle="Mettez à jour vos informations visibles par les recruteurs"
+          title={t('profile.editCv')}
+          subtitle={t('profile.editCvSubtitle')}
           maxWidth="md"
         >
-          <form onSubmit={handleSaveCv} className="space-y-4">
+          <form onSubmit={handleSaveCv} className="min-w-0 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Poste principal *
+              <label htmlFor="sports-cv-position" className="mb-1 block text-sm font-bold text-slate-700">
+                {t('profile.primaryPosition')} <span aria-hidden="true">*</span>
               </label>
               <SelectField
+                id="sports-cv-position"
+                name="sportsCvPosition"
                 value={cvPosition}
                 onChange={(e) => setCvPosition(e.target.value as Position)}
                 required
                 disabled={!positionOptions.length}
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                aria-label={t('profile.primaryPosition')}
+                className="w-full rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary"
               >
-                <option value="" disabled>Choisir un poste</option>
+                <option value="" disabled>{t('profile.choosePosition')}</option>
                 {positionOptions.map((position) => <option key={position} value={position}>{position}</option>)}
               </SelectField>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Taille (cm)</label>
+                <label htmlFor="sports-cv-height" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.height')}</label>
                 <input
+                  id="sports-cv-height"
+                  name="sportsCvHeight"
                   type="number"
                   min={100}
                   max={250}
@@ -564,13 +579,15 @@ export const ProfileView: React.FC = () => {
                   value={cvHeight}
                   onChange={(e) => setCvHeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.height}
-                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                  className="min-h-11 w-full min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
                 />
                 {cvErrors.height && <p className="mt-1 text-xs text-rose-600">{cvErrors.height}</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Poids (kg)</label>
+                <label htmlFor="sports-cv-weight" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.weight')}</label>
                 <input
+                  id="sports-cv-weight"
+                  name="sportsCvWeight"
                   type="number"
                   min={30}
                   max={250}
@@ -578,48 +595,45 @@ export const ProfileView: React.FC = () => {
                   value={cvWeight}
                   onChange={(e) => setCvWeight(Number(e.target.value))}
                   aria-invalid={!!cvErrors.weight}
-                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                  className="min-h-11 w-full min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel px-3 text-sm text-pitch-ink focus:border-pitch-primary"
                 />
                 {cvErrors.weight && <p className="mt-1 text-xs text-rose-600">{cvErrors.weight}</p>}
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Pied fort</label>
+              <div className="col-span-2 sm:col-span-1">
+                <label htmlFor="sports-cv-foot" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.strongFoot')}</label>
                 <SelectField
+                  id="sports-cv-foot"
+                  name="sportsCvFoot"
                   value={cvFoot}
                   onChange={(e) => setCvFoot(e.target.value as StrongFoot)}
                   required
                   disabled={!strongFootOptions.length}
-                  className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                  aria-label={t('profile.strongFoot')}
+                  className="w-full rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary"
                 >
-                  <option value="" disabled>Choisir un pied fort</option>
+                  <option value="" disabled>{t('profile.chooseStrongFoot')}</option>
                   {strongFootOptions.map((foot) => <option key={foot} value={foot}>{foot}</option>)}
                 </SelectField>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Club actuel</label>
-              <input
-                type="text"
-                value={cvCurrentTeam}
-                onChange={(e) => setCvCurrentTeam(e.target.value)}
-                maxLength={80}
-                aria-invalid={!!cvErrors.currentTeam}
-                placeholder="Ex: Betsileo FC"
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
-              />
+              <label htmlFor="sports-cv-current-team" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.currentClub')}</label>
+              <CurrentTeamSelectField id="sports-cv-current-team" name="sportsCvCurrentTeam" value={cvCurrentTeam} onChange={setCvCurrentTeam} />
               {cvErrors.currentTeam && <p className="mt-1 text-xs text-rose-600">{cvErrors.currentTeam}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Bio sportive</label>
+              <label htmlFor="sports-cv-bio" className="mb-1 block text-sm font-bold text-slate-700">{t('profile.sportsBio')}</label>
               <textarea
+                id="sports-cv-bio"
+                name="sportsCvBio"
                 rows={3}
                 value={cvBio}
                 onChange={(e) => setCvBio(e.target.value)}
                 maxLength={1000}
                 aria-invalid={!!cvErrors.bio}
-                className="w-full p-2.5 bg-pitch-panel border border-pitch-line rounded-2xl text-xs text-pitch-ink focus:border-pitch-primary"
+                className="min-h-24 w-full min-w-0 rounded-2xl border border-pitch-line bg-pitch-panel p-3 text-sm text-pitch-ink focus:border-pitch-primary"
               />
               {cvErrors.bio && <p className="mt-1 text-xs text-rose-600">{cvErrors.bio}</p>}
             </div>
@@ -628,9 +642,9 @@ export const ProfileView: React.FC = () => {
               <button
                 type="button"
                 onClick={closeEditCv}
-                className="px-4 py-2 min-h-11 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200"
+                className="min-h-11 rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-600 hover:bg-slate-200"
               >
-                Annuler
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
@@ -638,7 +652,7 @@ export const ProfileView: React.FC = () => {
                 className="px-5 py-2 min-h-11 rounded-xl bg-pitch-action hover:bg-pitch-action-hover text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs disabled:cursor-wait disabled:opacity-60"
               >
                 <Check className="w-4 h-4" />
-                <span>{isSavingCv ? 'Enregistrement…' : 'Enregistrer mon CV'}</span>
+                <span>{isSavingCv ? t('profile.savingCv') : t('profile.saveCv')}</span>
               </button>
             </div>
           </form>

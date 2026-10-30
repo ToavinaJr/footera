@@ -2,28 +2,28 @@ import React from 'react';
 import { Home, Compass, Trophy, User } from 'lucide-react';
 import { NavigationSection } from '../../context/navigation';
 import { useApp } from '../../context/useApp';
+import { useTranslation } from '../../i18n';
 
 export const MobileNav: React.FC = () => {
   const { activeSection, setActiveSection } = useApp();
+  const { t } = useTranslation();
 
   const tabs: { label: string; section: NavigationSection; icon: React.ElementType }[] = [
-    { label: 'Accueil', section: 'home', icon: Home },
-    { label: 'Joueurs', section: 'players', icon: Compass },
-    { label: 'Matchs', section: 'matches', icon: Trophy },
-    { label: 'Profil', section: 'profile', icon: User },
+    { label: t('nav.home'), section: 'home', icon: Home },
+    { label: t('nav.players'), section: 'players', icon: Compass },
+    { label: t('nav.matches'), section: 'matches', icon: Trophy },
+    { label: t('nav.settings'), section: 'settings', icon: User },
   ];
 
   return (
     <nav
-      aria-label="Navigation mobile"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border-subtle shadow-lg"
+      aria-label={t('nav.mobile')}
+      className="header-glass lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle shadow-lg"
     >
       <div className="grid grid-cols-4 h-16 max-w-md mx-auto items-center">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive =
-            activeSection === tab.section ||
-            (tab.label === 'Explorer' && (activeSection === 'players' || activeSection === 'teams'));
+          const isActive = activeSection === tab.section;
 
           return (
             <button

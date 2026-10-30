@@ -1,4 +1,4 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { RecordCollection, RecordRepository } from '../../database/record.repository.js';
 import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
@@ -11,6 +11,9 @@ function makeService() {
     createUserAccount: vi.fn(async (_id: string, _email: string, _user: UserRecord, _credential: AuthCredentialRecord, _player?: unknown) => undefined),
     create: vi.fn(async (_collection: string, _id: string, payload: unknown) => payload),
     consumeAuthSession: vi.fn(async () => true),
+    getLoginFailureCount: vi.fn(async () => 0),
+    recordLoginFailure: vi.fn(async () => 1),
+    clearLoginFailures: vi.fn(async () => undefined),
   };
   return { auth: new AuthService(records as unknown as RecordRepository), records };
 }
@@ -69,6 +72,19 @@ describe('AuthService', () => {
     expect(result.user.id).toBe(id);
     await expect(auth.login({ email: 'test@example.com', password: 'wrong password' }))
       .rejects.toBeInstanceOf(UnauthorizedException);
+    expect(records.recordLoginFailure).toHaveBeenCalledOnce();
+    expect(records.clearLoginFailures).toHaveBeenCalledOnce();
+  });
+
+  it('blocks an address and email pair after the persistent failure limit is reached', async () => {
+    const { auth, records } = makeService();
+    records.getLoginFailureCount.mockResolvedValue(10);
+
+    const error = await auth.login({ email: 'person@example.com', password: 'wrong password' }, '192.0.2.10').catch((reason: unknown) => reason);
+    expect(error).toBeInstanceOf(HttpException);
+    expect((error as HttpException).getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+    expect(records.find).not.toHaveBeenCalled();
+    expect(records.getLoginFailureCount.mock.calls[0]?.[0]).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('rotates refresh sessions and rejects replay of a consumed token', async () => {

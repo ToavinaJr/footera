@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Accepter les primitives JSON (`true`/`false`) renvoyées avec un type de contenu non JSON, tout en continuant à rejeter les pages HTML.
+
 - Rendre les scripts Vite indépendants des exécutables Bun endommagés dans `node_modules` et corriger les exports incompatibles avec Fast Refresh.
 - Synchroniser l’ouverture des détails, créations et édition du CV avec les URLs React Router.
 - Faire pointer les notifications vers les ressources correspondantes, y compris les réservations.
