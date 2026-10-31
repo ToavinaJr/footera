@@ -83,6 +83,7 @@ describe('AccountsService account operations', () => {
     const { service, records, context } = createAccountService();
     await expect(context.run('user-1', () => service.updatePreferences({ language: 'en', showPersonalActivity: true }))).resolves.toMatchObject({ id: 'user-1' });
     await expect(context.run('user-1', () => service.updatePreferences({ language: 'xx' }))).rejects.toThrow();
+    await expect(context.run('user-1', () => service.updatePreferences({ language: 'en', ownerId: 'attacker' }))).rejects.toThrow();
     await expect(context.run('user-1', () => service.toggleFavoriteTeam('team-1'))).resolves.toBe(false);
     await expect(context.run('user-1', () => service.toggleFavoriteMatch('match-1'))).resolves.toBe(true);
     expect(records.updateUserPreferences).toHaveBeenCalledWith('user-1', { language: 'en', showPersonalActivity: true });

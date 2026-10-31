@@ -12,6 +12,7 @@ describe('Persistent favorites', () => {
     await expect(controller.set('players', 'deleted', { favorite: true })).rejects.toThrow();
     await expect(controller.set('users', 'victim', { favorite: true })).rejects.toThrow();
     await expect(controller.set('teams', 't', { favorite: 'true' })).rejects.toThrow();
+    await expect(controller.set('teams', 't', { favorite: true, ownerId: 'attacker' })).rejects.toThrow();
   });
   it('preserves the finished-match following restriction', async () => {
     const records = { find: vi.fn(async (collection: string) => collection === 'matches' ? { status: 'FINISHED' } : { favoriteMatchIds: [] }), setUserFavorite: vi.fn() };

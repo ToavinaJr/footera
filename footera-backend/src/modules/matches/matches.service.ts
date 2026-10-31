@@ -11,6 +11,15 @@ import type { MatchEventRecord, MatchRecord, PlayerRecord, TeamRecord, Tournamen
 
 const SCORING_EVENT_TYPES = new Set<MatchEventType>([MATCH_EVENT_TYPES.GOAL, MATCH_EVENT_TYPES.PENALTY]);
 const isScoringEvent = (type: MatchEventType) => SCORING_EVENT_TYPES.has(type);
+const MATCH_EVENT_INPUT_FIELDS = new Set([
+  'minute', 'type', 'teamId', 'playerId', 'assistPlayerId', 'substitutedPlayerId', 'description',
+]);
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
 
 @Injectable()
 export class MatchesService {
@@ -216,7 +225,8 @@ export class MatchesService {
     ]);
     const teamIds = new Set([match.homeTeam.id, match.awayTeam.id]);
     return events.map((event) => {
-      if (!event || !isIntegerInRange(event.minute, 0, 130)
+      if (!isPlainObject(event) || Object.keys(event).some((field) => !MATCH_EVENT_INPUT_FIELDS.has(field))
+        || !isIntegerInRange(event.minute, 0, 130)
         || !allowedTypes.has(event.type) || !teamIds.has(event.teamId)) {
         throw new BadRequestException('Un événement du match contient des informations invalides.');
       }
@@ -269,7 +279,8 @@ export class MatchesService {
       this.records.list<TeamRecord>('teams'),
     ]);
     return lineups.map((lineup) => {
-      if (!lineup || !teamIds.has(lineup.teamId) || seenTeams.has(lineup.teamId)
+      if (!isPlainObject(lineup) || Object.keys(lineup).some((field) => field !== 'teamId' && field !== 'playerIds')
+        || !teamIds.has(lineup.teamId) || seenTeams.has(lineup.teamId)
         || !Array.isArray(lineup.playerIds) || lineup.playerIds.length > 30
         || new Set(lineup.playerIds).size !== lineup.playerIds.length) {
         throw new BadRequestException('Une composition contient des données invalides ou dupliquées.');

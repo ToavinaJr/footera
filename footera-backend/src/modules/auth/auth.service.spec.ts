@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { RecordCollection, RecordRepository } from '../../database/record.repository.js';
 import type { AuthCredentialRecord, AuthSessionRecord, UserRecord } from '../../database/domain-records.js';
@@ -91,6 +91,18 @@ describe('AuthService', () => {
       .rejects.toBeInstanceOf(UnauthorizedException);
     expect(records.recordLoginFailure).toHaveBeenCalledOnce();
     expect(records.clearLoginFailures).toHaveBeenCalledOnce();
+  });
+
+  it('rejects extra password-change fields before looking up account data', async () => {
+    const { auth, records } = makeService();
+
+    await expect(auth.changePassword('user-1', {
+      currentPassword: 'current-password',
+      newPassword: 'a sufficiently long replacement password',
+      userId: 'victim',
+    })).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(records.find).not.toHaveBeenCalled();
   });
 
   it('blocks an address and email pair after the persistent failure limit is reached', async () => {

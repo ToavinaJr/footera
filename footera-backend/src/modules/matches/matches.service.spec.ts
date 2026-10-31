@@ -128,11 +128,18 @@ describe('MatchesService tournament organizer controls', () => {
   });
 
   it('rejects invalid match updates before persistence', async () => {
-    const { service } = managementService('organizer-1');
+    const { service, records } = managementService('organizer-1');
 
     await expect(service.update('match-pending', {})).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.update('match-pending', { venue: '' })).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.update('match-pending', { scheduledAt: 'not-a-date' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.update('match-pending', {
+      events: [{ minute: 1, type: 'goal', teamId: 'team-1', playerId: 'player-1', adminOverride: true }],
+    })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.update('match-pending', {
+      lineups: [{ teamId: 'team-1', playerIds: [], captainId: 'player-1' }],
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(records.save).not.toHaveBeenCalled();
   });
 
   it('validates events and lineups, recalculates scores, and publishes the update', async () => {
