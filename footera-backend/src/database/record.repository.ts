@@ -172,6 +172,26 @@ export class RecordRepository {
     return attempt.attempts;
   }
 
+  async consumeRateLimit(id: string, now: Date, windowMs: number, limit: number): Promise<boolean> {
+    const expiresAt = new Date(now.getTime() + windowMs);
+    await this.prisma.authLoginAttemptRecord.deleteMany({ where: { expiresAt: { lte: now } } });
+    const attempts = await this.prisma.$queryRaw<Array<{ attempts: number }>>`
+      INSERT INTO auth_login_attempts (id, attempts, "expiresAt")
+      VALUES (${id}, 1, ${expiresAt})
+      ON CONFLICT (id) DO UPDATE SET
+        attempts = CASE
+          WHEN auth_login_attempts."expiresAt" <= ${now} THEN 1
+          ELSE auth_login_attempts.attempts + 1
+        END,
+        "expiresAt" = CASE
+          WHEN auth_login_attempts."expiresAt" <= ${now} THEN ${expiresAt}
+          ELSE auth_login_attempts."expiresAt"
+        END
+      RETURNING attempts
+    `;
+    return (attempts[0]?.attempts ?? limit + 1) <= limit;
+  }
+
   async clearLoginFailures(id: string): Promise<void> {
     await this.prisma.authLoginAttemptRecord.deleteMany({ where: { id } });
   }

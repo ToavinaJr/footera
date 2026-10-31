@@ -1,13 +1,14 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { AccountsService } from '../accounts/accounts.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RecordRepository } from '../../database/record.repository.js';
 
 export const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 6_000;
 const MAX_IMAGE_PIXELS = 20_000_000;
-const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
-const MAX_UPLOADS_PER_WINDOW = 20;
+export const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
+export const MAX_UPLOADS_PER_WINDOW = 20;
 const ALLOWED_PURPOSES = new Set(['avatar', 'marketplace', 'pitch', 'club-logo', 'tournament', 'gallery']);
 
 interface ImageUpload {
@@ -104,9 +105,11 @@ function inspectImage(file: ImageUpload | undefined): ImageInfo {
 
 @Injectable()
 export class UploadsService {
-  private readonly uploadAttempts = new Map<string, { count: number; expiresAt: number }>();
-
-  constructor(private readonly accounts: AccountsService, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly accounts: AccountsService,
+    private readonly prisma: PrismaService,
+    private readonly records: RecordRepository,
+  ) {}
 
   async uploadImage(file: ImageUpload | undefined, purpose: string | undefined, clientIp: string) {
     if (!purpose || !ALLOWED_PURPOSES.has(purpose)) {
@@ -122,7 +125,7 @@ export class UploadsService {
         throw new ForbiddenException(`Votre compte doit disposer du rôle ${requiredRole} pour cet upload.`);
       }
     }
-    this.enforceRateLimit(clientIp);
+    await this.enforceRateLimit(clientIp);
     const image = inspectImage(file);
     if (!file) throw new BadRequestException('Aucun fichier image reçu.');
     const filename = `${randomUUID()}.${image.extension}`;
@@ -148,17 +151,13 @@ export class UploadsService {
     return { buffer: Buffer.from(image.content), mimeType: image.mimeType };
   }
 
-  private enforceRateLimit(clientIp: string) {
-    const now = Date.now();
-    const current = this.uploadAttempts.get(clientIp);
-    if (!current || current.expiresAt <= now) {
-      this.uploadAttempts.set(clientIp, { count: 1, expiresAt: now + UPLOAD_WINDOW_MS });
-      return;
-    }
-    if (current.count >= MAX_UPLOADS_PER_WINDOW) {
+  private async enforceRateLimit(clientIp: string) {
+    const normalizedIp = clientIp.trim().slice(0, 100) || 'unknown';
+    const key = createHash('sha256').update(`upload:${normalizedIp}`).digest('hex');
+    const allowed = await this.records.consumeRateLimit(key, new Date(), UPLOAD_WINDOW_MS, MAX_UPLOADS_PER_WINDOW);
+    if (!allowed) {
       throw new HttpException('Limite d’upload atteinte. Réessayez plus tard.', 429);
     }
-    current.count += 1;
   }
 }
 

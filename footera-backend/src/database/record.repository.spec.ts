@@ -24,6 +24,7 @@ function createRepository() {
       findUnique: vi.fn(async () => ({ attempts: 2, expiresAt: new Date(Date.now() + 60_000) })),
       upsert: vi.fn(async () => ({ attempts: 3 })),
     },
+    $queryRaw: vi.fn(async () => [{ attempts: 3 }]),
     $executeRaw: vi.fn(async () => 1),
     $transaction: vi.fn(async (callback: (transaction: typeof prisma) => unknown) => callback(prisma)),
   };
@@ -78,6 +79,15 @@ describe('RecordRepository', () => {
     await expect(repository.changePasswordAndRevokeSessions('user@example.test', 'user-1', 'old', 'new')).resolves.toBe(true);
     expect(delegates.bookingRecord.update).toHaveBeenCalled();
     expect(prisma.authLoginAttemptRecord.deleteMany).toHaveBeenCalled();
+  });
+
+  it('consumes a rate limit atomically using the shared expiring attempts table', async () => {
+    const { repository, prisma } = createRepository();
+    await expect(repository.consumeRateLimit('hashed-client-key', new Date('2026-10-31T00:00:00Z'), 60_000, 3)).resolves.toBe(true);
+    expect(prisma.authLoginAttemptRecord.deleteMany).toHaveBeenCalledWith({ where: { expiresAt: { lte: new Date('2026-10-31T00:00:00Z') } } });
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce();
+    prisma.$queryRaw.mockResolvedValueOnce([{ attempts: 4 }]);
+    await expect(repository.consumeRateLimit('hashed-client-key', new Date('2026-10-31T00:00:01Z'), 60_000, 3)).resolves.toBe(false);
   });
 
   it('publishes activity without failing the business operation when persistence fails', async () => {

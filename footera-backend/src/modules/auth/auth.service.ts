@@ -8,6 +8,8 @@ const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const LOGIN_FAILURE_LIMIT = 10;
 const LOGIN_FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const REGISTRATION_LIMIT = 20;
+const REGISTRATION_WINDOW_MS = 60 * 60 * 1000;
 
 function derivePasswordKey(password: string, salt: Buffer, length: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -42,13 +44,19 @@ export class AuthService {
     return randomBytes(32).toString('base64url');
   }
 
-  async register(input: { name?: unknown; email?: unknown; password?: unknown }) {
+  async register(input: { name?: unknown; email?: unknown; password?: unknown }, clientAddress = 'unknown') {
     const name = typeof input.name === 'string' ? input.name.trim() : '';
     const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
     const password = typeof input.password === 'string' ? input.password : '';
     if (name.length < 2 || name.length > 80) throw new BadRequestException('Le nom doit contenir entre 2 et 80 caractères.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new BadRequestException('Adresse e-mail invalide.');
     if (password.length < 12 || password.length > 256) throw new BadRequestException('Le mot de passe doit contenir au moins 12 caractères.');
+    const normalizedAddress = clientAddress.trim().slice(0, 100) || 'unknown';
+    const rateLimitId = createHash('sha256').update(`registration:${normalizedAddress}`).digest('hex');
+    const now = new Date();
+    if (!await this.records.consumeRateLimit(rateLimitId, now, REGISTRATION_WINDOW_MS, REGISTRATION_LIMIT)) {
+      throw new HttpException('Trop de créations de compte depuis cette adresse. Réessayez plus tard.', HttpStatus.TOO_MANY_REQUESTS);
+    }
     const role = 'Joueur';
 
     if (await this.records.find('authCredentials', email)) throw new ConflictException('Un compte utilise déjà cette adresse e-mail.');

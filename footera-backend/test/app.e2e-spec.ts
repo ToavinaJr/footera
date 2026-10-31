@@ -1,31 +1,38 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppController } from './../src/app.controller.js';
-import { AppService } from './../src/app.service.js';
+import type { App } from 'supertest/types';
+import { INestApplication } from '@nestjs/common';
+import { createApp } from '../src/app.factory.js';
 
-describe('AppController (e2e)', () => {
+describe.skipIf(process.env.CI !== 'true')('Footera API (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+  beforeAll(async () => {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL must point to the isolated CI database for E2E tests.');
+    }
+    app = await createApp();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
-  });
-
-  afterEach(async () => {
+  afterAll(async () => {
     await app?.close();
+  });
+
+  it('serves the public API status route through the real application', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/status')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({
+          name: 'Footera API',
+          status: 'operational',
+        });
+      });
+  });
+
+  it('applies the global authentication guard to protected API routes', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .expect(401);
   });
 });

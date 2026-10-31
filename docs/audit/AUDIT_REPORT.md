@@ -8,7 +8,7 @@ Nature : revue statique et exécution des suites déjà configurées. Ce documen
 
 Footera est un monorepo composé d'une SPA React 19/Vite/Tailwind, d'une API REST NestJS 12, de Prisma 7/PostgreSQL et d'une automatisation GitHub Actions/Docker. Le socle comprend une authentification par jeton/cookies, des modules métier distincts, des validations spécifiques, des migrations et une CI relativement riche.
 
-La validation locale a réussi pour Oxlint + 177 tests backend (43 fichiers), le test d'intégration nommé E2E backend (1 test) et TypeScript + 11 tests unitaires frontend. La suite Playwright frontend a été lancée mais n'a pas terminé proprement : les tests de captures signalent que les fichiers de référence n'existent pas (`A snapshot doesn't exist`); le run a été interrompu sans bilan final. Les tests smoke visibles ont réussi. Aucun test n'a été lancé contre une base ou un service de production.
+À la vérification initiale, les captures visuelles manquaient; elles sont maintenant présentes et les assertions Playwright ont toutes affiché OK (8 tests actifs, 4 ignorés car associés à l'autre viewport). Le processus Playwright reste bloqué au teardown sous Windows après le dernier scénario, sans résumé final ni code de sortie propre. Les garde-fous upload et inscription partagés utilisent le quota PostgreSQL; Oxlint et 179 tests backend dans 43 fichiers passent; le build backend passe. Les E2E backend montent désormais l'application Nest complète et couvrent l'état API et la garde globale; avec le test PostgreSQL de quota, ces tests sont ignorés localement et attendent leur exécution sur le PostgreSQL éphémère CI (`CI=true`). Aucun test n'a été lancé contre une base ou un service de production.
 
 Les priorités ressortant des preuves sont : (1) réparer et stabiliser les références visuelles/Playwright, (2) rendre les limites d'upload distribuées et bornées, (3) remplacer les parcours E2E backend de démonstration par des scénarios HTTP métier, (4) réduire les lectures complètes et le couplage au JSON des enregistrements, (5) ajouter des contrôles de régression i18n et qualité d'accessibilité sur les parcours principaux. Aucun incident CRITICAL confirmé n'a été établi dans ce périmètre. Les audits de secrets historiques et de vulnérabilités du registre npm ne sont pas considérés comme exécutés ici.
 
@@ -33,26 +33,26 @@ Entrées principales : `footera-frontend/src/main.tsx`, `footera-frontend/src/Ap
 
 ## Dix constats prioritaires
 
-1. **Test de captures non reproductible à partir du dépôt** : les specs `landing`, `sidebar`, `notifications` attendent des snapshots absents; elles ne constituent pas un contrôle de régression vert tant que les baselines ne sont pas établies/revues (TEST-01).
+1. **Teardown Playwright non propre dans l'environnement Windows local** : captures examinées et versionnées, 8 scénarios affichent OK/4 viewport-skips, mais la commande ne rend pas le résumé/code final (TEST-01).
 2. **E2E backend insuffisant** : `test/app.e2e-spec.ts` vérifie seulement `GET /` et `Hello World!`, sans lancer l'application complète ni vérifier auth/API/DB (TEST-02).
-3. **Limiteur d'upload local au processus** : `Map` en mémoire, sans expiration générale des clés, donc contournable entre instances et potentiellement croissant avec les IPs (SEC-01).
-4. **Inscription sans limite persistante observée** : contrairement au login, `register()` ne reçoit pas de clé d'adresse client; risque d'abus de création de comptes (SEC-02, à confirmer par politique produit/plateforme).
+3. **Limiteur d'upload distribué** : corrigé en code en stockant les compteurs atomiquement dans la table PostgreSQL expirante existante; tests unitaires et build passent. La vérification réelle de concurrence reste à exécuter en CI (SEC-01).
+4. **Abus d'inscription (mitigation ajoutée)** : le contrôleur transmet désormais l'adresse réseau et `register()` applique un quota PostgreSQL partagé de 20 comptes par heure et par IP avec clé hachée; surveiller les faux positifs NAT et confirmer le test concurrent en CI (SEC-02).
 5. **Accès aux données non paginé au niveau repository** : `list()` fait un `findMany` complet; beaucoup de services chargent plusieurs collections et filtrent/trient en mémoire (ARCH-02).
 6. **Modèle de données largement en `payload Json`** : contraintes métier, index et requêtes ciblées limités pour les agrégats; concurrence, intégrité et évolution des requêtes deviennent plus coûteuses (ARCH-01).
 7. **Limites de couverture produit en navigateur** : les E2E existants se concentrent sur landing/sidebar/notifications; auth, réservations, adhésion équipe, création de match, marketplace et rôle ne sont pas exercés bout-en-bout par Playwright (TEST-03).
 8. **Clés i18n non sûres à l'exécution** : `t(key: string)` force un cast puis utilise la valeur française sans garde; une clé inconnue peut propager `undefined` vers `replaceAll` et faire échouer l'affichage (FE-01).
 9. **Axe accessibility limité** : axe n'est exécuté que sur landing et tiroirs ciblés, pas sur les formulaires et pages métier (UX-02).
-10. **Release indépendante de la CI de tests** : le workflow de tag publie les images sans `needs` vers les contrôles CI, et les actions sont référencées par tags majeurs, non par SHA immuable (OPS-01).
+10. **Release — gate en cours** : constat initial de publication indépendante; le workflow a été changé pour attendre une CI réussie sur tag et reconstruire son SHA. Le premier run GitHub reste à confirmer; les actions sont encore référencées par tags majeurs (OPS-01/02).
 
 ## Dix risques majeurs
 
-1. Abus d'upload et fuite de mémoire par cardinalité d'adresses IP (SEC-01).
-2. Création automatisée de comptes si aucune limitation externe n'est appliquée (SEC-02).
+1. Abus d'upload si la CI ne valide pas encore l'atomicité Postgres (SEC-01, risque réduit; intégration en attente).
+2. Automatisation d'inscription distribuée ou attaques par botnet peuvent contourner le quota par IP; étudier CAPTCHA adaptatif/contrôles plateforme seulement si la télémétrie le justifie (SEC-02).
 3. Mauvaise interprétation d'un test visuel vert/rouge tant que les baselines ne sont ni présentes ni revues (TEST-01).
 4. Régression d'autorisation ou d'intégration non repérée par l'E2E backend actuel (TEST-02/03).
 5. Saturation mémoire/latence causée par chargements complets à mesure que les collections augmentent (ARCH-02).
 6. Perte d'écritures concurrentes et faible intégrité référentielle sur payloads JSON (ARCH-01).
-7. Déploiement d'une image produite par un tag sans preuve que les tests du commit/tag ont passé (OPS-01).
+7. Risque résiduel de gate de publication non vérifié en exécution réelle; la configuration exige désormais une CI réussie sur le SHA du tag (OPS-01, NEEDS_REVIEW).
 8. Dépendances transitives vulnérables non recensées par cet audit; le workflow prévoit `npm audit`, mais son résultat courant n'a pas été obtenu dans cette exécution (SEC-03).
 9. Incohérences de langue ou crash dû à une clé de traduction erronée/non répertoriée (FE-01).
 10. Régression d'accessibilité et responsive hors des trois surfaces testées (UX-02/TEST-03).
@@ -71,7 +71,7 @@ Backlog proposé : **15 tâches** — P0 : 0, P1 : 4, P2 : 7, P3 : 4. Les priori
 4. Lot 4 (P2) : profilage des collections/requêtes, pagination et index à partir de métriques réalistes.
 5. Lot 5 (P2/P3) : accessibilité des formulaires/pages, renforcement de release, supply-chain et observabilité.
 
-Le **premier lot prêt** est le lot de tests : les commandes et surfaces sont identifiées, et les échecs de captures sont reproductibles. Avant l'implémentation, faire valider puis enregistrer les snapshots visuels attendus sur un environnement maîtrisé.
+Le **premier lot prêt** est le lot de tests : les références ont été inspectées et les assertions visibles passent; reste à résoudre le teardown de Playwright et obtenir un code de sortie propre avant de le marquer DONE.
 
 ## Documents détaillés
 
@@ -89,4 +89,4 @@ Le **premier lot prêt** est le lot de tests : les commandes et surfaces sont id
 
 Lecture des manifestes, configurations, controllers/services ciblés, schéma Prisma/migrations, tests et documentation existante; recherches statiques ciblées; exécution locale de lint/tests unitaires et essais E2E configurés. Les fichiers `.env` n'ont pas été lus ni leurs valeurs copiées dans ce rapport. Pas d'accès/écriture à une DB distante, pas de migration, pas de déploiement, pas de test d'intrusion, pas d'installation/scan d'historique spécialisé (Gitleaks) et pas de confirmation de CVE par registre réseau. Les fichiers de documentation préexistants dans `docs/` ont été considérés comme contexte, non comme preuve automatique de l'état courant.
 
-Pendant Playwright, le runner a généré des fichiers `*-snapshots/`/`test-results/` pour les captures absentes. Ce sont des sorties de test non examinées/validées comme références visuelles; elles ne sont pas adoptées par cet audit comme baselines.
+Les captures actuellement suivies ont été examinées visuellement pendant la phase d'implémentation; aucun snapshot n'a été régénéré dans la seconde exécution. Le répertoire `test-results/` reste une sortie ignorée par Git.

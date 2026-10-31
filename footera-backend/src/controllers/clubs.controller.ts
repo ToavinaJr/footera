@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { ClubsService } from '../modules/clubs/clubs.service.js';
+import { updateClubLogoBodyPipe } from '../modules/clubs/club-logo-request.validation.js';
 
 @Controller('clubs')
 export class ClubsController {
@@ -11,7 +12,7 @@ export class ClubsController {
   }
 
   @Patch(':id/logo')
-  updateLogo(@Param('id') id: string, @Body('logoUrl') logoUrl: string) {
-    return this.clubs.updateLogo(id, logoUrl);
+  updateLogo(@Param('id') id: string, @Body(updateClubLogoBodyPipe) body: { logoUrl: string }) {
+    return this.clubs.updateLogo(id, body.logoUrl);
   }
 }

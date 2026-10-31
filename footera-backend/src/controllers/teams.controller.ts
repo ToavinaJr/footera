@@ -1,6 +1,11 @@
 import { Controller, Get, Param, Query, Post, Patch, Body, NotFoundException, HttpCode, HttpStatus, Delete } from '@nestjs/common';
 import { TeamsService } from '../modules/teams/teams.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
+import {
+  joinTeamBodyPipe,
+  remindTeamMembersBodyPipe,
+  updateTeamJoinRequestBodyPipe,
+} from '../modules/teams/team-mutation-request.validation.js';
 
 @Controller('teams')
 export class TeamsController {
@@ -33,8 +38,8 @@ export class TeamsController {
   }
 
   @Patch('my-join-requests/:requestId')
-  updateMyJoinRequest(@Param('requestId') requestId: string, @Body() body: { message?: string; position?: string }) {
-    return this.teams.updateMyJoinRequest(requestId, body.message ?? '', body.position ?? '');
+  updateMyJoinRequest(@Param('requestId') requestId: string, @Body(updateTeamJoinRequestBodyPipe) body: { message: string; position: string }) {
+    return this.teams.updateMyJoinRequest(requestId, body.message, body.position);
   }
 
   @Delete('my-join-requests/:requestId')
@@ -58,8 +63,8 @@ export class TeamsController {
   }
 
   @Post(':id/reminders')
-  remindMembers(@Param('id') id: string, @Body('message') message: unknown) {
-    return this.teams.remindMembers(id, message);
+  remindMembers(@Param('id') id: string, @Body(remindTeamMembersBodyPipe) body: { message: string }) {
+    return this.teams.remindMembers(id, body.message);
   }
 
   @Get(':id/detail')
@@ -91,8 +96,8 @@ export class TeamsController {
   }
 
   @Post(':id/join')
-  joinTeam(@Param('id') id: string, @Body('message') message?: string, @Body('position') position?: string) {
-    return this.teams.requestJoin(id, message || '', position || '');
+  joinTeam(@Param('id') id: string, @Body(joinTeamBodyPipe) body: { message: string; position: string }) {
+    return this.teams.requestJoin(id, body.message, body.position);
   }
 
   @Post(':id/favorite')

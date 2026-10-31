@@ -2,6 +2,7 @@ import { Controller, Get, Query, Post, Body, Param, BadRequestException } from '
 import { MarketplaceService } from '../modules/marketplace/marketplace.service.js';
 import type { CreateMarketplaceInput } from '../modules/marketplace/marketplace.service.js';
 import { createMarketplaceBodyPipe } from '../modules/marketplace/marketplace-request.validation.js';
+import { addMarketplaceBrandBodyPipe } from '../modules/marketplace/marketplace-brand-request.validation.js';
 import { Public } from '../modules/auth/public.decorator.js';
 
 @Controller('marketplace')
@@ -44,7 +45,7 @@ export class MarketplaceController {
   }
 
   @Post('brands')
-  addBrand(@Body() body: { brand?: unknown }) {
+  addBrand(@Body(addMarketplaceBrandBodyPipe) body: { brand: string }) {
     if (typeof body?.brand !== 'string' || !body.brand.trim() || body.brand.trim().length > 80) {
       throw new BadRequestException('Le nom de marque doit contenir entre 1 et 80 caractères.');
     }

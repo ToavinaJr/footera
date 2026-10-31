@@ -14,6 +14,7 @@ function makeService() {
     getLoginFailureCount: vi.fn(async () => 0),
     recordLoginFailure: vi.fn(async () => 1),
     clearLoginFailures: vi.fn(async () => undefined),
+    consumeRateLimit: vi.fn(async () => true),
   };
   return { auth: new AuthService(records as unknown as RecordRepository), records };
 }
@@ -48,6 +49,22 @@ describe('AuthService', () => {
     const [, , user] = records.createUserAccount.mock.calls[0]!;
     expect(user.roles).toEqual(['Joueur']);
     expect(user.activeRole).toBe('Joueur');
+  });
+
+  it('rate limits account creation by a hashed client address before account persistence', async () => {
+    const { auth, records } = makeService();
+    records.consumeRateLimit.mockResolvedValueOnce(true).mockResolvedValue(false);
+
+    const result = await auth.register({ name: 'Test User', email: 'test@example.com', password: 'correct horse battery staple' }, '203.0.113.42');
+    const rateLimitError = await auth.register({ name: 'Test User', email: 'second@example.com', password: 'correct horse battery staple' }, '203.0.113.42')
+      .catch((error: unknown) => error);
+
+    expect(result.user.email).toBe('test@example.com');
+    expect(rateLimitError).toBeInstanceOf(HttpException);
+    expect((rateLimitError as HttpException).getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+    expect(records.consumeRateLimit).toHaveBeenCalledWith(expect.stringMatching(/^[a-f0-9]{64}$/), expect.any(Date), 60 * 60 * 1000, 20);
+    expect(records.consumeRateLimit.mock.calls[0]?.[0]).not.toContain('203.0.113.42');
+    expect(records.createUserAccount).toHaveBeenCalledOnce();
   });
 
   it('rejects duplicate email addresses', async () => {

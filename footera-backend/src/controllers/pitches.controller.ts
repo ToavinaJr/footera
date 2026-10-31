@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@n
 import { BookingsService } from '../modules/bookings/bookings.service.js';
 import type { CreatePitchInput } from '../modules/bookings/bookings.service.js';
 import { createPitchBodyPipe } from '../modules/bookings/pitch-request.validation.js';
+import { ratePitchBodyPipe } from '../modules/bookings/pitch-review-request.validation.js';
 
 @Controller('pitches')
 export class PitchesController {
@@ -18,7 +19,7 @@ export class PitchesController {
   }
 
   @Post(':id/reviews')
-  rate(@Param('id') id: string, @Body() body: { rating: number; comment?: string }) {
+  rate(@Param('id') id: string, @Body(ratePitchBodyPipe) body: { rating: number; comment?: string }) {
     return this.bookings.ratePitch(id, body);
   }
 

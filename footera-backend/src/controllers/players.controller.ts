@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query, Post, Body, NotFoundException } from '@n
 import { PlayersService } from '../modules/players/players.service.js';
 import { TeamsService } from '../modules/teams/teams.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
+import { invitePlayerBodyPipe } from '../modules/teams/player-invitation-request.validation.js';
 
 @Controller('players')
 export class PlayersController {
@@ -56,7 +57,7 @@ export class PlayersController {
   }
 
   @Post(':id/invite')
-  invite(@Param('id') id: string, @Body('message') message?: string) {
-    return this.teams.invitePlayer(id, message || 'Invitation à rejoindre notre équipe.');
+  invite(@Param('id') id: string, @Body(invitePlayerBodyPipe) body: { message?: string }) {
+    return this.teams.invitePlayer(id, body.message || 'Invitation à rejoindre notre équipe.');
   }
 }

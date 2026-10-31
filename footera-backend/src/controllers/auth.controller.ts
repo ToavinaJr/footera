@@ -6,6 +6,7 @@ import { AuthService } from '../modules/auth/auth.service.js';
 import { Public } from '../modules/auth/public.decorator.js';
 import { parseCookieValue } from '../utils/text.utils.js';
 import { loginBodyPipe, profileBodyPipe, registerBodyPipe } from '../modules/auth/auth-request.validation.js';
+import { switchActiveRoleBodyPipe } from '../modules/accounts/active-role-request.validation.js';
 
 @Controller('auth')
 export class AuthController {
@@ -14,8 +15,8 @@ export class AuthController {
   @Post('register')
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body(registerBodyPipe) body: { name?: unknown; email?: unknown; password?: unknown }, @Res({ passthrough: true }) response: Response) {
-    const result = await this.auth.register(body);
+  async register(@Body(registerBodyPipe) body: { name?: unknown; email?: unknown; password?: unknown }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const result = await this.auth.register(body, request.ip || request.socket.remoteAddress || 'unknown');
     this.setSessionCookies(response, result.accessToken, result.refreshToken);
     return { user: await this.auth.getProfile(result.user.id) };
   }
@@ -85,8 +86,8 @@ export class AuthController {
 
   @Post('role')
   @HttpCode(HttpStatus.OK)
-  switchRole(@Body('role') role: string) {
-    return this.accounts.setActiveRole(role);
+  switchRole(@Body(switchActiveRoleBodyPipe) body: { role: string }) {
+    return this.accounts.setActiveRole(body.role);
   }
 
   @Post('reset-demo')

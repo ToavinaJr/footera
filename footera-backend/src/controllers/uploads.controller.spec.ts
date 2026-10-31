@@ -6,6 +6,7 @@ import { UploadsController } from './uploads.controller.js';
 import { UploadsService } from '../modules/uploads/uploads.service.js';
 import { AccountsService } from '../modules/accounts/accounts.service.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { RecordRepository } from '../database/record.repository.js';
 
 const onePixelPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/g1sAAAAASUVORK5CYII=', 'base64');
 
@@ -30,6 +31,7 @@ describe('UploadsController security', () => {
         UploadsService,
         { provide: AccountsService, useValue: { profile: async () => ({ activeRole: 'Joueur', roles: ['Joueur'] }) } },
         { provide: PrismaService, useValue: prisma },
+        { provide: RecordRepository, useValue: { consumeRateLimit: async () => true } },
       ],
     }).compile();
     app = module.createNestApplication();

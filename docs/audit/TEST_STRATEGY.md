@@ -4,11 +4,11 @@
 
 | Couche | État/résultat de l'audit | Limite |
 |---|---|---|
-| Frontend unit | `npm run lint` et `npm run test:unit` réussis; 11 assertions réparties sur API response, upload, dates, routes | Peu de logique view-model/domain testée directement |
-| Backend unit | Oxlint et `npm test` réussis; 177 tests dans 43 fichiers | Couverture annoncée par commande CI, mais seuils/couverture non mesurés pendant cet audit |
-| Backend E2E | `npm run test:e2e` réussi (1) | Teste seulement `GET /`/Hello World, pas la composition réelle de l'application |
-| Browser E2E | Playwright lancé; smoke desktop/mobile visibles réussis; tests screenshots échouent faute de snapshot de référence; run interrompu sans résumé final | Pas de verdict complet sur tests restants; aucune baseline n'est approuvée |
-| Accessibilité | axe sur quelques écrans seulement | Les parcours formulaire et état dynamique ne sont pas couverts |
+| Frontend unit | `npm run lint` et `npm run test:unit` réussis après ajout de 4 tests i18n; tests couvrent API response, upload, dates, routes, parité FR/EN/MG, placeholders et fallback | Persistance navigateur vérifiée par assertion Playwright, mais le runner Windows reste bloqué au teardown |
+| Backend unit | Oxlint et `npm test` réussis après les changements; 202 tests dans 53 fichiers, dont des tests HTTP Nest isolés pour toutes les validations de mutation ajoutées | Couverture chiffrée/seuils non mesurés; tests de rôles/ressources et du cycle complet à compléter en intégration DB |
+| Backend E2E | `npm run test:e2e`: 2 fichiers / 3 tests ignorés localement (`CI=true` requis); la CI dispose d'un PostgreSQL éphémère, applique migrations et seed avant l'exécution. `app.e2e-spec.ts` monte désormais l'application via `createApp()` et teste status + guard global | Le test de l'application composée et le test PostgreSQL concurrent doivent encore s'exécuter dans CI |
+| Browser E2E | 8 scénarios actifs affichent OK, 4 ignorés par projet viewport; captures maintenant suivies | Processus reste bloqué au teardown sans résumé/code de sortie; ne pas déclarer le gate entièrement vert avant résolution |
+| Accessibilité | axe couvre landing, sidebar, notifications, connexion/inscription desktop/mobile; les variantes auth affichent OK sans violation; la préférence de langue est aussi testée après rechargement | Teardown Playwright Windows reste bloqué après les assertions; formulaires métier, états d'erreur et pages principales encore à couvrir |
 
 ## Fichiers/scénarios à écrire
 

@@ -23,9 +23,9 @@ Aucun fichier ou symbole n'est déclaré mort sur la seule base de recherches te
 
 ## Tests locaux observés
 
-- Backend : Oxlint réussi; 43 fichiers de tests unitaires, 177 tests réussis.
+- Backend : Oxlint réussi; 43 fichiers de tests, 178 tests réussis après les corrections du lot.
 - Backend E2E : 1 test réussi, portée insuffisante pour certifier les modules.
 - Frontend : TypeScript réussi; 11 tests unitaires réussis.
-- Frontend Playwright : run interrompu; sorties de test indiquent l'absence initiale des snapshots attendus.
+- Frontend Playwright : 8 scénarios actifs passent et 4 sont skip par viewport; aucune assertion en échec dans le run observé, mais le processus ne sort pas proprement sous Windows.
 
 La couverture chiffrée (`test:cov`) n'a pas été exécutée séparément pendant cette revue; la CI la prévoit.
