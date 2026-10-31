@@ -69,6 +69,8 @@ jobs:
     name: Frontend checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/footera-frontend/.cache/ms-playwright
     defaults:
       run:
         working-directory: footera-frontend
